@@ -14,6 +14,7 @@ import SolfegeKeyboard from "@/components/game/SolfegeKeyboard";
 import GameSettings from "@/components/game/GameSettings";
 import Timer from "@/components/game/Timer";
 import ScoreBoard from "@/components/game/ScoreBoard";
+import GameResultModal from "@/components/game/GameResultModal";
 
 const GamePage: React.FC = () => {
   const { t } = useTranslation();
@@ -34,6 +35,7 @@ const GamePage: React.FC = () => {
   } = useGameStore();
 
   const [showSettings, setShowSettings] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
   const [feedback, setFeedback] = useState<{
     message: string;
     type: "success" | "error";
@@ -85,6 +87,13 @@ const GamePage: React.FC = () => {
       generateNewQuestion();
     }
   }, [gameState, currentQuestion, generateNewQuestion]);
+
+  // 게임 완료 시 결과 모달 표시
+  useEffect(() => {
+    if (gameState === "finished") {
+      setShowResultModal(true);
+    }
+  }, [gameState]);
 
   // 답안 제출 처리
   const handleAnswerSubmit = useCallback(
@@ -288,19 +297,14 @@ const GamePage: React.FC = () => {
                       className="flex justify-center"
                     />
                   ) : (
-                    <div className="text-center">
-                      <p className="text-gray-600 mb-4">
-                        도레미 입력 모드 (개발 예정)
-                      </p>
-                      <PianoKeyboard
-                        startOctave={settings.octaveRange.min}
-                        endOctave={settings.octaveRange.max}
-                        onNoteClick={handleAnswerSubmit}
-                        selectedNote={currentAnswer}
-                        disabled={!isGameActive()}
-                        className="flex justify-center"
-                      />
-                    </div>
+                    <SolfegeKeyboard
+                      startOctave={settings.octaveRange.min}
+                      endOctave={settings.octaveRange.max}
+                      onNoteClick={handleAnswerSubmit}
+                      selectedNote={currentAnswer}
+                      disabled={!isGameActive()}
+                      className="flex justify-center"
+                    />
                   )}
                 </div>
               )}
