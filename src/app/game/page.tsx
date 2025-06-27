@@ -1,18 +1,19 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useGameStore } from '@/store/gameStore';
-import { useTranslation } from '@/hooks/useTranslation';
-import { generateQuestion, validateAnswer } from '@/lib/music/utils';
-import { playPianoNote, initializeAudio } from '@/lib/music/audio';
-import { Note } from '@/types/music';
+import React, { useState, useEffect, useCallback } from "react";
+import { useGameStore } from "@/store/gameStore";
+import { useTranslation } from "@/hooks/useTranslation";
+import { generateQuestion, validateAnswer } from "@/lib/music/utils";
+import { playPianoNote, initializeAudio } from "@/lib/music/audio";
+import { Note } from "@/types/music";
 
 // 컴포넌트 임포트
-import Staff from '@/components/game/Staff';
-import PianoKeyboard from '@/components/game/PianoKeyboard';
-import GameSettings from '@/components/game/GameSettings';
-import Timer from '@/components/game/Timer';
-import ScoreBoard from '@/components/game/ScoreBoard';
+import Staff from "@/components/game/Staff";
+import PianoKeyboard from "@/components/game/PianoKeyboard";
+import SolfegeKeyboard from "@/components/game/SolfegeKeyboard";
+import GameSettings from "@/components/game/GameSettings";
+import Timer from "@/components/game/Timer";
+import ScoreBoard from "@/components/game/ScoreBoard";
 
 const GamePage: React.FC = () => {
   const { t } = useTranslation();
@@ -29,11 +30,14 @@ const GamePage: React.FC = () => {
     setCurrentQuestion,
     setCurrentAnswer,
     addAnswer,
-    isGameActive
+    isGameActive,
   } = useGameStore();
 
   const [showSettings, setShowSettings] = useState(false);
-  const [feedback, setFeedback] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [feedback, setFeedback] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
   const [isAudioInitialized, setIsAudioInitialized] = useState(false);
 
   // 오디오 초기화
@@ -43,73 +47,90 @@ const GamePage: React.FC = () => {
         await initializeAudio();
         setIsAudioInitialized(true);
       } catch (error) {
-        console.error('Failed to initialize audio:', error);
+        console.error("Failed to initialize audio:", error);
       }
     };
-    
+
     initAudio();
   }, []);
 
   // 새 문제 생성
   const generateNewQuestion = useCallback(() => {
     if (!isGameActive()) return;
-    
+
     const question = generateQuestion(settings);
     setCurrentQuestion(question);
     setCurrentAnswer(null);
     setFeedback(null);
 
     // 오디오 모드일 때 소리 재생
-    if (settings.gameMode === 'audio' || settings.gameMode === 'both') {
+    if (settings.gameMode === "audio" || settings.gameMode === "both") {
       if (settings.enableSound && isAudioInitialized) {
         setTimeout(() => {
           playPianoNote(question.displayNote, 1000).catch(console.error);
         }, 500);
       }
     }
-  }, [settings, isGameActive, setCurrentQuestion, setCurrentAnswer, isAudioInitialized]);
+  }, [
+    settings,
+    isGameActive,
+    setCurrentQuestion,
+    setCurrentAnswer,
+    isAudioInitialized,
+  ]);
 
   // 게임 시작 시 첫 문제 생성
   useEffect(() => {
-    if (gameState === 'playing' && !currentQuestion) {
+    if (gameState === "playing" && !currentQuestion) {
       generateNewQuestion();
     }
   }, [gameState, currentQuestion, generateNewQuestion]);
 
   // 답안 제출 처리
-  const handleAnswerSubmit = useCallback((answer: Note) => {
-    if (!currentQuestion || !isGameActive()) return;
+  const handleAnswerSubmit = useCallback(
+    (answer: Note) => {
+      if (!currentQuestion || !isGameActive()) return;
 
-    const isCorrect = validateAnswer(currentQuestion, answer);
-    const answerData = {
-      note: answer,
-      timestamp: Date.now(),
-      isCorrect
-    };
+      const isCorrect = validateAnswer(currentQuestion, answer);
+      const answerData = {
+        note: answer,
+        timestamp: Date.now(),
+        isCorrect,
+      };
 
-    addAnswer(answerData);
-    setCurrentAnswer(answer);
+      addAnswer(answerData);
+      setCurrentAnswer(answer);
 
-    // 피드백 표시
-    setFeedback({
-      message: isCorrect ? t.messages.correct : t.messages.incorrect,
-      type: isCorrect ? 'success' : 'error'
-    });
+      // 피드백 표시
+      setFeedback({
+        message: isCorrect ? t.messages.correct : t.messages.incorrect,
+        type: isCorrect ? "success" : "error",
+      });
 
-    // 다음 문제로 넘어가기
-    setTimeout(() => {
-      generateNewQuestion();
-    }, 1500);
-  }, [currentQuestion, isGameActive, addAnswer, setCurrentAnswer, generateNewQuestion, t]);
+      // 다음 문제로 넘어가기
+      setTimeout(() => {
+        generateNewQuestion();
+      }, 1500);
+    },
+    [
+      currentQuestion,
+      isGameActive,
+      addAnswer,
+      setCurrentAnswer,
+      generateNewQuestion,
+      t,
+    ]
+  );
 
   // 소리 재생 (문제 다시 듣기)
   const handlePlaySound = useCallback(async () => {
-    if (!currentQuestion || !settings.enableSound || !isAudioInitialized) return;
-    
+    if (!currentQuestion || !settings.enableSound || !isAudioInitialized)
+      return;
+
     try {
       await playPianoNote(currentQuestion.displayNote, 1000);
     } catch (error) {
-      console.error('Failed to play sound:', error);
+      console.error("Failed to play sound:", error);
     }
   }, [currentQuestion, settings.enableSound, isAudioInitialized]);
 
@@ -140,9 +161,7 @@ const GamePage: React.FC = () => {
         {/* 헤더 */}
         <header className="mb-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-900">
-              {t.gameTitle}
-            </h1>
+            <h1 className="text-3xl font-bold text-gray-900">{t.gameTitle}</h1>
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => setShowSettings(true)}
@@ -157,7 +176,7 @@ const GamePage: React.FC = () => {
         {/* 게임 컨트롤 */}
         <div className="mb-6">
           <div className="flex items-center justify-center space-x-4">
-            {gameState === 'idle' && (
+            {gameState === "idle" && (
               <button
                 onClick={handleStartGame}
                 className="px-6 py-3 text-lg font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -165,8 +184,8 @@ const GamePage: React.FC = () => {
                 {t.startGame}
               </button>
             )}
-            
-            {gameState === 'playing' && (
+
+            {gameState === "playing" && (
               <button
                 onClick={handlePauseGame}
                 className="px-6 py-3 text-lg font-medium text-white bg-yellow-600 border border-transparent rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500"
@@ -174,8 +193,8 @@ const GamePage: React.FC = () => {
                 {t.pauseGame}
               </button>
             )}
-            
-            {gameState === 'paused' && (
+
+            {gameState === "paused" && (
               <button
                 onClick={handleResumeGame}
                 className="px-6 py-3 text-lg font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -183,8 +202,8 @@ const GamePage: React.FC = () => {
                 {t.resumeGame}
               </button>
             )}
-            
-            {(gameState === 'playing' || gameState === 'paused') && (
+
+            {(gameState === "playing" || gameState === "paused") && (
               <button
                 onClick={handleEndGame}
                 className="px-6 py-3 text-lg font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
@@ -192,8 +211,8 @@ const GamePage: React.FC = () => {
                 {t.endGame}
               </button>
             )}
-            
-            {gameState === 'finished' && (
+
+            {gameState === "finished" && (
               <button
                 onClick={handleResetGame}
                 className="px-6 py-3 text-lg font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -217,43 +236,49 @@ const GamePage: React.FC = () => {
             <div className="bg-white rounded-lg shadow-md p-6">
               {/* 피드백 메시지 */}
               {feedback && (
-                <div className={`mb-4 p-3 rounded-md text-center font-medium ${
-                  feedback.type === 'success' 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
-                }`}>
+                <div
+                  className={`mb-4 p-3 rounded-md text-center font-medium ${
+                    feedback.type === "success"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
                   {feedback.message}
                 </div>
               )}
 
               {/* 오선지 */}
-              {currentQuestion && (settings.gameMode === 'visual' || settings.gameMode === 'both') && (
-                <div className="mb-6">
-                  <Staff
-                    clef={currentQuestion.clef}
-                    keySignature={currentQuestion.keySignature}
-                    note={currentQuestion.displayNote}
-                    className="flex justify-center"
-                  />
-                </div>
-              )}
+              {currentQuestion &&
+                (settings.gameMode === "visual" ||
+                  settings.gameMode === "both") && (
+                  <div className="mb-6">
+                    <Staff
+                      clef={currentQuestion.clef}
+                      keySignature={currentQuestion.keySignature}
+                      note={currentQuestion.displayNote}
+                      className="flex justify-center"
+                    />
+                  </div>
+                )}
 
               {/* 소리 재생 버튼 */}
-              {currentQuestion && settings.enableSound && isAudioInitialized && (
-                <div className="mb-6 text-center">
-                  <button
-                    onClick={handlePlaySound}
-                    className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    🔊 소리 듣기
-                  </button>
-                </div>
-              )}
+              {currentQuestion &&
+                settings.enableSound &&
+                isAudioInitialized && (
+                  <div className="mb-6 text-center">
+                    <button
+                      onClick={handlePlaySound}
+                      className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      🔊 소리 듣기
+                    </button>
+                  </div>
+                )}
 
               {/* 답안 입력 영역 */}
               {isGameActive() && (
                 <div className="mt-6">
-                  {settings.answerMode === 'piano' ? (
+                  {settings.answerMode === "piano" ? (
                     <PianoKeyboard
                       startOctave={settings.octaveRange.min}
                       endOctave={settings.octaveRange.max}
@@ -264,7 +289,9 @@ const GamePage: React.FC = () => {
                     />
                   ) : (
                     <div className="text-center">
-                      <p className="text-gray-600 mb-4">도레미 입력 모드 (개발 예정)</p>
+                      <p className="text-gray-600 mb-4">
+                        도레미 입력 모드 (개발 예정)
+                      </p>
                       <PianoKeyboard
                         startOctave={settings.octaveRange.min}
                         endOctave={settings.octaveRange.max}
@@ -279,7 +306,7 @@ const GamePage: React.FC = () => {
               )}
 
               {/* 게임 대기 상태 */}
-              {gameState === 'idle' && (
+              {gameState === "idle" && (
                 <div className="text-center py-12">
                   <h2 className="text-2xl font-semibold text-gray-700 mb-4">
                     게임을 시작해보세요!
@@ -291,14 +318,12 @@ const GamePage: React.FC = () => {
               )}
 
               {/* 게임 완료 상태 */}
-              {gameState === 'finished' && (
+              {gameState === "finished" && (
                 <div className="text-center py-12">
                   <h2 className="text-2xl font-semibold text-green-700 mb-4">
                     {t.messages.gameComplete}
                   </h2>
-                  <p className="text-gray-600">
-                    점수판에서 결과를 확인하세요!
-                  </p>
+                  <p className="text-gray-600">점수판에서 결과를 확인하세요!</p>
                 </div>
               )}
             </div>
