@@ -1,14 +1,14 @@
 // 음표 이름 (영어)
-export type NoteName = 'C' | 'D' | 'E' | 'F' | 'G' | 'A' | 'B';
+export type NoteName = "C" | "D" | "E" | "F" | "G" | "A" | "B";
 
 // 음표 이름 (한국어 - 도레미)
-export type SolfegeNote = '도' | '레' | '미' | '파' | '솔' | '라' | '시';
+export type SolfegeNote = "도" | "레" | "미" | "파" | "솔" | "라" | "시";
 
 // 조표 (Accidental)
-export type Accidental = 'natural' | 'sharp' | 'flat';
+export type Accidental = "natural" | "sharp" | "flat";
 
 // 음자리표 (Clef)
-export type ClefType = 'treble' | 'bass' | 'alto' | 'tenor';
+export type ClefType = "treble" | "bass" | "alto" | "tenor";
 
 // 옥타브 (일반적으로 0-8)
 export type Octave = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
@@ -32,28 +32,28 @@ export interface KeySignature {
   key: string;
   sharps: NoteName[];
   flats: NoteName[];
-  accidentalType: 'sharp' | 'flat' | 'natural';
+  accidentalType: "sharp" | "flat" | "natural";
 }
 
 // 게임 난이도
-export type Difficulty = 'easy' | 'medium' | 'hard' | 'expert';
+export type Difficulty = "easy" | "medium" | "hard" | "expert";
 
 // 게임 모드
-export type GameMode = 'visual' | 'audio' | 'both';
+export type GameMode = "visual" | "audio" | "both";
 
 // 답안 입력 방식
-export type AnswerMode = 'piano' | 'solfege';
+export type AnswerMode = "piano" | "solfege";
 
 // 언어 설정
-export type Language = 'en' | 'ko';
+export type Language = "en" | "ko";
 
 // 게임 설정
 export interface GameSettings {
-  clef: ClefType | 'random';
-  keySignature: string | 'random';
-  octaveRange: {
-    min: Octave;
-    max: Octave;
+  clef: ClefType | "random";
+  keySignature: string | "random";
+  staffRange: {
+    ledgerLinesAbove: number; // 오선지 위쪽 보조선 개수
+    ledgerLinesBelow: number; // 오선지 아래쪽 보조선 개수
   };
   difficulty: Difficulty;
   gameMode: GameMode;
@@ -64,7 +64,7 @@ export interface GameSettings {
 }
 
 // 게임 상태
-export type GameState = 'idle' | 'playing' | 'paused' | 'finished';
+export type GameState = "idle" | "playing" | "paused" | "finished";
 
 // 문제 정보
 export interface Question {

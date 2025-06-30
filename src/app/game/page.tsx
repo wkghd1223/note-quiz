@@ -289,8 +289,6 @@ const GamePage: React.FC = () => {
                 <div className="mt-6">
                   {settings.answerMode === "piano" ? (
                     <PianoKeyboard
-                      startOctave={settings.octaveRange.min}
-                      endOctave={settings.octaveRange.max}
                       onNoteClick={handleAnswerSubmit}
                       selectedNote={currentAnswer}
                       disabled={!isGameActive()}
@@ -298,8 +296,8 @@ const GamePage: React.FC = () => {
                     />
                   ) : (
                     <SolfegeKeyboard
-                      startOctave={settings.octaveRange.min}
-                      endOctave={settings.octaveRange.max}
+                      startOctave={3}
+                      endOctave={6}
                       onNoteClick={handleAnswerSubmit}
                       selectedNote={currentAnswer}
                       disabled={!isGameActive()}
