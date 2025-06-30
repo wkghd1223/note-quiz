@@ -265,6 +265,7 @@ const GamePage: React.FC = () => {
                       clef={currentQuestion.clef}
                       keySignature={currentQuestion.keySignature}
                       note={currentQuestion.displayNote}
+                      originalNote={currentQuestion.note}
                       className="flex justify-center"
                     />
                   </div>

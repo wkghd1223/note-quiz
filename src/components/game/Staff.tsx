@@ -11,7 +11,8 @@ import {
 interface StaffProps {
   clef: ClefType;
   keySignature: KeySignature;
-  note?: Note;
+  note?: Note; // 표시할 음표 (displayNote)
+  originalNote?: Note; // 원본 음표 (임시표 표시 판단용)
   width?: number;
   height?: number;
   className?: string;
@@ -28,6 +29,7 @@ const Staff: React.FC<StaffProps> = ({
   clef,
   keySignature,
   note,
+  originalNote,
   width = 400,
   height = 200,
   className = "",
@@ -152,21 +154,22 @@ const Staff: React.FC<StaffProps> = ({
         {note && notePosition !== null && (
           <g transform={`translate(${noteX}, ${noteY})`}>
             <QuarterNote position={notePosition} />
-            {/* 조표가 적용된 음표의 임시표 */}
-            {note.accidental === "sharp" && (
+            {/* 임시표 표시 */}
+            {originalNote && originalNote.accidental === "sharp" && (
               <g transform="translate(-25, -20)">
                 <SharpSymbol />
               </g>
             )}
-            {note.accidental === "flat" && (
+            {originalNote && originalNote.accidental === "flat" && (
               <g transform="translate(-25, -20)">
                 <FlatSymbol />
               </g>
             )}
-            {note.accidental === "natural" &&
-              (keySignature.sharps.includes(note.name) ||
-                keySignature.flats.includes(note.name)) && (
-                <g transform="translate(-25, 0)">
+            {originalNote &&
+              originalNote.accidental === "natural" &&
+              (keySignature.sharps.includes(originalNote.name) ||
+                keySignature.flats.includes(originalNote.name)) && (
+                <g transform="translate(-25, -20)">
                   <NaturalSymbol />
                 </g>
               )}

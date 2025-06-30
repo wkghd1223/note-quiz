@@ -370,11 +370,60 @@ export function generateQuestion(settings: GameSettings): Question {
 }
 
 /**
- * 답안 검증 (옥타브 무관)
+ * 이명동음 매핑 테이블
+ */
+const ENHARMONIC_EQUIVALENTS: Record<string, string[]> = {
+  C: ["C", "B#", "Dbb"],
+  "C#": ["C#", "Db", "B##"],
+  D: ["D", "C##", "Ebb"],
+  "D#": ["D#", "Eb", "Fbb"],
+  E: ["E", "D##", "Fb"],
+  F: ["F", "E#", "Gbb"],
+  "F#": ["F#", "Gb", "E##"],
+  G: ["G", "F##", "Abb"],
+  "G#": ["G#", "Ab"],
+  A: ["A", "G##", "Bbb"],
+  "A#": ["A#", "Bb", "Cbb"],
+  B: ["B", "A##", "Cb"],
+};
+
+/**
+ * 음표를 이명동음 표기로 변환
+ */
+function getNoteWithAccidental(note: Note): string {
+  const accidentalSymbol =
+    note.accidental === "sharp" ? "#" : note.accidental === "flat" ? "b" : "";
+  return `${note.name}${accidentalSymbol}`;
+}
+
+/**
+ * 두 음표가 이명동음인지 확인
+ */
+function areEnharmonicEquivalents(note1: string, note2: string): boolean {
+  // 각 음표가 속한 이명동음 그룹을 찾기
+  for (const equivalents of Object.values(ENHARMONIC_EQUIVALENTS)) {
+    if (equivalents.includes(note1) && equivalents.includes(note2)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * 답안 검증 (옥타브 무관, 이명동음 처리)
  */
 export function validateAnswer(question: Question, userAnswer: Note): boolean {
-  // 기본 음표 이름이 같은지 확인 (조표와 옥타브는 무시)
-  return question.note.name === userAnswer.name;
+  // 문제의 음표 (조표와 임시표가 적용된 최종 음표)
+  const questionNoteStr = getNoteWithAccidental(question.displayNote);
+
+  // 사용자 답안 음표
+  const userAnswerStr = getNoteWithAccidental(userAnswer);
+
+  console.log("Question note:", questionNoteStr);
+  console.log("User answer:", userAnswerStr);
+
+  // 이명동음 확인
+  return areEnharmonicEquivalents(questionNoteStr, userAnswerStr);
 }
 
 /**

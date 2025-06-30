@@ -53,7 +53,7 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
       if (disabled) return;
 
       const note: Note = {
-        name: key.note as NoteName,
+        name: key.note.replace("#", "") as NoteName,
         accidental: key.note.includes("#") ? "sharp" : "natural",
         octave: key.octave,
       };
@@ -117,12 +117,14 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
       <div className="mt-4 text-center text-sm text-gray-600">
         <p>클릭하여 음표를 선택하세요</p>
         {selectedNote && (
-          <p className="mt-1 font-medium text-blue-600">
-            선택된 음표: {selectedNote.name}
-            {selectedNote.accidental === "sharp" && "#"}
-            {selectedNote.accidental === "flat" && "♭"}
-            {/* {selectedNote.octave} */}
-          </p>
+          <>
+            <p className="mt-1 font-medium text-blue-600">
+              선택된 음표: {selectedNote.name}
+              {selectedNote.accidental === "sharp" && "#"}
+              {selectedNote.accidental === "flat" && "♭"}
+              {/* {selectedNote.octave} */}
+            </p>
+          </>
         )}
       </div>
 
@@ -132,7 +134,7 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
       >
         {/* 흰 건반 */}
         <div className="flex">
-          {whiteKeys.map((key, index) => {
+          {whiteKeys.map((key) => {
             const keyId = `${key.note}${key.octave}`;
             const isPressed = key.isPressed;
             const isSelected = isKeySelected(key);
@@ -169,7 +171,7 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
 
         {/* 검은 건반 */}
         <div className="absolute top-0 left-0">
-          {blackKeys.map((key, index) => {
+          {blackKeys.map((key) => {
             const keyId = `${key.note}${key.octave}`;
             const isPressed = key.isPressed;
             const isSelected = isKeySelected(key);
