@@ -167,18 +167,33 @@ function generateNoteInStaffRange(
   clef: ClefType,
   staffRange: { ledgerLinesAbove: number; ledgerLinesBelow: number }
 ): Note {
-  // 오선지 기본 위치 (0-8, 0이 가장 아래 첫 번째 보조선, 8이 가장 위 첫 번째 보조선)
-  // 실제 오선지는 1,2,3,4,5 (아래부터 위로)
-  const staffBottom = -4; // 오선지 아래 첫 번째 간격
-  const staffTop = 12; // 오선지 위 첫 번째 간격
+  // 오선지 기본 위치 정의
+  // 오선지 5줄: 0, 2, 4, 6, 8 (짝수는 선, 홀수는 간격)
+  const staffMinPosition = 0; // 가장 아래 선
+  const staffMaxPosition = 8; // 가장 위 선
 
-  const minPosition = staffBottom - staffRange.ledgerLinesBelow * 2; // 아래쪽 보조선
-  const maxPosition = staffTop + staffRange.ledgerLinesAbove * 2; // 위쪽 보조선
-
-  // 가능한 모든 위치 (선과 간격 모두 포함)
+  // 가능한 모든 위치 계산
   const allPositions = [];
-  for (let pos = minPosition; pos <= maxPosition; pos += 1) {
+
+  // 아래쪽 보조선 영역
+  if (staffRange.ledgerLinesBelow > 0) {
+    const belowMinPosition = staffMinPosition - staffRange.ledgerLinesBelow * 2;
+    for (let pos = belowMinPosition; pos < staffMinPosition; pos += 1) {
+      allPositions.push(pos);
+    }
+  }
+
+  // 오선지 내부 (항상 포함)
+  for (let pos = staffMinPosition; pos <= staffMaxPosition; pos += 1) {
     allPositions.push(pos);
+  }
+
+  // 위쪽 보조선 영역
+  if (staffRange.ledgerLinesAbove > 0) {
+    const aboveMaxPosition = staffMaxPosition + staffRange.ledgerLinesAbove * 2;
+    for (let pos = staffMaxPosition + 1; pos <= aboveMaxPosition; pos += 1) {
+      allPositions.push(pos);
+    }
   }
 
   // 랜덤 위치 선택
