@@ -82,6 +82,7 @@ export interface Answer {
   note: Note;
   timestamp: number;
   isCorrect: boolean;
+  timeSpent: number; // 해당 문제에 걸린 시간 (밀리초)
 }
 
 // 게임 결과

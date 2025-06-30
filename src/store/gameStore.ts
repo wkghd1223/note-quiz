@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import {
   GameSettings,
   GameState,
@@ -7,9 +7,9 @@ import {
   Answer,
   GameResult,
   GameStats,
-  Note
-} from '@/types/music';
-import { DEFAULT_GAME_SETTINGS } from '@/lib/music/constants';
+  Note,
+} from "@/types/music";
+import { DEFAULT_GAME_SETTINGS } from "@/lib/music/constants";
 
 interface GameStore {
   // 게임 설정
@@ -36,10 +36,13 @@ interface GameStore {
   startTime: number | null;
   currentTime: number;
   elapsedTime: number;
+  questionStartTime: number | null; // 현재 문제 시작 시간
   startTimer: () => void;
   updateTimer: (time: number) => void;
   stopTimer: () => void;
   resetTimer: () => void;
+  startQuestionTimer: () => void;
+  getQuestionElapsedTime: () => number;
 
   // 게임 결과
   gameResult: GameResult | null;
@@ -69,7 +72,7 @@ const initialStats: GameStats = {
   totalQuestions: 0,
   bestAccuracy: 0,
   bestTime: Infinity,
-  averageAccuracy: 0
+  averageAccuracy: 0,
 };
 
 export const useGameStore = create<GameStore>()(
@@ -79,12 +82,12 @@ export const useGameStore = create<GameStore>()(
       settings: DEFAULT_GAME_SETTINGS,
       updateSettings: (newSettings) =>
         set((state) => ({
-          settings: { ...state.settings, ...newSettings }
+          settings: { ...state.settings, ...newSettings },
         })),
       resetSettings: () => set({ settings: DEFAULT_GAME_SETTINGS }),
 
       // 게임 상태
-      gameState: 'idle',
+      gameState: "idle",
       setGameState: (gameState) => set({ gameState }),
 
       // 현재 문제
@@ -97,7 +100,7 @@ export const useGameStore = create<GameStore>()(
       answers: [],
       addAnswer: (answer) =>
         set((state) => ({
-          answers: [...state.answers, answer]
+          answers: [...state.answers, answer],
         })),
       clearAnswers: () => set({ answers: [] }),
 
@@ -105,25 +108,38 @@ export const useGameStore = create<GameStore>()(
       startTime: null,
       currentTime: 0,
       elapsedTime: 0,
+      questionStartTime: null,
       startTimer: () => {
         const now = Date.now();
         set({
           startTime: now,
-          currentTime: now
+          currentTime: now,
         });
       },
       updateTimer: (time) =>
         set((state) => ({
           currentTime: time,
-          elapsedTime: state.startTime ? time - state.startTime : 0
+          elapsedTime: state.startTime ? time - state.startTime : 0,
         })),
       stopTimer: () => set({ startTime: null }),
       resetTimer: () =>
         set({
           startTime: null,
           currentTime: 0,
-          elapsedTime: 0
+          elapsedTime: 0,
+          questionStartTime: null,
         }),
+
+      startQuestionTimer: () => {
+        const now = Date.now();
+        set({ questionStartTime: now });
+      },
+
+      getQuestionElapsedTime: () => {
+        const { questionStartTime } = get();
+        if (!questionStartTime) return 0;
+        return Date.now() - questionStartTime;
+      },
 
       // 게임 결과
       gameResult: null,
@@ -137,18 +153,19 @@ export const useGameStore = create<GameStore>()(
           newStats.gamesPlayed += 1;
           newStats.totalCorrect += result.correctAnswers;
           newStats.totalQuestions += result.totalQuestions;
-          
+
           if (result.accuracy > newStats.bestAccuracy) {
             newStats.bestAccuracy = result.accuracy;
           }
-          
+
           if (result.averageTime < newStats.bestTime) {
             newStats.bestTime = result.averageTime;
           }
-          
-          newStats.averageAccuracy = newStats.totalQuestions > 0 
-            ? (newStats.totalCorrect / newStats.totalQuestions) * 100 
-            : 0;
+
+          newStats.averageAccuracy =
+            newStats.totalQuestions > 0
+              ? (newStats.totalCorrect / newStats.totalQuestions) * 100
+              : 0;
 
           return { stats: newStats };
         }),
@@ -158,35 +175,37 @@ export const useGameStore = create<GameStore>()(
       startGame: () => {
         const { startTimer } = get();
         set({
-          gameState: 'playing',
+          gameState: "playing",
           answers: [],
           gameResult: null,
           currentAnswer: null,
-          currentQuestion: null
+          currentQuestion: null,
         });
         startTimer();
       },
 
       pauseGame: () => {
         const { stopTimer } = get();
-        set({ gameState: 'paused' });
+        set({ gameState: "paused" });
         stopTimer();
       },
 
       resumeGame: () => {
         const { startTimer } = get();
-        set({ gameState: 'playing' });
+        set({ gameState: "playing" });
         startTimer();
       },
 
       endGame: () => {
         const { stopTimer, answers, elapsedTime } = get();
         stopTimer();
-        
+
         const totalQuestions = answers.length;
-        const correctAnswers = answers.filter(a => a.isCorrect).length;
-        const accuracy = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
-        const averageTime = totalQuestions > 0 ? elapsedTime / totalQuestions : 0;
+        const correctAnswers = answers.filter((a) => a.isCorrect).length;
+        const accuracy =
+          totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
+        const averageTime =
+          totalQuestions > 0 ? elapsedTime / totalQuestions : 0;
 
         const result: GameResult = {
           totalQuestions,
@@ -194,12 +213,12 @@ export const useGameStore = create<GameStore>()(
           totalTime: elapsedTime,
           averageTime,
           accuracy,
-          answers
+          answers,
         };
 
         set({
-          gameState: 'finished',
-          gameResult: result
+          gameState: "finished",
+          gameResult: result,
         });
 
         // 통계 업데이트
@@ -209,11 +228,11 @@ export const useGameStore = create<GameStore>()(
       resetGame: () => {
         const { resetTimer } = get();
         set({
-          gameState: 'idle',
+          gameState: "idle",
           currentQuestion: null,
           currentAnswer: null,
           answers: [],
-          gameResult: null
+          gameResult: null,
         });
         resetTimer();
       },
@@ -221,27 +240,27 @@ export const useGameStore = create<GameStore>()(
       // 유틸리티
       isGameActive: () => {
         const { gameState } = get();
-        return gameState === 'playing';
+        return gameState === "playing";
       },
 
       getCurrentScore: () => {
         const { answers } = get();
-        return answers.filter(a => a.isCorrect).length;
+        return answers.filter((a) => a.isCorrect).length;
       },
 
       getAccuracy: () => {
         const { answers } = get();
         if (answers.length === 0) return 0;
-        const correct = answers.filter(a => a.isCorrect).length;
+        const correct = answers.filter((a) => a.isCorrect).length;
         return (correct / answers.length) * 100;
-      }
+      },
     }),
     {
-      name: 'note-quiz-game-store',
+      name: "note-quiz-game-store",
       partialize: (state) => ({
         settings: state.settings,
-        stats: state.stats
-      })
+        stats: state.stats,
+      }),
     }
   )
 );

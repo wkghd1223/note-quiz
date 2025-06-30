@@ -260,7 +260,9 @@ export async function playPianoNote(
     );
     noteGain.gain.setValueAtTime(
       sustainLevel,
-      now + duration / 1000 - releaseTime
+      now + duration / 1000 - releaseTime < 0
+        ? 0
+        : now + duration / 1000 - releaseTime
     );
     noteGain.gain.exponentialRampToValueAtTime(0.001, now + duration / 1000);
 

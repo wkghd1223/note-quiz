@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useGameStore } from '@/store/gameStore';
+import React from "react";
+import { useGameStore } from "@/store/gameStore";
 
 interface ScoreBoardProps {
   className?: string;
 }
 
-const ScoreBoard: React.FC<ScoreBoardProps> = ({ className = '' }) => {
-  const { 
-    answers, 
-    getCurrentScore, 
-    getAccuracy, 
-    gameResult, 
+const ScoreBoard: React.FC<ScoreBoardProps> = ({ className = "" }) => {
+  const {
+    answers,
+    getCurrentScore,
+    getAccuracy,
+    gameResult,
     stats,
-    gameState 
+    gameState,
   } = useGameStore();
 
   const currentScore = getCurrentScore();
@@ -27,7 +27,7 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({ className = '' }) => {
         <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
           점수판
         </h3>
-        
+
         {/* 현재 게임 점수 */}
         <div className="space-y-3">
           <div className="flex justify-between items-center">
@@ -36,24 +36,24 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({ className = '' }) => {
               {currentScore}
             </span>
           </div>
-          
+
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-gray-600">총 문제</span>
             <span className="text-lg font-bold text-blue-600">
               {totalQuestions}
             </span>
           </div>
-          
+
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-gray-600">정확도</span>
             <span className="text-lg font-bold text-purple-600">
               {currentAccuracy.toFixed(1)}%
             </span>
           </div>
-          
+
           {/* 정확도 진행 바 */}
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
+            <div
               className="bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 h-2 rounded-full transition-all duration-300"
               style={{ width: `${currentAccuracy}%` }}
             />
@@ -61,7 +61,7 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({ className = '' }) => {
         </div>
 
         {/* 게임 완료 시 결과 */}
-        {gameState === 'finished' && gameResult && (
+        {gameState === "finished" && gameResult && (
           <div className="mt-6 pt-4 border-t border-gray-200">
             <h4 className="text-md font-semibold text-gray-800 mb-3">
               게임 결과
@@ -120,10 +120,9 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({ className = '' }) => {
             <div className="flex justify-between">
               <span className="text-gray-600">최고 기록</span>
               <span className="font-medium text-blue-600">
-                {stats.bestTime === Infinity 
-                  ? '-' 
-                  : `${(stats.bestTime / 1000).toFixed(1)}초`
-                }
+                {stats.bestTime === Infinity
+                  ? "-"
+                  : `${(stats.bestTime / 1000).toFixed(1)}초`}
               </span>
             </div>
           </div>
@@ -136,38 +135,46 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({ className = '' }) => {
               최근 답안
             </h4>
             <div className="space-y-1 max-h-32 overflow-y-auto">
-              {answers.slice(-5).reverse().map((answer, index) => (
-                <div 
-                  key={`answer-${answers.length - index}`}
-                  className={`flex items-center justify-between p-2 rounded text-sm ${
-                    answer.isCorrect 
-                      ? 'bg-green-50 text-green-800' 
-                      : 'bg-red-50 text-red-800'
-                  }`}
-                >
-                  <span className="font-medium">
-                    {answer.note.name}
-                    {answer.note.accidental === 'sharp' && '#'}
-                    {answer.note.accidental === 'flat' && '♭'}
-                    {answer.note.octave}
-                  </span>
-                  <span className={`text-xs ${
-                    answer.isCorrect ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {answer.isCorrect ? '✓' : '✗'}
-                  </span>
-                </div>
-              ))}
+              {answers
+                .slice(-5)
+                .reverse()
+                .map((answer, index) => (
+                  <div
+                    key={`answer-${answers.length - index}`}
+                    className={`p-2 rounded text-sm ${
+                      answer.isCorrect
+                        ? "bg-green-50 text-green-800"
+                        : "bg-red-50 text-red-800"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">
+                        {answer.note.name}
+                        {answer.note.accidental === "sharp" && "#"}
+                        {answer.note.accidental === "flat" && "♭"}
+                        {answer.note.octave}
+                      </span>
+                      <span
+                        className={`text-xs ${
+                          answer.isCorrect ? "text-green-600" : "text-red-600"
+                        }`}
+                      >
+                        {answer.isCorrect ? "✓" : "✗"}
+                      </span>
+                    </div>
+                    <div className="text-xs opacity-75 mt-1">
+                      {(answer.timeSpent / 1000).toFixed(1)}초
+                    </div>
+                  </div>
+                ))}
             </div>
           </div>
         )}
 
         {/* 성취 배지 */}
-        {gameState === 'finished' && gameResult && (
+        {gameState === "finished" && gameResult && (
           <div className="mt-6 pt-4 border-t border-gray-200">
-            <h4 className="text-md font-semibold text-gray-800 mb-3">
-              성취
-            </h4>
+            <h4 className="text-md font-semibold text-gray-800 mb-3">성취</h4>
             <div className="flex flex-wrap gap-2">
               {gameResult.accuracy === 100 && (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">

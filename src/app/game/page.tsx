@@ -32,6 +32,8 @@ const GamePage: React.FC = () => {
     setCurrentAnswer,
     addAnswer,
     isGameActive,
+    startQuestionTimer,
+    getQuestionElapsedTime,
   } = useGameStore();
 
   const [showSettings, setShowSettings] = useState(false);
@@ -65,6 +67,9 @@ const GamePage: React.FC = () => {
     setCurrentAnswer(null);
     setFeedback(null);
 
+    // 문제별 타이머 시작
+    startQuestionTimer();
+
     // 오디오 모드일 때 소리 재생
     if (settings.gameMode === "audio" || settings.gameMode === "both") {
       if (settings.enableSound && isAudioInitialized) {
@@ -79,6 +84,7 @@ const GamePage: React.FC = () => {
     setCurrentQuestion,
     setCurrentAnswer,
     isAudioInitialized,
+    startQuestionTimer,
   ]);
 
   // 게임 시작 시 첫 문제 생성
@@ -101,10 +107,12 @@ const GamePage: React.FC = () => {
       if (!currentQuestion || !isGameActive()) return;
 
       const isCorrect = validateAnswer(currentQuestion, answer);
+      const timeSpent = getQuestionElapsedTime();
       const answerData = {
         note: answer,
         timestamp: Date.now(),
         isCorrect,
+        timeSpent,
       };
 
       addAnswer(answerData);
@@ -127,6 +135,7 @@ const GamePage: React.FC = () => {
       addAnswer,
       setCurrentAnswer,
       generateNewQuestion,
+      getQuestionElapsedTime,
       t,
     ]
   );
