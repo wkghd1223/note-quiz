@@ -414,13 +414,10 @@ function areEnharmonicEquivalents(note1: string, note2: string): boolean {
  */
 export function validateAnswer(question: Question, userAnswer: Note): boolean {
   // 문제의 음표 (조표와 임시표가 적용된 최종 음표)
-  const questionNoteStr = getNoteWithAccidental(question.displayNote);
+  const questionNoteStr = getNoteWithAccidental(question.note);
 
   // 사용자 답안 음표
   const userAnswerStr = getNoteWithAccidental(userAnswer);
-
-  console.log("Question note:", questionNoteStr);
-  console.log("User answer:", userAnswerStr);
 
   // 이명동음 확인
   return areEnharmonicEquivalents(questionNoteStr, userAnswerStr);
