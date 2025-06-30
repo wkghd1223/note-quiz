@@ -58,16 +58,16 @@ const Staff: React.FC<StaffProps> = ({
 
   return (
     <div className={`staff-container ${className}`}>
-      <svg width={width} height={height} className="staff-svg">
-        {/* 오선지 배경 */}
-        <rect
-          width={width}
-          height={height}
-          fill="white"
-          stroke="#e5e7eb"
-          strokeWidth="1"
-        />
-
+      <svg
+        width={width}
+        style={{
+          minHeight: `${height}px`,
+          padding: "20px 0",
+          margin: "50px 0 60px 0",
+          overflow: "visible",
+        }}
+        className="staff-svg"
+      >
         {/* 오선 (5줄) */}
         {[0, 1, 2, 3, 4].map((lineIndex) => (
           <line
@@ -151,7 +151,7 @@ const Staff: React.FC<StaffProps> = ({
         {/* 음표 */}
         {note && notePosition !== null && (
           <g transform={`translate(${noteX}, ${noteY})`}>
-            <QuarterNote />
+            <QuarterNote position={notePosition} />
             {/* 조표가 적용된 음표의 임시표 */}
             {note.accidental === "sharp" && (
               <g transform="translate(-25, 0)">
@@ -203,12 +203,35 @@ const TenorClef: React.FC<ClefProps> = ({
 }) => <image href="/alto-clef.svg" x={x} y={y} width={width} height={height} />;
 
 // 4분음표 SVG
-const QuarterNote: React.FC = () => (
-  <g>
-    <ellipse cx="0" cy="0" rx="11" ry="8" fill="#000" transform="rotate(-20)" />
-    <rect x="9" y="-45" width="2" height="45" fill="#000" />
-  </g>
-);
+interface QuarterNoteProps {
+  position: number;
+}
+
+const QuarterNote: React.FC<QuarterNoteProps> = ({ position }) => {
+  // 3선(가운데 선)은 position 4에 해당
+  // 3선보다 위에 있으면 막대기를 아래로, 아래에 있으면 막대기를 위로
+  const stemDown = position > 4;
+
+  return (
+    <g>
+      <ellipse
+        cx="0"
+        cy="0"
+        rx="11"
+        ry="8"
+        fill="#000"
+        transform="rotate(-20)"
+      />
+      {stemDown ? (
+        // 막대기 아래로 (왼쪽에 위치)
+        <rect x="-11" y="0" width="2" height="45" fill="#000" />
+      ) : (
+        // 막대기 위로 (오른쪽에 위치)
+        <rect x="9" y="-45" width="2" height="45" fill="#000" />
+      )}
+    </g>
+  );
+};
 
 // 샾 기호 SVG
 const SharpSymbol: React.FC = () => (
