@@ -292,7 +292,7 @@ const GamePage: React.FC = () => {
                       onNoteClick={handleAnswerSubmit}
                       selectedNote={currentAnswer}
                       disabled={!isGameActive()}
-                      className="flex justify-center"
+                      className="flex flex-col justify-center items-center"
                     />
                   ) : (
                     <SolfegeKeyboard

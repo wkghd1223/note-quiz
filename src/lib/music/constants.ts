@@ -321,4 +321,6 @@ export const DEFAULT_GAME_SETTINGS = {
   language: "en" as const,
   enableSound: true,
   timeLimit: undefined,
+  enableAccidentals: false, // 기본적으로 임시표 비활성화
+  accidentalProbability: 0.3, // 30% 확률로 임시표 생성
 };

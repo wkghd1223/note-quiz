@@ -114,7 +114,7 @@ const Staff: React.FC<StaffProps> = ({
             {keySignature.sharps.map((sharpNote, index) => (
               <g
                 key={`sharp-${index}`}
-                transform={`translate(${keySignatureX + index * 15}, ${getAccidentalY(sharpNote, clef, staffStartY, staffLineSpacing, "sharp")})`}
+                transform={`translate(${keySignatureX + index * 12 - 40}, ${getAccidentalY(sharpNote, clef, staffStartY, staffLineSpacing, "sharp")})`}
               >
                 <SharpSymbol />
               </g>
@@ -127,7 +127,7 @@ const Staff: React.FC<StaffProps> = ({
             {keySignature.flats.map((flatNote, index) => (
               <g
                 key={`flat-${index}`}
-                transform={`translate(${keySignatureX + index * 15}, ${getAccidentalY(flatNote, clef, staffStartY, staffLineSpacing, "flat")})`}
+                transform={`translate(${keySignatureX + index * 10 - 40}, ${getAccidentalY(flatNote, clef, staffStartY, staffLineSpacing, "flat")})`}
               >
                 <FlatSymbol />
               </g>
@@ -154,15 +154,22 @@ const Staff: React.FC<StaffProps> = ({
             <QuarterNote position={notePosition} />
             {/* 조표가 적용된 음표의 임시표 */}
             {note.accidental === "sharp" && (
-              <g transform="translate(-25, 0)">
+              <g transform="translate(-25, -20)">
                 <SharpSymbol />
               </g>
             )}
             {note.accidental === "flat" && (
-              <g transform="translate(-25, 0)">
+              <g transform="translate(-25, -20)">
                 <FlatSymbol />
               </g>
             )}
+            {note.accidental === "natural" &&
+              (keySignature.sharps.includes(note.name) ||
+                keySignature.flats.includes(note.name)) && (
+                <g transform="translate(-25, 0)">
+                  <NaturalSymbol />
+                </g>
+              )}
           </g>
         )}
       </svg>
@@ -172,7 +179,7 @@ const Staff: React.FC<StaffProps> = ({
 
 // 높은음자리표 SVG
 const TrebleClef: React.FC<ClefProps> = ({
-  x = -20,
+  x = 0,
   y = 0,
   width,
   height = 80,
@@ -180,7 +187,7 @@ const TrebleClef: React.FC<ClefProps> = ({
 
 // 낮은음자리표 SVG
 const BassClef: React.FC<ClefProps> = ({
-  x = -20,
+  x = -10,
   y = 0,
   width,
   height = 100,
@@ -188,7 +195,7 @@ const BassClef: React.FC<ClefProps> = ({
 
 // 알토음자리표 SVG
 const AltoClef: React.FC<ClefProps> = ({
-  x = -20,
+  x = 0,
   y = 0,
   width,
   height = 100,
@@ -196,7 +203,7 @@ const AltoClef: React.FC<ClefProps> = ({
 
 // 테너음자리표 SVG
 const TenorClef: React.FC<ClefProps> = ({
-  x = -20,
+  x = 0,
   y = -25,
   width,
   height = 80,
@@ -235,20 +242,17 @@ const QuarterNote: React.FC<QuarterNoteProps> = ({ position }) => {
 
 // 샾 기호 SVG
 const SharpSymbol: React.FC = () => (
-  <g>
-    <rect x="-1" y="-15" width="1" height="30" fill="#000" />
-    <rect x="3" y="-15" width="1" height="30" fill="#000" />
-    <rect x="-3" y="-8" width="8" height="1" fill="#000" />
-    <rect x="-3" y="2" width="8" height="1" fill="#000" />
-  </g>
+  <image href="/sharp-sign.svg" height={35} y={2} />
 );
 
 // 플랫 기호 SVG
 const FlatSymbol: React.FC = () => (
-  <g>
-    <rect x="0" y="-20" width="1" height="35" fill="#000" />
-    <path d="M1,-5 Q8,-8 12,-2 Q16,4 12,10 Q8,16 1,13 Z" fill="#000" />
-  </g>
+  <image href="/flat-sign.svg" height={35} y={-4} />
+);
+
+// natural 기호 SVG
+const NaturalSymbol: React.FC = () => (
+  <image href="/natural-sign.svg" height={35} />
 );
 
 // 조표 위치 계산 함수
@@ -262,40 +266,53 @@ function getAccidentalY(
   // 각 음자리표별 조표 위치 매핑
   const positions: Record<ClefType, Record<string, number>> = {
     treble: {
-      F: staffStartY + staffLineSpacing * 0.5, // F5
-      C: staffStartY + staffLineSpacing * 1.5, // C5
-      G: staffStartY + staffLineSpacing * 0, // G5
-      D: staffStartY + staffLineSpacing * 2, // D5
-      A: staffStartY + staffLineSpacing * 0.5, // A4
-      E: staffStartY + staffLineSpacing * 2.5, // E5
+      F:
+        staffStartY +
+        staffLineSpacing * (accidentalType === "sharp" ? -1 : 2.5), // F5
+      C: staffStartY + staffLineSpacing * 0.5, // C5
+      G:
+        staffStartY +
+        staffLineSpacing * (accidentalType === "sharp" ? -1.5 : 2), // G5
+      D: staffStartY + staffLineSpacing * 0, // D5
+      A: staffStartY + staffLineSpacing * 1.5, // A4
+      E: staffStartY + staffLineSpacing * -0.5, // E5
       B: staffStartY + staffLineSpacing * 1, // B4
     },
     bass: {
-      B: staffStartY + staffLineSpacing * 1, // B3
-      E: staffStartY + staffLineSpacing * 2.5, // E3
-      A: staffStartY + staffLineSpacing * 0.5, // A3
-      D: staffStartY + staffLineSpacing * 2, // D3
-      G: staffStartY + staffLineSpacing * 0, // G3
-      C: staffStartY + staffLineSpacing * 1.5, // C3
-      F: staffStartY + staffLineSpacing * 0.5, // F2
+      F:
+        staffStartY + staffLineSpacing * (accidentalType === "sharp" ? 0 : 3.5), // F5
+      C: staffStartY + staffLineSpacing * 1.5, // C5
+      G:
+        staffStartY +
+        staffLineSpacing * (accidentalType === "sharp" ? -0.5 : 3), // G5
+      D: staffStartY + staffLineSpacing * 1, // D5
+      A: staffStartY + staffLineSpacing * 2.5, // A4
+      E: staffStartY + staffLineSpacing * 0.5, // E5
+      B: staffStartY + staffLineSpacing * 2, // B4
     },
     alto: {
-      F: staffStartY + staffLineSpacing * 0.5,
-      C: staffStartY + staffLineSpacing * 2,
-      G: staffStartY + staffLineSpacing * 0.5,
-      D: staffStartY + staffLineSpacing * 2.5,
-      A: staffStartY + staffLineSpacing * 1,
-      E: staffStartY + staffLineSpacing * 3,
-      B: staffStartY + staffLineSpacing * 1.5,
+      F:
+        staffStartY +
+        staffLineSpacing * (accidentalType === "sharp" ? -0.5 : 3), // F5
+      C: staffStartY + staffLineSpacing * 1, // C5
+      G:
+        staffStartY +
+        staffLineSpacing * (accidentalType === "sharp" ? -1 : 2.5), // G5
+      D: staffStartY + staffLineSpacing * 0.5, // D5
+      A: staffStartY + staffLineSpacing * 2, // A4
+      E: staffStartY + staffLineSpacing * 0, // E5
+      B: staffStartY + staffLineSpacing * 1.5, // B4
     },
     tenor: {
-      F: staffStartY + staffLineSpacing * 0.5,
-      C: staffStartY + staffLineSpacing * 2,
-      G: staffStartY + staffLineSpacing * 0.5,
-      D: staffStartY + staffLineSpacing * 2.5,
-      A: staffStartY + staffLineSpacing * 1,
-      E: staffStartY + staffLineSpacing * 3,
-      B: staffStartY + staffLineSpacing * 1.5,
+      F: staffStartY + staffLineSpacing * (accidentalType === "sharp" ? 2 : 2), // F5
+      C: staffStartY + staffLineSpacing * 0, // C5
+      G:
+        staffStartY +
+        staffLineSpacing * (accidentalType === "sharp" ? 1.5 : 1.5), // G5
+      D: staffStartY + staffLineSpacing * -0.5, // D5
+      A: staffStartY + staffLineSpacing * 1, // A4
+      E: staffStartY + staffLineSpacing * -1, // E5
+      B: staffStartY + staffLineSpacing * 0.5, // B4
     },
   };
 

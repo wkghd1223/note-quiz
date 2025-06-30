@@ -69,6 +69,14 @@ const GameSettings: React.FC<GameSettingsProps> = ({
     updateSettings({ timeLimit });
   };
 
+  const handleAccidentalsToggle = (enableAccidentals: boolean) => {
+    updateSettings({ enableAccidentals });
+  };
+
+  const handleAccidentalProbabilityChange = (accidentalProbability: number) => {
+    updateSettings({ accidentalProbability });
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div
@@ -344,6 +352,56 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                 />
               )}
             </div>
+          </div>
+
+          {/* 임시표 설정 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              임시표 (♯, ♭, ♮)
+            </label>
+            <div className="space-y-3">
+              <label className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={settings.enableAccidentals}
+                  onChange={(e) => handleAccidentalsToggle(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  임시표 사용
+                </span>
+              </label>
+
+              {settings.enableAccidentals && (
+                <div>
+                  <label className="block text-xs text-gray-500 mb-2">
+                    임시표 출현 확률:{" "}
+                    {Math.round(settings.accidentalProbability * 100)}%
+                  </label>
+                  <input
+                    type="range"
+                    min="0.1"
+                    max="1"
+                    step="0.1"
+                    value={settings.accidentalProbability}
+                    onChange={(e) =>
+                      handleAccidentalProbabilityChange(
+                        parseFloat(e.target.value)
+                      )
+                    }
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>10%</span>
+                    <span>100%</span>
+                  </div>
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              임시표가 활성화되면 조표와 별개로 개별 음표에 ♯, ♭, ♮이 추가될 수
+              있습니다.
+            </p>
           </div>
         </div>
 

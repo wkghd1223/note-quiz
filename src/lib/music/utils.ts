@@ -267,6 +267,70 @@ function convertStaffPositionToNote(position: number, clef: ClefType): Note {
 }
 
 /**
+ * 임시표 추가 함수
+ */
+function addAccidental(
+  note: Note,
+  settings: GameSettings,
+  keySignature: KeySignature
+): Note {
+  if (!settings.enableAccidentals) {
+    return note;
+  }
+
+  // 임시표가 나올 확률 체크
+  if (Math.random() > settings.accidentalProbability) {
+    return note;
+  }
+
+  // 가능한 임시표들 (natural, sharp, flat)
+  const possibleAccidentals: Accidental[] = ["natural", "sharp", "flat"];
+
+  // E와 B는 샵이 없고, F와 C는 플랫이 없음 (반음 관계)
+  let availableAccidentals = [...possibleAccidentals];
+
+  if (note.name === "E" || note.name === "B") {
+    availableAccidentals = availableAccidentals.filter(
+      (acc) => acc !== "sharp"
+    );
+  }
+
+  if (note.name === "F" || note.name === "C") {
+    availableAccidentals = availableAccidentals.filter((acc) => acc !== "flat");
+  }
+
+  // 조표와 겹치는 경우 처리
+  const isSharpInKeySignature = keySignature.sharps.includes(note.name);
+  const isFlatInKeySignature = keySignature.flats.includes(note.name);
+
+  if (isSharpInKeySignature || isFlatInKeySignature) {
+    // 조표가 적용된 음표는 natural만 가능 (조표를 취소하는 역할)
+    availableAccidentals = ["natural"];
+  } else {
+    // 조표가 적용되지 않은 음표는 natural 제외 (natural은 표시하지 않음)
+    availableAccidentals = availableAccidentals.filter(
+      (acc) => acc !== "natural"
+    );
+  }
+
+  // 사용 가능한 임시표가 없으면 원래 음표 반환
+  if (availableAccidentals.length === 0) {
+    return note;
+  }
+
+  // 랜덤 임시표 선택
+  const randomAccidental =
+    availableAccidentals[
+      Math.floor(Math.random() * availableAccidentals.length)
+    ];
+
+  return {
+    ...note,
+    accidental: randomAccidental,
+  };
+}
+
+/**
  * 게임 설정에 따른 문제 생성
  */
 export function generateQuestion(settings: GameSettings): Question {
@@ -285,10 +349,16 @@ export function generateQuestion(settings: GameSettings): Question {
       : KEY_SIGNATURES[settings.keySignature] || KEY_SIGNATURES["C"];
 
   // 보조선 범위에 따른 음표 생성
-  const baseNote = generateNoteInStaffRange(clef, settings.staffRange);
+  let baseNote = generateNoteInStaffRange(clef, settings.staffRange);
 
-  // 조표 적용
-  const displayNote = applyKeySignature(baseNote, keySignature);
+  // 임시표 추가 (조표와 별개)
+  baseNote = addAccidental(baseNote, settings, keySignature);
+
+  // 조표 적용 (임시표가 있으면 조표는 무시됨)
+  const displayNote =
+    baseNote.accidental !== "natural"
+      ? baseNote
+      : applyKeySignature(baseNote, keySignature);
 
   return {
     id: `question_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,

@@ -113,6 +113,19 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
 
   return (
     <div className={`piano-keyboard ${className}`}>
+      {/* 키보드 정보 */}
+      <div className="mt-4 text-center text-sm text-gray-600">
+        <p>클릭하여 음표를 선택하세요</p>
+        {selectedNote && (
+          <p className="mt-1 font-medium text-blue-600">
+            선택된 음표: {selectedNote.name}
+            {selectedNote.accidental === "sharp" && "#"}
+            {selectedNote.accidental === "flat" && "♭"}
+            {/* {selectedNote.octave} */}
+          </p>
+        )}
+      </div>
+
       <div
         className="relative select-none"
         style={{ width: keyboardWidth, height: 200 }}
@@ -146,7 +159,7 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
                 {showLabels && (
                   <span className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-xs text-gray-600 font-medium">
                     {key.note}
-                    <sub className="text-xs">{key.octave}</sub>
+                    {/* <sub className="text-xs">{key.octave}</sub> */}
                   </span>
                 )}
               </button>
@@ -193,26 +206,13 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
                 {showLabels && (
                   <span className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-xs text-white font-medium">
                     {key.note}
-                    <sub className="text-xs">{key.octave}</sub>
+                    {/* <sub className="text-xs">{key.octave}</sub> */}
                   </span>
                 )}
               </button>
             );
           })}
         </div>
-      </div>
-
-      {/* 키보드 정보 */}
-      <div className="mt-4 text-center text-sm text-gray-600">
-        <p>클릭하여 음표를 선택하세요</p>
-        {selectedNote && (
-          <p className="mt-1 font-medium text-blue-600">
-            선택된 음표: {selectedNote.name}
-            {selectedNote.accidental === "sharp" && "#"}
-            {selectedNote.accidental === "flat" && "♭"}
-            {selectedNote.octave}
-          </p>
-        )}
       </div>
     </div>
   );

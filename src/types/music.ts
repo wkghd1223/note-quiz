@@ -61,6 +61,8 @@ export interface GameSettings {
   language: Language;
   enableSound: boolean;
   timeLimit?: number; // seconds, undefined for no limit
+  enableAccidentals: boolean; // 임시표 사용 여부
+  accidentalProbability: number; // 임시표가 나올 확률 (0-1)
 }
 
 // 게임 상태
