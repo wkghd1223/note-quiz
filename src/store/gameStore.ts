@@ -70,7 +70,6 @@ const initialStats: GameStats = {
   gamesPlayed: 0,
   totalCorrect: 0,
   totalQuestions: 0,
-  bestAccuracy: 0,
   bestTime: Infinity,
   averageAccuracy: 0,
 };
@@ -154,11 +153,10 @@ export const useGameStore = create<GameStore>()(
           newStats.totalCorrect += result.correctAnswers;
           newStats.totalQuestions += result.totalQuestions;
 
-          if (result.accuracy > newStats.bestAccuracy) {
-            newStats.bestAccuracy = result.accuracy;
-          }
-
-          if (result.averageTime < newStats.bestTime) {
+          if (
+            result.averageTime < newStats.bestTime ||
+            newStats.bestTime === Infinity
+          ) {
             newStats.bestTime = result.averageTime;
           }
 

@@ -111,12 +111,7 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({ className = "" }) => {
                 {stats.averageAccuracy.toFixed(1)}%
               </span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">최고 정확도</span>
-              <span className="font-medium text-green-600">
-                {stats.bestAccuracy.toFixed(1)}%
-              </span>
-            </div>
+
             <div className="flex justify-between">
               <span className="text-gray-600">최고 기록</span>
               <span className="font-medium text-blue-600">

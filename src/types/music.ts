@@ -100,7 +100,6 @@ export interface GameStats {
   gamesPlayed: number;
   totalCorrect: number;
   totalQuestions: number;
-  bestAccuracy: number;
   bestTime: number;
   averageAccuracy: number;
 }
