@@ -1,12 +1,3 @@
-import {
-  NoteName,
-  SolfegeNote,
-  ClefType,
-  Clef,
-  KeySignature,
-  Octave,
-} from "@/types/music";
-
 // 음표 이름 배열
 export const NOTE_NAMES: NoteName[] = ["C", "D", "E", "F", "G", "A", "B"];
 

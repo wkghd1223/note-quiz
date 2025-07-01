@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import { Note, NoteName, Octave } from "@/types/music";
 import { playPianoNote } from "@/lib/music/audio";
 import { PIANO_KEYS } from "@/lib/music/constants";
 

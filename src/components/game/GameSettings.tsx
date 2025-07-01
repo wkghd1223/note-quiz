@@ -1,14 +1,6 @@
 "use client";
 
 import React from "react";
-import {
-  GameSettings as GameSettingsType,
-  ClefType,
-  Difficulty,
-  GameMode,
-  AnswerMode,
-  Language,
-} from "@/types/music";
 import { CLEFS, KEY_SIGNATURES } from "@/lib/music/constants";
 import { useGameStore } from "@/store/gameStore";
 
@@ -145,7 +137,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
               </button>
               {Object.entries(KEY_SIGNATURES).map(([key, keySignature]) => (
                 <button
-                  key={key}
+                  key={`${key}_${keySignature}`}
                   onClick={() => handleKeySignatureChange(key)}
                   className={`p-2 rounded-lg border text-sm font-medium transition-colors ${
                     settings.keySignature === key
@@ -170,7 +162,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                   위쪽 보조선
                 </label>
                 <select
-                  value={settings.staffRange.ledgerLinesAbove}
+                  value={settings.staffRange?.ledgerLinesAbove || 0}
                   onChange={(e) =>
                     handleStaffRangeChange(
                       "ledgerLinesAbove",
@@ -191,7 +183,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                   아래쪽 보조선
                 </label>
                 <select
-                  value={settings.staffRange.ledgerLinesBelow}
+                  value={settings.staffRange?.ledgerLinesBelow || 0}
                   onChange={(e) =>
                     handleStaffRangeChange(
                       "ledgerLinesBelow",

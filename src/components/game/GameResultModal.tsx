@@ -1,8 +1,7 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { GameResult } from '@/types/music';
-import { useTranslation } from '@/hooks/useTranslation';
+import React from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface GameResultModalProps {
   isOpen: boolean;
@@ -17,30 +16,32 @@ const GameResultModal: React.FC<GameResultModalProps> = ({
   result,
   onClose,
   onPlayAgain,
-  className = ''
+  className = "",
 }) => {
   const { t } = useTranslation();
 
   if (!isOpen || !result) return null;
 
   const getGradeColor = (accuracy: number) => {
-    if (accuracy >= 90) return 'text-green-600';
-    if (accuracy >= 70) return 'text-blue-600';
-    if (accuracy >= 50) return 'text-yellow-600';
-    return 'text-red-600';
+    if (accuracy >= 90) return "text-green-600";
+    if (accuracy >= 70) return "text-blue-600";
+    if (accuracy >= 50) return "text-yellow-600";
+    return "text-red-600";
   };
 
   const getGradeText = (accuracy: number) => {
-    if (accuracy === 100) return '완벽!';
-    if (accuracy >= 90) return '우수';
-    if (accuracy >= 70) return '양호';
-    if (accuracy >= 50) return '보통';
-    return '연습 필요';
+    if (accuracy === 100) return "완벽!";
+    if (accuracy >= 90) return "우수";
+    if (accuracy >= 70) return "양호";
+    if (accuracy >= 50) return "보통";
+    return "연습 필요";
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className={`bg-white rounded-lg shadow-xl max-w-md w-full mx-4 ${className}`}>
+      <div
+        className={`bg-white rounded-lg shadow-xl max-w-md w-full mx-4 ${className}`}
+      >
         {/* 헤더 */}
         <div className="text-center p-6 border-b">
           <div className="mb-4">
@@ -57,7 +58,9 @@ const GameResultModal: React.FC<GameResultModalProps> = ({
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
             {t.messages.gameComplete}
           </h2>
-          <p className={`text-xl font-semibold ${getGradeColor(result.accuracy)}`}>
+          <p
+            className={`text-xl font-semibold ${getGradeColor(result.accuracy)}`}
+          >
             {getGradeText(result.accuracy)}
           </p>
         </div>
@@ -75,18 +78,24 @@ const GameResultModal: React.FC<GameResultModalProps> = ({
 
             {/* 정확도 */}
             <div className="text-center">
-              <div className={`text-3xl font-bold ${getGradeColor(result.accuracy)} mb-2`}>
+              <div
+                className={`text-3xl font-bold ${getGradeColor(result.accuracy)} mb-2`}
+              >
                 {result.accuracy.toFixed(1)}%
               </div>
               <div className="text-sm text-gray-600">정확도</div>
-              
+
               {/* 정확도 진행 바 */}
               <div className="w-full bg-gray-200 rounded-full h-3 mt-2">
-                <div 
+                <div
                   className={`h-3 rounded-full transition-all duration-500 ${
-                    result.accuracy >= 90 ? 'bg-green-500' :
-                    result.accuracy >= 70 ? 'bg-blue-500' :
-                    result.accuracy >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                    result.accuracy >= 90
+                      ? "bg-green-500"
+                      : result.accuracy >= 70
+                        ? "bg-blue-500"
+                        : result.accuracy >= 50
+                          ? "bg-yellow-500"
+                          : "bg-red-500"
                   }`}
                   style={{ width: `${result.accuracy}%` }}
                 />

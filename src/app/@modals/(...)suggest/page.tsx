@@ -1,5 +1,5 @@
-import GunHee from '@/components/pages/suggest';
-import Modal from '@/components/ui/modal';
+import GunHee from "@/components/suggest/Suggest";
+import Modal from "@/components/ui/modal";
 
 export default function SuggestModal() {
   return (

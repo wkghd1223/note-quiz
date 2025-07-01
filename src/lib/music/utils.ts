@@ -1,15 +1,4 @@
 import {
-  Note,
-  NoteName,
-  SolfegeNote,
-  ClefType,
-  Octave,
-  KeySignature,
-  Question,
-  GameSettings,
-  Accidental,
-} from "@/types/music";
-import {
   NOTE_NAMES,
   NOTE_NAME_MAPPING,
   SOLFEGE_TO_NOTE_MAPPING,
@@ -176,8 +165,9 @@ function generateNoteInStaffRange(
   const allPositions = [];
 
   // 아래쪽 보조선 영역
-  if (staffRange.ledgerLinesBelow > 0) {
-    const belowMinPosition = staffMinPosition - staffRange.ledgerLinesBelow * 2;
+  if ((staffRange?.ledgerLinesBelow || 0) > 0) {
+    const belowMinPosition =
+      staffMinPosition - (staffRange?.ledgerLinesBelow || 0) * 2;
     for (let pos = belowMinPosition; pos < staffMinPosition; pos += 1) {
       allPositions.push(pos);
     }
@@ -189,8 +179,9 @@ function generateNoteInStaffRange(
   }
 
   // 위쪽 보조선 영역
-  if (staffRange.ledgerLinesAbove > 0) {
-    const aboveMaxPosition = staffMaxPosition + staffRange.ledgerLinesAbove * 2;
+  if ((staffRange?.ledgerLinesAbove || 0) > 0) {
+    const aboveMaxPosition =
+      staffMaxPosition + (staffRange?.ledgerLinesAbove || 0) * 2;
     for (let pos = staffMaxPosition + 1; pos <= aboveMaxPosition; pos += 1) {
       allPositions.push(pos);
     }

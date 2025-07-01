@@ -1,4 +1,3 @@
-import { Note } from "@/types/music";
 import { getNoteFrequency } from "./utils";
 
 /**

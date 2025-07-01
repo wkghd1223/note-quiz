@@ -1,14 +1,5 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import {
-  GameSettings,
-  GameState,
-  Question,
-  Answer,
-  GameResult,
-  GameStats,
-  Note,
-} from "@/types/music";
 import { DEFAULT_GAME_SETTINGS } from "@/lib/music/constants";
 
 interface GameStore {
@@ -64,6 +55,9 @@ interface GameStore {
   isGameActive: () => boolean;
   getCurrentScore: () => number;
   getAccuracy: () => number;
+
+  feedback: Feedback | null;
+  setFeedback: (feedback: Feedback | null) => void;
 }
 
 const initialStats: GameStats = {
@@ -78,15 +72,15 @@ export const useGameStore = create<GameStore>()(
   persist(
     (set, get) => ({
       // 게임 설정
-      settings: DEFAULT_GAME_SETTINGS,
+      settings: { ...DEFAULT_GAME_SETTINGS },
       updateSettings: (newSettings) =>
         set((state) => ({
           settings: { ...state.settings, ...newSettings },
         })),
-      resetSettings: () => set({ settings: DEFAULT_GAME_SETTINGS }),
+      resetSettings: () => set({ settings: { ...DEFAULT_GAME_SETTINGS } }),
 
       // 게임 상태
-      gameState: "idle",
+      gameState: "idle" as const,
       setGameState: (gameState) => set({ gameState }),
 
       // 현재 문제
@@ -252,6 +246,9 @@ export const useGameStore = create<GameStore>()(
         const correct = answers.filter((a) => a.isCorrect).length;
         return (correct / answers.length) * 100;
       },
+
+      feedback: null,
+      setFeedback: (feedback) => set({ feedback }),
     }),
     {
       name: "note-quiz-game-store",

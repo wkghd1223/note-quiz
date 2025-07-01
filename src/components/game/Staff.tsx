@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { Note, ClefType, KeySignature } from "@/types/music";
 import {
   getNotePositionOnStaff,
   needsLedgerLines,

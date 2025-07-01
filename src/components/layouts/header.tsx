@@ -1,46 +1,16 @@
-'use client';
-import useAuthToken from '@/hooks/useAuthToken';
-import { useUserStore } from '@/store/userStore';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { signOut } from '@/services/authService';
-import { HiOutlineBell } from 'react-icons/hi';
-import { FaUserCircle } from 'react-icons/fa';
-import { FRONT_URL_PATH } from '@/lib/constants';
-import { getFileUrl } from '@/lib/file';
-import Image from 'next/image';
-import { GiGreekTemple } from 'react-icons/gi';
-
-const navs = [
-  { href: FRONT_URL_PATH.DASHBOARD, text: '대시보드' },
-  { href: FRONT_URL_PATH.NOTICE, text: '공지사항' },
-];
+"use client";
+import Link from "next/link";
+import Image from "next/image";
+import { useTranslation } from "@/hooks/useTranslation";
+import { useState } from "react";
+import GameSettings from "../game/GameSettings";
 
 const Header = () => {
-  const user = useUserStore((state) => state.user);
-  const clearUser = useUserStore((state) => state.clearUser);
-
-  const router = useRouter();
-
-  const onClickSignIn = (e: any) => {
-    e.preventDefault();
-    e.stopPropagation();
-    router.push(FRONT_URL_PATH.SIGNIN);
-  };
-
-  const onClickSignOut = async (e: any) => {
-    e.preventDefault();
-    e.stopPropagation();
-    await signOut();
-    localStorage.removeItem('token');
-    clearUser();
-  };
-
-  useAuthToken();
-
+  const { t } = useTranslation();
+  const [showSettings, setShowSettings] = useState(false);
   return (
-    <header className="flex justify-between items-center mr-4 ml-4 mb-4">
-      <nav className="flex items-center">
+    <>
+      <header className="flex justify-between items-center mr-4 ml-4 mb-4">
         <Link
           className="flex items-center space-x-2 m-4 cursor-pointer"
           href="/"
@@ -52,37 +22,26 @@ const Header = () => {
             width={12}
             height={12}
           />
+          <h1 className="text-3xl font-bold text-gray-900">{t.gameTitle}</h1>
         </Link>
-        <ul className="flex space-x-6">
-          {navs.map((nav, navKey) => (
-            <li
-              className="text-gray-700 font-medium"
-              key={`HEADER_NAV_${navKey}`}
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setShowSettings(true)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <Link href={nav.href}>{nav.text}</Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      <div className="flex items-center space-x-4">
-        <Link href="/suggest">
-          <GiGreekTemple />
-        </Link>
-        <HiOutlineBell className="text-xl text-gray-600" />
-        {user ? (
-          <div className="flex items-center">
-            <span className="mr-2 mt-1">{user.name}</span>
-            <button onClick={onClickSignOut}>
-              <FaUserCircle className="text-2xl text-gray-600" />
+              {t.settings}
             </button>
           </div>
-        ) : (
-          <div className="signin">
-            <button onClick={onClickSignIn}>로그인</button>
-          </div>
-        )}
-      </div>
-    </header>
+        </div>
+      </header>
+      {/* 설정 모달 */}
+      <GameSettings
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
+    </>
   );
 };
 

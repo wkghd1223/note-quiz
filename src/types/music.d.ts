@@ -1,34 +1,34 @@
 // 음표 이름 (영어)
-export type NoteName = "C" | "D" | "E" | "F" | "G" | "A" | "B";
+type NoteName = "C" | "D" | "E" | "F" | "G" | "A" | "B";
 
 // 음표 이름 (한국어 - 도레미)
-export type SolfegeNote = "도" | "레" | "미" | "파" | "솔" | "라" | "시";
+type SolfegeNote = "도" | "레" | "미" | "파" | "솔" | "라" | "시";
 
 // 조표 (Accidental)
-export type Accidental = "natural" | "sharp" | "flat";
+type Accidental = "natural" | "sharp" | "flat";
 
 // 음자리표 (Clef)
-export type ClefType = "treble" | "bass" | "alto" | "tenor";
+type ClefType = "treble" | "bass" | "alto" | "tenor";
 
 // 옥타브 (일반적으로 0-8)
-export type Octave = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+type Octave = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 // 완전한 음표 정보
-export interface Note {
+interface Note {
   name: NoteName;
   accidental: Accidental;
   octave: Octave;
 }
 
 // 음자리표 정보
-export interface Clef {
+interface Clef {
   type: ClefType;
   name: string;
   nameKo: string;
 }
 
 // 조표 정보 (Key Signature)
-export interface KeySignature {
+interface KeySignature {
   key: string;
   sharps: NoteName[];
   flats: NoteName[];
@@ -36,19 +36,19 @@ export interface KeySignature {
 }
 
 // 게임 난이도
-export type Difficulty = "easy" | "medium" | "hard" | "expert";
+type Difficulty = "easy" | "medium" | "hard" | "expert";
 
 // 게임 모드
-export type GameMode = "visual" | "audio" | "both";
+type GameMode = "visual" | "audio" | "both";
 
 // 답안 입력 방식
-export type AnswerMode = "piano" | "solfege";
+type AnswerMode = "piano" | "solfege";
 
 // 언어 설정
-export type Language = "en" | "ko";
+type Language = "en" | "ko";
 
 // 게임 설정
-export interface GameSettings {
+interface GameSettings {
   clef: ClefType | "random";
   keySignature: string | "random";
   staffRange: {
@@ -66,10 +66,10 @@ export interface GameSettings {
 }
 
 // 게임 상태
-export type GameState = "idle" | "playing" | "paused" | "finished";
+type GameState = "idle" | "playing" | "paused" | "finished";
 
 // 문제 정보
-export interface Question {
+interface Question {
   id: string;
   note: Note;
   clef: ClefType;
@@ -78,7 +78,7 @@ export interface Question {
 }
 
 // 답안 정보
-export interface Answer {
+interface Answer {
   note: Note;
   timestamp: number;
   isCorrect: boolean;
@@ -86,7 +86,7 @@ export interface Answer {
 }
 
 // 게임 결과
-export interface GameResult {
+interface GameResult {
   totalQuestions: number;
   correctAnswers: number;
   totalTime: number;
@@ -96,10 +96,15 @@ export interface GameResult {
 }
 
 // 게임 통계
-export interface GameStats {
+interface GameStats {
   gamesPlayed: number;
   totalCorrect: number;
   totalQuestions: number;
   bestTime: number;
   averageAccuracy: number;
+}
+
+interface Feedback {
+  message: string;
+  type: "success" | "error";
 }
