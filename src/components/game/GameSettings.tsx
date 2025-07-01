@@ -3,6 +3,7 @@
 import React from "react";
 import { CLEFS, KEY_SIGNATURES } from "@/lib/music/constants";
 import { useGameStore } from "@/store/gameStore";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface GameSettingsProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
   onClose,
   className = "",
 }) => {
+  const { t } = useTranslation();
   const { settings, updateSettings, resetSettings } = useGameStore();
 
   if (!isOpen) return null;
@@ -77,7 +79,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
         {/* 헤더 */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-            게임 설정
+            {t.settings}
           </h2>
           <button
             onClick={onClose}
@@ -92,7 +94,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
           {/* 음자리표 설정 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
-              음자리표
+              {t.settingsLabels.clef}
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               <button
@@ -103,7 +105,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                     : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                 }`}
               >
-                랜덤
+                {t.settingsLabels.random}
               </button>
               {Object.entries(CLEFS).map(([key, clef]) => (
                 <button
@@ -124,7 +126,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
           {/* 조표 설정 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              조표
+              {t.settingsLabels.keySignature}
             </label>
             <div className="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto">
               <button
@@ -135,7 +137,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                     : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                 }`}
               >
-                랜덤
+                {t.settingsLabels.random}
               </button>
               {Object.entries(KEY_SIGNATURES).map(([key, keySignature]) => (
                 <button
@@ -156,12 +158,12 @@ const GameSettings: React.FC<GameSettingsProps> = ({
           {/* 오선지 범위 설정 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              오선지 범위 (보조선)
+              {t.settingsLabels.staffRange}
             </label>
             <div className="flex items-center space-x-4">
               <div>
                 <label className="block text-xs text-gray-500 mb-1">
-                  위쪽 보조선
+                  {t.settingsLabels.ledgerLinesAbove}
                 </label>
                 <select
                   value={settings.staffRange?.ledgerLinesAbove || 0}
@@ -182,7 +184,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">
-                  아래쪽 보조선
+                  {t.settingsLabels.ledgerLinesBelow}
                 </label>
                 <select
                   value={settings.staffRange?.ledgerLinesBelow || 0}
@@ -351,7 +353,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
           {/* 임시표 설정 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              임시표 (♯, ♭, ♮)
+              {t.settingsLabels.accidentals} (♯, ♭, ♮)
             </label>
             <div className="space-y-3">
               <label className="flex items-center space-x-3">
@@ -362,14 +364,14 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
                 <span className="text-sm font-medium text-gray-700">
-                  임시표 사용
+                  {t.settingsLabels.accidentals}
                 </span>
               </label>
 
               {settings.enableAccidentals && (
                 <div>
                   <label className="block text-xs text-gray-500 mb-2">
-                    임시표 출현 확률:{" "}
+                    {t.settingsLabels.accidentalProbability}:{" "}
                     {Math.round(settings.accidentalProbability * 100)}%
                   </label>
                   <input
@@ -393,8 +395,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
               )}
             </div>
             <p className="text-xs text-gray-500 mt-2">
-              임시표가 활성화되면 조표와 별개로 개별 음표에 ♯, ♭, ♮이 추가될 수
-              있습니다.
+              {t.ui.accidentalDescription}
             </p>
           </div>
         </div>

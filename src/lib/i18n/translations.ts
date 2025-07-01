@@ -68,6 +68,12 @@ export interface Translations {
     resetToDefault: string;
     cancel: string;
     apply: string;
+    random: string;
+    staffRange: string;
+    ledgerLinesAbove: string;
+    ledgerLinesBelow: string;
+    accidentals: string;
+    accidentalProbability: string;
   };
 
   // 점수판
@@ -210,6 +216,12 @@ export const translations: Record<Language, Translations> = {
       resetToDefault: "Reset to Default",
       cancel: "Cancel",
       apply: "Apply",
+      random: "Random",
+      staffRange: "Staff Range",
+      ledgerLinesAbove: "Ledger Lines Above",
+      ledgerLinesBelow: "Ledger Lines Below",
+      accidentals: "Accidentals",
+      accidentalProbability: "Accidental Probability",
     },
 
     scoreboard: {
@@ -346,6 +358,12 @@ export const translations: Record<Language, Translations> = {
       resetToDefault: "기본값으로 재설정",
       cancel: "취소",
       apply: "적용",
+      random: "랜덤",
+      staffRange: "오선지 범위",
+      ledgerLinesAbove: "위쪽 보조선",
+      ledgerLinesBelow: "아래쪽 보조선",
+      accidentals: "임시표 사용",
+      accidentalProbability: "임시표 출현 확률",
     },
 
     scoreboard: {

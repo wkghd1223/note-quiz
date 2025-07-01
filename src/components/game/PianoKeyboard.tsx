@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from "react";
 import { playPianoNote } from "@/lib/music/audio";
 import { PIANO_KEYS } from "@/lib/music/constants";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface PianoKeyboardProps {
   onNoteClick?: (note: Note) => void;
@@ -26,6 +27,7 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
   showLabels = true,
   className = "",
 }) => {
+  const { t } = useTranslation();
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
 
   // 키보드 키 생성
@@ -114,11 +116,12 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
     <div className={`piano-keyboard ${className}`}>
       {/* 키보드 정보 */}
       <div className="mt-4 mb-2 text-center text-sm text-gray-600">
-        <p>클릭하여 음표를 선택하세요</p>
+        <p>{t.piano.instruction}</p>
         <p className="mt-1 font-medium text-blue-600">
-          선택된 음표:
+          {t.piano.selectedNote}:
           {selectedNote && (
             <>
+              {" "}
               {selectedNote.name}
               {selectedNote.accidental === "sharp" && "#"}
               {selectedNote.accidental === "flat" && "♭"}

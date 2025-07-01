@@ -153,7 +153,7 @@ const GameMain: React.FC = () => {
               onClick={() => setShowScoreBoardModal(true)}
               className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              📊 점수판
+              📊 {t.scoreboard.title}
             </button>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
@@ -193,7 +193,7 @@ const GameMain: React.FC = () => {
                   onClick={handlePlaySound}
                   className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  🔊 소리 듣기
+                  {t.messages.playSound}
                 </button>
               </div>
             )}
@@ -225,10 +225,10 @@ const GameMain: React.FC = () => {
             {gameState === "idle" && (
               <div className="text-center py-12">
                 <h2 className="text-2xl font-semibold text-gray-700 mb-4">
-                  게임을 시작해보세요!
+                  {t.ui.welcome}
                 </h2>
                 <p className="text-gray-600">
-                  설정을 조정한 후 &quot;게임 시작&quot; 버튼을 클릭하세요.
+                  {t.messages.startGameInstruction}
                 </p>
               </div>
             )}
@@ -239,7 +239,9 @@ const GameMain: React.FC = () => {
                 <h2 className="text-2xl font-semibold text-green-700 mb-4">
                   {t.messages.gameComplete}
                 </h2>
-                <p className="text-gray-600">점수판에서 결과를 확인하세요!</p>
+                <p className="text-gray-600">
+                  Check your results on the scoreboard!
+                </p>
               </div>
             )}
           </div>
@@ -251,7 +253,9 @@ const GameMain: React.FC = () => {
         <div className="md:hidden fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-lg font-semibold text-gray-800">점수판</h2>
+              <h2 className="text-lg font-semibold text-gray-800">
+                {t.scoreboard.title}
+              </h2>
               <button
                 onClick={() => setShowScoreBoardModal(false)}
                 className="text-gray-400 hover:text-gray-600 text-xl font-bold"

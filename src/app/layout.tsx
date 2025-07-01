@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BOILER",
-  description: "BOILER PLATE",
+  title: "Note Quiz",
+  description: "Note Quiz Game",
 };
 
 export default function RootLayout({
