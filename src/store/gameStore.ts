@@ -1,11 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { DEFAULT_GAME_SETTINGS } from "@/lib/music/constants";
-import {
-  trackGameStart,
-  trackGameComplete,
-  trackAnswer,
-} from "@/lib/analytics";
+import { trackGameStart, trackAnswer } from "@/lib/analytics";
 
 interface GameStore {
   // 게임 설정
