@@ -100,7 +100,7 @@ const GameControl: React.FC = () => {
 
   return (
     <div className="mb-6">
-      <div className="flex items-center justify-center space-x-4">
+      <div className="flex items-center justify-center space-x-4 pt-4">
         {gameState === "idle" && (
           <button
             onClick={handleStartGame}

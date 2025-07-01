@@ -64,10 +64,10 @@ const Staff: React.FC<StaffProps> = ({
         style={{
           minHeight: `${height}px`,
           padding: "20px 0",
-          margin: "50px 0 60px 0",
+          // margin: "50px 0 60px 0",
           overflow: "visible",
         }}
-        className="staff-svg"
+        className="staff-svg md:mt-10 md:mb-10 mt-5 mb-5"
       >
         {/* 오선 (5줄) */}
         {[0, 1, 2, 3, 4].map((lineIndex) => (

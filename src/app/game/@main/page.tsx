@@ -31,6 +31,7 @@ const GameMain: React.FC = () => {
   } = useGameStore();
 
   const [isAudioInitialized, setIsAudioInitialized] = useState(false);
+  const [showScoreBoardModal, setShowScoreBoardModal] = useState(false);
 
   // 오디오 초기화
   useEffect(() => {
@@ -71,6 +72,7 @@ const GameMain: React.FC = () => {
     isGameActive,
     setCurrentQuestion,
     setCurrentAnswer,
+    setFeedback,
     isAudioInitialized,
     startQuestionTimer,
   ]);
@@ -110,6 +112,7 @@ const GameMain: React.FC = () => {
         generateNewQuestion();
       }, 1500);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       currentQuestion,
       isGameActive,
@@ -134,103 +137,135 @@ const GameMain: React.FC = () => {
   }, [currentQuestion, settings.enableSound, isAudioInitialized]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      {/* 왼쪽: 타이머와 점수판 */}
-      <div className="lg:col-span-1 space-y-6">
-        <Timer />
-        <ScoreBoard />
-      </div>
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 overflow-hidden relative">
+        {/* 왼쪽: 타이머와 점수판 (데스크톱만) */}
+        <div className="hidden md:block md:col-span-1 space-y-6">
+          <Timer />
+          <ScoreBoard />
+        </div>
 
-      {/* 중앙: 게임 영역 */}
-      <div className="lg:col-span-3">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          {/* 피드백 메시지 */}
-          {feedback && (
-            <div
-              className={`mb-4 p-3 rounded-md text-center font-medium ${
-                feedback.type === "success"
-                  ? "bg-green-100 text-green-800"
-                  : "bg-red-100 text-red-800"
-              }`}
+        {/* 중앙: 게임 영역 */}
+        <div className="md:col-span-3">
+          {/* 모바일 점수판 버튼 */}
+          <div className="md:hidden mb-4 flex justify-end">
+            <button
+              onClick={() => setShowScoreBoardModal(true)}
+              className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              {feedback.message}
+              📊 점수판
+            </button>
+          </div>
+          <div className="bg-white rounded-lg shadow-md p-6">
+            {/* 피드백 메시지 */}
+            <div
+              className={`mb-4 rounded-md text-center font-medium absolute bottom-2 right-2 z-10
+                  transition-opacity duration-300 ease-in-out
+                  ${!!feedback ? "opacity-100 p-3" : "opacity-0"}
+                  ${
+                    feedback?.type === "success"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+            >
+              {feedback?.message}
             </div>
-          )}
 
-          {/* 오선지 */}
-          {currentQuestion &&
-            (settings.gameMode === "visual" ||
-              settings.gameMode === "both") && (
-              <div className="mb-6">
-                <Staff
-                  clef={currentQuestion.clef}
-                  keySignature={currentQuestion.keySignature}
-                  note={currentQuestion.displayNote}
-                  originalNote={currentQuestion.note}
-                  className="flex justify-center"
-                />
+            {/* 오선지 */}
+            {currentQuestion &&
+              (settings.gameMode === "visual" ||
+                settings.gameMode === "both") && (
+                <div className="mb-6">
+                  <Staff
+                    clef={currentQuestion.clef}
+                    keySignature={currentQuestion.keySignature}
+                    note={currentQuestion.displayNote}
+                    originalNote={currentQuestion.note}
+                    className="flex justify-center"
+                  />
+                </div>
+              )}
+
+            {/* 소리 재생 버튼 */}
+            {currentQuestion && settings.enableSound && isAudioInitialized && (
+              <div className="mb-6 text-center">
+                <button
+                  onClick={handlePlaySound}
+                  className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  🔊 소리 듣기
+                </button>
               </div>
             )}
 
-          {/* 소리 재생 버튼 */}
-          {currentQuestion && settings.enableSound && isAudioInitialized && (
-            <div className="mb-6 text-center">
-              <button
-                onClick={handlePlaySound}
-                className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                🔊 소리 듣기
-              </button>
-            </div>
-          )}
+            {/* 답안 입력 영역 */}
+            {isGameActive() && (
+              <div className="mt-6">
+                {settings.answerMode === "piano" ? (
+                  <PianoKeyboard
+                    onNoteClick={handleAnswerSubmit}
+                    selectedNote={currentAnswer}
+                    disabled={!isGameActive()}
+                    className="flex flex-col justify-center items-center"
+                  />
+                ) : (
+                  <SolfegeKeyboard
+                    startOctave={3}
+                    endOctave={6}
+                    onNoteClick={handleAnswerSubmit}
+                    selectedNote={currentAnswer}
+                    disabled={!isGameActive()}
+                    className="flex justify-center"
+                  />
+                )}
+              </div>
+            )}
 
-          {/* 답안 입력 영역 */}
-          {isGameActive() && (
-            <div className="mt-6">
-              {settings.answerMode === "piano" ? (
-                <PianoKeyboard
-                  onNoteClick={handleAnswerSubmit}
-                  selectedNote={currentAnswer}
-                  disabled={!isGameActive()}
-                  className="flex flex-col justify-center items-center"
-                />
-              ) : (
-                <SolfegeKeyboard
-                  startOctave={3}
-                  endOctave={6}
-                  onNoteClick={handleAnswerSubmit}
-                  selectedNote={currentAnswer}
-                  disabled={!isGameActive()}
-                  className="flex justify-center"
-                />
-              )}
-            </div>
-          )}
+            {/* 게임 대기 상태 */}
+            {gameState === "idle" && (
+              <div className="text-center py-12">
+                <h2 className="text-2xl font-semibold text-gray-700 mb-4">
+                  게임을 시작해보세요!
+                </h2>
+                <p className="text-gray-600">
+                  설정을 조정한 후 &quot;게임 시작&quot; 버튼을 클릭하세요.
+                </p>
+              </div>
+            )}
 
-          {/* 게임 대기 상태 */}
-          {gameState === "idle" && (
-            <div className="text-center py-12">
-              <h2 className="text-2xl font-semibold text-gray-700 mb-4">
-                게임을 시작해보세요!
-              </h2>
-              <p className="text-gray-600">
-                설정을 조정한 후 &quot;게임 시작&quot; 버튼을 클릭하세요.
-              </p>
-            </div>
-          )}
-
-          {/* 게임 완료 상태 */}
-          {gameState === "finished" && (
-            <div className="text-center py-12">
-              <h2 className="text-2xl font-semibold text-green-700 mb-4">
-                {t.messages.gameComplete}
-              </h2>
-              <p className="text-gray-600">점수판에서 결과를 확인하세요!</p>
-            </div>
-          )}
+            {/* 게임 완료 상태 */}
+            {gameState === "finished" && (
+              <div className="text-center py-12">
+                <h2 className="text-2xl font-semibold text-green-700 mb-4">
+                  {t.messages.gameComplete}
+                </h2>
+                <p className="text-gray-600">점수판에서 결과를 확인하세요!</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* 모바일 점수판 모달 */}
+      {showScoreBoardModal && (
+        <div className="md:hidden fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold text-gray-800">점수판</h2>
+              <button
+                onClick={() => setShowScoreBoardModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-xl font-bold"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-4">
+              <ScoreBoard />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

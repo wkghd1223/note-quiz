@@ -10,19 +10,21 @@ const Header = () => {
   const [showSettings, setShowSettings] = useState(false);
   return (
     <>
-      <header className="flex justify-between items-center mr-4 ml-4 mb-4">
+      <header className="flex justify-between items-center md:mr-4 md:ml-4 md:mb-4">
         <Link
-          className="flex items-center space-x-2 m-4 cursor-pointer"
+          className="flex items-center space-x-2 md:m-4 cursor-pointer"
           href="/"
         >
           <Image
-            src="/globe.svg"
+            src="/logo.svg"
             alt="Logo"
             className="w-12 h-12"
             width={12}
             height={12}
           />
-          <h1 className="text-3xl font-bold text-gray-900">{t.gameTitle}</h1>
+          <h1 className="md:text-3xl text-xl font-bold text-gray-900">
+            {t.gameTitle}
+          </h1>
         </Link>
 
         <div className="flex items-center justify-between">
