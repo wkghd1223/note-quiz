@@ -1,6 +1,11 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { DEFAULT_GAME_SETTINGS } from "@/lib/music/constants";
+import {
+  trackGameStart,
+  trackGameComplete,
+  trackAnswer,
+} from "@/lib/analytics";
 
 interface GameStore {
   // 게임 설정
@@ -91,10 +96,14 @@ export const useGameStore = create<GameStore>()(
       currentAnswer: null,
       setCurrentAnswer: (currentAnswer) => set({ currentAnswer }),
       answers: [],
-      addAnswer: (answer) =>
+      addAnswer: (answer) => {
+        // Google Analytics 이벤트 추적
+        trackAnswer(answer.isCorrect, answer.timeSpent);
+
         set((state) => ({
           answers: [...state.answers, answer],
-        })),
+        }));
+      },
       clearAnswers: () => set({ answers: [] }),
 
       // 타이머
@@ -165,7 +174,17 @@ export const useGameStore = create<GameStore>()(
 
       // 게임 제어
       startGame: () => {
-        const { startTimer } = get();
+        const { startTimer, settings } = get();
+
+        // Google Analytics 이벤트 추적
+        trackGameStart({
+          clef: settings.clef,
+          keySignature: settings.keySignature,
+          difficulty: settings.difficulty,
+          gameMode: settings.gameMode,
+          answerMode: settings.answerMode,
+        });
+
         set({
           gameState: "playing",
           answers: [],

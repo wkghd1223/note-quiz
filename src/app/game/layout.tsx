@@ -1,3 +1,16 @@
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Play Game",
+  description:
+    "Start playing the note identification game. Test your sight-reading skills with customizable settings including clefs, key signatures, and difficulty levels.",
+  openGraph: {
+    title: "Note Quiz Game - Play Now",
+    description:
+      "Test your music sight-reading skills with our interactive note identification game.",
+  },
+};
+
 export default function Layout({
   header,
   main,

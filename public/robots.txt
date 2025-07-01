@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /suggest
+
+# Sitemap
+Sitemap: https://note-quiz.com/sitemap.xml

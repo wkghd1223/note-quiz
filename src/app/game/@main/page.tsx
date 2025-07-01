@@ -159,7 +159,7 @@ const GameMain: React.FC = () => {
           <div className="bg-white rounded-lg shadow-md p-6">
             {/* 피드백 메시지 */}
             <div
-              className={`mb-4 rounded-md text-center font-medium absolute bottom-2 right-2 z-10
+              className={`mb-4 rounded-md text-center font-medium fixed bottom-2 right-2 z-10
                   transition-opacity duration-300 ease-in-out
                   ${!!feedback ? "opacity-100 p-3" : "opacity-0"}
                   ${
@@ -210,8 +210,6 @@ const GameMain: React.FC = () => {
                   />
                 ) : (
                   <SolfegeKeyboard
-                    startOctave={3}
-                    endOctave={6}
                     onNoteClick={handleAnswerSubmit}
                     selectedNote={currentAnswer}
                     disabled={!isGameActive()}
