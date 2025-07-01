@@ -79,7 +79,7 @@ const Timer: React.FC<TimerProps> = ({ className = "" }) => {
         <div className="text-center md:block flex items-center justify-center">
           <div className="min-w-[30%]">
             <div className="text-sm font-medium text-gray-600 mb-1">
-              {settings.timeLimit ? "남은 시간" : "경과 시간"}
+              {settings.timeLimit ? t.timer.remaining : t.timer.elapsed}
             </div>
             <div
               className={`md:text-3xl text-base font-mono font-bold transition-colors duration-200 ${

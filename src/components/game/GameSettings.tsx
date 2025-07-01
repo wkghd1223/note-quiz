@@ -17,7 +17,8 @@ const GameSettings: React.FC<GameSettingsProps> = ({
   className = "",
 }) => {
   const { t } = useTranslation();
-  const { settings, updateSettings, resetSettings } = useGameStore();
+  const { settings, updateSettings, resetSettings, resetStats } =
+    useGameStore();
 
   if (!isOpen) return null;
 
@@ -198,14 +199,14 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                 >
                   {[0, 1, 2, 3, 4, 5].map((lines) => (
                     <option key={lines} value={lines}>
-                      {lines}개
+                      {lines}
                     </option>
                   ))}
                 </select>
               </div>
             </div>
             <p className="text-xs text-gray-500 mt-2">
-              보조선이 많을수록 더 넓은 음역대의 문제가 출제됩니다.
+              {t.settingsLabels.ledgerLinesInstruction}
             </p>
           </div>
 
@@ -226,10 +227,10 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                         : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                     }`}
                   >
-                    {difficulty === "easy" && "쉬움"}
-                    {difficulty === "medium" && "보통"}
-                    {difficulty === "hard" && "어려움"}
-                    {difficulty === "expert" && "전문가"}
+                    {difficulty === "easy" && t.difficulties.easy}
+                    {difficulty === "medium" && t.difficulties.medium}
+                    {difficulty === "hard" && t.difficulties.hard}
+                    {difficulty === "expert" && t.difficulties.expert}
                   </button>
                 )
               )}
@@ -239,7 +240,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
           {/* 게임 모드 설정 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              게임 모드
+              {t.settingsLabels.gameMode}
             </label>
             <div className="grid grid-cols-3 gap-2">
               {(["visual", "audio", "both"] as GameMode[]).map((mode) => (
@@ -252,9 +253,9 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                       : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                   }`}
                 >
-                  {mode === "visual" && "시각적"}
-                  {mode === "audio" && "청각적"}
-                  {mode === "both" && "시청각"}
+                  {mode === "visual" && t.gameModes.visual}
+                  {mode === "audio" && t.gameModes.audio}
+                  {mode === "both" && t.gameModes.both}
                 </button>
               ))}
             </div>
@@ -263,7 +264,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
           {/* 답안 입력 방식 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              답안 입력 방식
+              {t.settingsLabels.answerMode}
             </label>
             <div className="grid grid-cols-2 gap-2">
               {(["piano", "solfege"] as AnswerMode[]).map((mode) => (
@@ -276,8 +277,8 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                       : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                   }`}
                 >
-                  {mode === "piano" && "피아노 건반"}
-                  {mode === "solfege" && "도레미"}
+                  {mode === "piano" && t.answerModes.piano}
+                  {mode === "solfege" && t.answerModes.solfege}
                 </button>
               ))}
             </div>
@@ -286,6 +287,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
           {/* 언어 설정 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
+              {t.settingsLabels.language}
               언어
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -315,7 +317,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <span className="text-sm font-medium text-gray-700">
-                소리 재생
+                {t.settingsLabels.enableSound}
               </span>
             </label>
           </div>
@@ -323,7 +325,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
           {/* 시간 제한 설정 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              시간 제한 (초)
+              {t.settingsLabels.timeLimit}
             </label>
             <div className="flex items-center space-x-2">
               <input
@@ -334,7 +336,9 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                 }
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
-              <span className="text-sm text-gray-600">시간 제한 사용</span>
+              <span className="text-sm text-gray-600">
+                {t.settingsLabels.timeLimitEnable}
+              </span>
               {settings.timeLimit !== undefined && (
                 <input
                   type="number"
@@ -401,25 +405,33 @@ const GameSettings: React.FC<GameSettingsProps> = ({
         </div>
 
         {/* 버튼 */}
-        <div className="flex items-center justify-between p-6 border-t bg-gray-50">
-          <button
-            onClick={resetSettings}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            기본값으로 재설정
-          </button>
+        <div className="flex items-center justify-between p-6 border-t bg-gray-50 flex-wrap space-y-3">
+          <div className="flex space-x-3">
+            <button
+              onClick={resetSettings}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {t.settingsLabels.resetToDefault}
+            </button>
+            <button
+              onClick={resetStats}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {t.settingsLabels.resetAllStats}
+            </button>
+          </div>
           <div className="flex space-x-3">
             <button
               onClick={onClose}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              취소
+              {t.settingsLabels.cancel}
             </button>
             <button
               onClick={onClose}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              적용
+              {t.settingsLabels.apply}
             </button>
           </div>
         </div>

@@ -72,8 +72,10 @@ export interface Translations {
     staffRange: string;
     ledgerLinesAbove: string;
     ledgerLinesBelow: string;
+    ledgerLinesInstruction: string;
     accidentals: string;
     accidentalProbability: string;
+    resetAllStats: string;
   };
 
   // 점수판
@@ -114,6 +116,13 @@ export interface Translations {
 
   // 피아노 키보드
   piano: {
+    instruction: string;
+    selectedNote: string;
+  };
+
+  // 도레미 키보드
+  solfege: {
+    title: string;
     instruction: string;
     selectedNote: string;
   };
@@ -220,8 +229,11 @@ export const translations: Record<Language, Translations> = {
       staffRange: "Staff Range",
       ledgerLinesAbove: "Ledger Lines Above",
       ledgerLinesBelow: "Ledger Lines Below",
+      ledgerLinesInstruction:
+        "The more ledger lines, the wider range of notes will be generated.",
       accidentals: "Accidentals",
       accidentalProbability: "Accidental Probability",
+      resetAllStats: "Reset All Stats",
     },
 
     scoreboard: {
@@ -259,6 +271,12 @@ export const translations: Record<Language, Translations> = {
 
     piano: {
       instruction: "Click to select a note",
+      selectedNote: "Selected Note",
+    },
+
+    solfege: {
+      title: "Solfege Input",
+      instruction: "Click solfege to select a note",
       selectedNote: "Selected Note",
     },
 
@@ -362,8 +380,11 @@ export const translations: Record<Language, Translations> = {
       staffRange: "오선지 범위",
       ledgerLinesAbove: "위쪽 보조선",
       ledgerLinesBelow: "아래쪽 보조선",
+      ledgerLinesInstruction:
+        "보조선이 많을수록 더 넓은 음역대의 문제가 출제됩니다.",
       accidentals: "임시표 사용",
       accidentalProbability: "임시표 출현 확률",
+      resetAllStats: "모든 통계 초기화",
     },
 
     scoreboard: {
@@ -401,6 +422,12 @@ export const translations: Record<Language, Translations> = {
 
     piano: {
       instruction: "클릭하여 음표를 선택하세요",
+      selectedNote: "선택된 음표",
+    },
+
+    solfege: {
+      title: "도레미 입력",
+      instruction: "도레미를 클릭하여 음표를 선택하세요",
       selectedNote: "선택된 음표",
     },
 

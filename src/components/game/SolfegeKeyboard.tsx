@@ -2,44 +2,59 @@
 
 import React, { useState, useCallback } from "react";
 import { playPianoNote } from "@/lib/music/audio";
-import {
-  NOTE_NAME_MAPPING,
-  SOLFEGE_TO_NOTE_MAPPING,
-  SOLFEGE_NOTES,
-} from "@/lib/music/constants";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface SolfegeKeyboardProps {
-  startOctave?: Octave;
-  endOctave?: Octave;
   onNoteClick?: (note: Note) => void;
   selectedNote?: Note | null;
   disabled?: boolean;
   className?: string;
 }
 
+// 도레미 키보드 레이아웃 (반음 포함)
+type SolfegeKey = {
+  solfege: string;
+  note: string;
+  accidental: "natural" | "sharp";
+  color: "white" | "black";
+};
+
+const SOLFEGE_LAYOUT: SolfegeKey[] = [
+  { solfege: "도", note: "C", accidental: "natural", color: "white" },
+  { solfege: "도♯", note: "C", accidental: "sharp", color: "black" },
+  { solfege: "레", note: "D", accidental: "natural", color: "white" },
+  { solfege: "레♯", note: "D", accidental: "sharp", color: "black" },
+  { solfege: "미", note: "E", accidental: "natural", color: "white" },
+  { solfege: "파", note: "F", accidental: "natural", color: "white" },
+  { solfege: "파♯", note: "F", accidental: "sharp", color: "black" },
+  { solfege: "솔", note: "G", accidental: "natural", color: "white" },
+  { solfege: "솔♯", note: "G", accidental: "sharp", color: "black" },
+  { solfege: "라", note: "A", accidental: "natural", color: "white" },
+  { solfege: "라♯", note: "A", accidental: "sharp", color: "black" },
+  { solfege: "시", note: "B", accidental: "natural", color: "white" },
+];
+
 const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
-  startOctave = 3,
-  endOctave = 6,
   onNoteClick,
   selectedNote,
   disabled = false,
   className = "",
 }) => {
+  const { t } = useTranslation();
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
 
   // 키 클릭 핸들러
   const handleKeyClick = useCallback(
-    async (solfege: SolfegeNote, octave: Octave) => {
+    async (keyData: SolfegeKey) => {
       if (disabled) return;
 
-      const noteName = SOLFEGE_TO_NOTE_MAPPING[solfege];
       const note: Note = {
-        name: noteName,
-        accidental: "natural",
-        octave,
+        name: keyData.note as NoteName,
+        accidental: keyData.accidental,
+        octave: 4, // 기본 옥타브 (옥타브 무관하므로 고정값)
       };
 
-      const keyId = `${solfege}${octave}`;
+      const keyId = keyData.solfege;
 
       // 키 눌림 상태 업데이트
       setPressedKeys((prev) => new Set(prev).add(keyId));
@@ -68,100 +83,92 @@ const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
 
   // 선택된 키인지 확인
   const isKeySelected = useCallback(
-    (solfege: SolfegeNote, octave: Octave): boolean => {
+    (keyData: SolfegeKey): boolean => {
       if (!selectedNote) return false;
 
-      const expectedSolfege = NOTE_NAME_MAPPING[selectedNote.name];
       return (
-        expectedSolfege === solfege &&
-        selectedNote.octave === octave &&
-        selectedNote.accidental === "natural"
+        selectedNote.name === keyData.note &&
+        selectedNote.accidental === keyData.accidental
       );
     },
     [selectedNote]
   );
 
-  // 옥타브별 도레미 키 생성
-  const generateKeys = () => {
-    const keys = [];
-    for (let octave = startOctave; octave <= endOctave; octave++) {
-      keys.push(
-        <div key={`octave-${octave}`} className="mb-4">
-          <div className="text-center text-sm font-medium text-gray-600 mb-2">
-            {octave}옥타브
-          </div>
-          <div className="grid grid-cols-7 gap-2">
-            {SOLFEGE_NOTES.map((solfege) => {
-              const keyId = `${solfege}${octave}`;
-              const isPressed = pressedKeys.has(keyId);
-              const isSelected = isKeySelected(solfege, octave as Octave);
-
-              return (
-                <button
-                  key={keyId}
-                  className={`
-                    solfege-key p-4 rounded-lg border-2 font-bold text-lg
-                    transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500
-                    ${
-                      isPressed
-                        ? "bg-blue-200 border-blue-400 shadow-inner transform scale-95"
-                        : "bg-white border-gray-300 hover:bg-gray-50 hover:border-gray-400"
-                    }
-                    ${
-                      isSelected
-                        ? "bg-blue-100 border-blue-400 ring-2 ring-blue-300"
-                        : ""
-                    }
-                    ${
-                      disabled
-                        ? "cursor-not-allowed opacity-50"
-                        : "cursor-pointer hover:shadow-md"
-                    }
-                  `}
-                  onClick={() => handleKeyClick(solfege, octave as Octave)}
-                  disabled={disabled}
-                  aria-label={`${solfege} ${octave}옥타브`}
-                >
-                  <div className="text-center">
-                    <div className="text-xl">{solfege}</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {SOLFEGE_TO_NOTE_MAPPING[solfege]}
-                      {octave}
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      );
-    }
-    return keys;
-  };
-
   return (
     <div className={`solfege-keyboard ${className}`}>
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
-            도레미 입력
-          </h3>
+        {/* 도레미 키보드 */}
+        <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-12 gap-2">
+          {SOLFEGE_LAYOUT.map((keyData) => {
+            const isPressed = pressedKeys.has(keyData.solfege);
+            const isSelected = isKeySelected(keyData);
+            const isBlackKey = keyData.color === "black";
 
-          <div className="space-y-4">{generateKeys()}</div>
+            return (
+              <button
+                key={keyData.solfege}
+                className={`
+                    solfege-key p-3 sm:p-4 rounded-lg border-2 font-bold text-sm sm:text-base
+                    transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500
+                    ${
+                      isPressed
+                        ? "shadow-inner transform scale-95"
+                        : "hover:shadow-md"
+                    }
+                    ${isSelected ? "ring-2 ring-blue-300" : ""}
+                    ${
+                      disabled
+                        ? "cursor-not-allowed opacity-50"
+                        : "cursor-pointer"
+                    }
+                    ${
+                      isBlackKey
+                        ? isPressed
+                          ? "bg-gray-600 border-gray-700 text-white"
+                          : isSelected
+                            ? "bg-gray-700 border-gray-800 text-white"
+                            : "bg-gray-800 border-gray-900 text-white hover:bg-gray-700"
+                        : isPressed
+                          ? "bg-blue-200 border-blue-400 text-blue-800"
+                          : isSelected
+                            ? "bg-blue-100 border-blue-400 text-blue-700"
+                            : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400"
+                    }
+                  `}
+                onClick={() => handleKeyClick(keyData)}
+                disabled={disabled}
+                aria-label={keyData.solfege}
+              >
+                <div className="text-center">
+                  <div className="text-lg sm:text-xl">{keyData.solfege}</div>
+                  <div className="text-xs text-current opacity-75 mt-1">
+                    {keyData.note}
+                    {keyData.accidental === "sharp" && "♯"}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
 
-          {/* 선택된 음표 정보 */}
-          <div className="mt-6 text-center text-sm text-gray-600">
-            <p>도레미를 클릭하여 음표를 선택하세요</p>
+        {/* 선택된 음표 정보 */}
+        <div className="mt-4 mb-2 text-center text-sm text-gray-600">
+          <p>{t.solfege.instruction}</p>
+          <p className="mt-1 font-medium text-blue-600">
+            {t.solfege.selectedNote}:
             {selectedNote && (
-              <p className="mt-2 font-medium text-blue-600">
-                선택된 음표: {NOTE_NAME_MAPPING[selectedNote.name]} (
-                {selectedNote.name}
-                {selectedNote.accidental === "sharp" && "#"}
+              <>
+                {" "}
+                {SOLFEGE_LAYOUT.find(
+                  (key) =>
+                    key.note === selectedNote.name &&
+                    key.accidental === selectedNote.accidental
+                )?.solfege || selectedNote.name}
+                {selectedNote.accidental === "sharp" && "♯"}
                 {selectedNote.accidental === "flat" && "♭"}
-                {selectedNote.octave})
-              </p>
+              </>
             )}
-          </div>
+          </p>
         </div>
       </div>
     </div>
