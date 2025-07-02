@@ -50,7 +50,6 @@ interface GameSettings {
     ledgerLinesBelow: number; // 오선지 아래쪽 보조선 개수
   };
   answerMode: AnswerMode;
-  language: Language;
   enableSound: boolean;
   timeLimit?: number; // seconds, undefined for no limit
   enableAccidentals: boolean; // 임시표 사용 여부

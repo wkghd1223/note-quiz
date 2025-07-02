@@ -1,15 +1,15 @@
 "use client";
 
 import { useMemo } from "react";
-import { useGameStore } from "@/store/gameStore";
+import { useLanguageStore } from "@/store/languageStore";
 import { getTranslation } from "@/lib/i18n/translations";
 
 export function useTranslation() {
-  const { settings } = useGameStore();
+  const { language } = useLanguageStore();
 
   const t = useMemo(() => {
-    return getTranslation(settings.language);
-  }, [settings.language]);
+    return getTranslation(language);
+  }, [language]);
 
-  return { t, language: settings.language };
+  return { t, language };
 }

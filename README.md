@@ -1,4 +1,4 @@
-# 🎵 Note Quiz Game
+# 🎵 Note Quiz
 
 A comprehensive web-based music note identification game designed to help musicians improve their sight-reading skills through visual and auditory training.
 

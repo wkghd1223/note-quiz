@@ -44,10 +44,6 @@ const GameSettings: React.FC<GameSettingsProps> = ({
     updateSettings({ answerMode });
   };
 
-  const handleLanguageChange = (language: Language) => {
-    updateSettings({ language });
-  };
-
   const handleSoundToggle = (enableSound: boolean) => {
     updateSettings({ enableSound });
   };
@@ -110,7 +106,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                       : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                   }`}
                 >
-                  {settings.language === "ko" ? clef.nameKo : clef.name}
+                  {clef.name}
                 </button>
               ))}
             </div>
@@ -220,28 +216,6 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                 >
                   {mode === "piano" && t.answerModes.piano}
                   {mode === "solfege" && t.answerModes.solfege}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* 언어 설정 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              {t.settingsLabels.language}
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {(["en", "ko"] as Language[]).map((lang) => (
-                <button
-                  key={lang}
-                  onClick={() => handleLanguageChange(lang)}
-                  className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
-                    settings.language === lang
-                      ? "bg-blue-100 border-blue-300 text-blue-700"
-                      : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  {lang === "en" ? "English" : "한국어"}
                 </button>
               ))}
             </div>

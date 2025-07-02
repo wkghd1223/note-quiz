@@ -155,7 +155,7 @@ export interface Translations {
 
 export const translations: Record<Language, Translations> = {
   en: {
-    gameTitle: "Note Quiz Game",
+    gameTitle: "Note Quiz",
     startGame: "Start Game",
     pauseGame: "Pause",
     resumeGame: "Resume",
@@ -284,7 +284,7 @@ export const translations: Record<Language, Translations> = {
     },
 
     ui: {
-      welcome: "Welcome to Note Quiz Game!",
+      welcome: "Welcome to Note Quiz!",
       description: "Learn to read musical notes by sight and sound!",
       features: {
         customSettings: "Customizable Settings",

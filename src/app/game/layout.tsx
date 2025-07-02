@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "Start playing the note identification game. Test your sight-reading skills with customizable settings including clefs, key signatures, and difficulty levels.",
   openGraph: {
-    title: "Note Quiz Game - Play Now",
+    title: "Note Quiz - Play Now",
     description:
       "Test your music sight-reading skills with our interactive note identification game.",
   },
