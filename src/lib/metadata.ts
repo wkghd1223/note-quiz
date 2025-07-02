@@ -32,7 +32,7 @@ export const defaultMetadata: Metadata = {
   keywords: siteConfig.keywords,
   authors: [
     {
-      name: "Note Quiz Team",
+      name: "JEON HYEONTAE",
     },
   ],
   creator: siteConfig.creator,
