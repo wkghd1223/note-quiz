@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 export const siteConfig = {
-  name: "Note Quiz Game",
+  name: "Note Quiz",
   description:
     "Learn to read musical notes by sight and sound! A comprehensive web-based music note identification game designed to help musicians improve their sight-reading skills.",
   url: "https://note-quiz.com",

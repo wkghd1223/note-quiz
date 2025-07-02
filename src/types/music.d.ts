@@ -16,7 +16,7 @@ type Octave = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 // 완전한 음표 정보
 interface Note {
   name: NoteName;
-  accidental: Accidental;
+  accidental: Accidental | null;
   octave: Octave;
 }
 
@@ -35,12 +35,6 @@ interface KeySignature {
   accidentalType: "sharp" | "flat" | "natural";
 }
 
-// 게임 난이도
-type Difficulty = "easy" | "medium" | "hard" | "expert";
-
-// 게임 모드
-type GameMode = "visual" | "audio" | "both";
-
 // 답안 입력 방식
 type AnswerMode = "piano" | "solfege";
 
@@ -55,10 +49,7 @@ interface GameSettings {
     ledgerLinesAbove: number; // 오선지 위쪽 보조선 개수
     ledgerLinesBelow: number; // 오선지 아래쪽 보조선 개수
   };
-  difficulty: Difficulty;
-  gameMode: GameMode;
   answerMode: AnswerMode;
-  language: Language;
   enableSound: boolean;
   timeLimit?: number; // seconds, undefined for no limit
   enableAccidentals: boolean; // 임시표 사용 여부

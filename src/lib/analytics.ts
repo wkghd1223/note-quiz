@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Google Analytics 이벤트 추적 함수들
 
 declare global {
@@ -5,7 +6,6 @@ declare global {
     gtag: (
       command: "config" | "event" | "js",
       targetId: string | Date,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       config?: Record<string, any>
     ) => void;
   }
@@ -15,8 +15,6 @@ declare global {
 export const trackGameStart = (settings: {
   clef: string;
   keySignature: string;
-  difficulty: string;
-  gameMode: string;
   answerMode: string;
 }) => {
   if (typeof window !== "undefined" && window.gtag) {
@@ -25,8 +23,6 @@ export const trackGameStart = (settings: {
       event_label: "Game Started",
       clef: settings.clef,
       key_signature: settings.keySignature,
-      difficulty: settings.difficulty,
-      game_mode: settings.gameMode,
       answer_mode: settings.answerMode,
     });
   }

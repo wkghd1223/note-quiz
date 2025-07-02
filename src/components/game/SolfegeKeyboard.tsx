@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from "react";
 import { playPianoNote } from "@/lib/music/audio";
-import { useTranslation } from "@/hooks/useTranslation";
+// import { useTranslation } from "@/hooks/useTranslation";
 
 interface SolfegeKeyboardProps {
   onNoteClick?: (note: Note) => void;
@@ -40,7 +40,7 @@ const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
   disabled = false,
   className = "",
 }) => {
-  const { t } = useTranslation();
+  // const { t } = useTranslation();
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
 
   // 키 클릭 핸들러
@@ -96,6 +96,26 @@ const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
 
   return (
     <div className={`solfege-keyboard ${className}`}>
+      {/* 선택된 음표 정보 */}
+      {/* <div className="mt-4 mb-2 text-center text-sm text-gray-600">
+          <p>{t.solfege.instruction}</p>
+          <p className="mt-1 font-medium text-blue-600">
+            {t.solfege.selectedNote}:
+            {selectedNote && (
+              <>
+                {" "}
+                {SOLFEGE_LAYOUT.find(
+                  (key) =>
+                    key.note === selectedNote.name &&
+                    key.accidental === selectedNote.accidental
+                )?.solfege || selectedNote.name}
+                {selectedNote.accidental === "sharp" && "♯"}
+                {selectedNote.accidental === "flat" && "♭"}
+              </>
+            )}
+          </p>
+        </div> */}
+
       <div className="max-w-4xl mx-auto">
         {/* 도레미 키보드 */}
         <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-12 gap-2">
@@ -149,26 +169,6 @@ const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
               </button>
             );
           })}
-        </div>
-
-        {/* 선택된 음표 정보 */}
-        <div className="mt-4 mb-2 text-center text-sm text-gray-600">
-          <p>{t.solfege.instruction}</p>
-          <p className="mt-1 font-medium text-blue-600">
-            {t.solfege.selectedNote}:
-            {selectedNote && (
-              <>
-                {" "}
-                {SOLFEGE_LAYOUT.find(
-                  (key) =>
-                    key.note === selectedNote.name &&
-                    key.accidental === selectedNote.accidental
-                )?.solfege || selectedNote.name}
-                {selectedNote.accidental === "sharp" && "♯"}
-                {selectedNote.accidental === "flat" && "♭"}
-              </>
-            )}
-          </p>
         </div>
       </div>
     </div>

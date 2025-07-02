@@ -40,20 +40,8 @@ const GameSettings: React.FC<GameSettingsProps> = ({
     updateSettings({ staffRange: newRange });
   };
 
-  const handleDifficultyChange = (difficulty: Difficulty) => {
-    updateSettings({ difficulty });
-  };
-
-  const handleGameModeChange = (gameMode: GameMode) => {
-    updateSettings({ gameMode });
-  };
-
   const handleAnswerModeChange = (answerMode: AnswerMode) => {
     updateSettings({ answerMode });
-  };
-
-  const handleLanguageChange = (language: Language) => {
-    updateSettings({ language });
   };
 
   const handleSoundToggle = (enableSound: boolean) => {
@@ -118,7 +106,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                       : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                   }`}
                 >
-                  {settings.language === "ko" ? clef.nameKo : clef.name}
+                  {clef.name}
                 </button>
               ))}
             </div>
@@ -178,7 +166,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                 >
                   {[0, 1, 2, 3, 4, 5].map((lines) => (
                     <option key={lines} value={lines}>
-                      {lines}개
+                      {lines}
                     </option>
                   ))}
                 </select>
@@ -210,57 +198,6 @@ const GameSettings: React.FC<GameSettingsProps> = ({
             </p>
           </div>
 
-          {/* 난이도 설정 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              난이도
-            </label>
-            <div className="grid grid-cols-4 gap-2">
-              {(["easy", "medium", "hard", "expert"] as Difficulty[]).map(
-                (difficulty) => (
-                  <button
-                    key={difficulty}
-                    onClick={() => handleDifficultyChange(difficulty)}
-                    className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
-                      settings.difficulty === difficulty
-                        ? "bg-blue-100 border-blue-300 text-blue-700"
-                        : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    {difficulty === "easy" && t.difficulties.easy}
-                    {difficulty === "medium" && t.difficulties.medium}
-                    {difficulty === "hard" && t.difficulties.hard}
-                    {difficulty === "expert" && t.difficulties.expert}
-                  </button>
-                )
-              )}
-            </div>
-          </div>
-
-          {/* 게임 모드 설정 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              {t.settingsLabels.gameMode}
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {(["visual", "audio", "both"] as GameMode[]).map((mode) => (
-                <button
-                  key={mode}
-                  onClick={() => handleGameModeChange(mode)}
-                  className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
-                    settings.gameMode === mode
-                      ? "bg-blue-100 border-blue-300 text-blue-700"
-                      : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  {mode === "visual" && t.gameModes.visual}
-                  {mode === "audio" && t.gameModes.audio}
-                  {mode === "both" && t.gameModes.both}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* 답안 입력 방식 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -279,29 +216,6 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                 >
                   {mode === "piano" && t.answerModes.piano}
                   {mode === "solfege" && t.answerModes.solfege}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* 언어 설정 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              {t.settingsLabels.language}
-              언어
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {(["en", "ko"] as Language[]).map((lang) => (
-                <button
-                  key={lang}
-                  onClick={() => handleLanguageChange(lang)}
-                  className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
-                    settings.language === lang
-                      ? "bg-blue-100 border-blue-300 text-blue-700"
-                      : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  {lang === "en" ? "English" : "한국어"}
                 </button>
               ))}
             </div>

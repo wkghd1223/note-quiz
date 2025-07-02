@@ -306,10 +306,7 @@ export const DEFAULT_GAME_SETTINGS = {
     ledgerLinesAbove: 2, // 오선지 위쪽 보조선 2개까지
     ledgerLinesBelow: 2, // 오선지 아래쪽 보조선 2개까지
   },
-  difficulty: "medium" as const,
-  gameMode: "visual" as const,
   answerMode: "piano" as const,
-  language: "en" as const,
   enableSound: true,
   timeLimit: undefined,
   enableAccidentals: false, // 기본적으로 임시표 비활성화
