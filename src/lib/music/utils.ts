@@ -252,7 +252,7 @@ function convertStaffPositionToNote(position: number, clef: ClefType): Note {
 
   return {
     name: noteNames[noteIndex],
-    accidental: "natural",
+    accidental: null,
     octave: Math.max(0, Math.min(8, octave)) as Octave,
   };
 }
@@ -265,6 +265,7 @@ function addAccidental(
   settings: GameSettings,
   keySignature: KeySignature
 ): Note {
+  // 임시표가 비활성화되어 있으면 아무것도 하지 않음
   if (!settings.enableAccidentals) {
     return note;
   }
@@ -296,6 +297,7 @@ function addAccidental(
 
   if (isSharpInKeySignature || isFlatInKeySignature) {
     // 조표가 적용된 음표는 natural만 가능 (조표를 취소하는 역할)
+    // 하지만 확률적으로만 적용 - 항상 natural이 나오지 않도록
     availableAccidentals = ["natural"];
   } else {
     // 조표가 적용되지 않은 음표는 natural 제외 (natural은 표시하지 않음)
@@ -379,12 +381,38 @@ const ENHARMONIC_EQUIVALENTS: Record<string, string[]> = {
 };
 
 /**
- * 음표를 이명동음 표기로 변환
+ * 음표를 이명동음 표기로 변환 (조표와 임시표 고려)
  */
-function getNoteWithAccidental(note: Note): string {
-  const accidentalSymbol =
-    note.accidental === "sharp" ? "#" : note.accidental === "flat" ? "b" : "";
-  return `${note.name}${accidentalSymbol}`;
+function getNoteWithAccidental(
+  note: Note,
+  keySignature?: KeySignature
+): string {
+  // 임시표가 있는 경우
+  if (note.accidental === "sharp") {
+    return `${note.name}#`;
+  }
+  if (note.accidental === "flat") {
+    return `${note.name}b`;
+  }
+  if (note.accidental === "natural") {
+    // natural 임시표는 조표를 취소하므로 기본 음표 반환
+    return note.name;
+  }
+
+  // 임시표가 없는 경우 (null), 조표 확인
+  if (keySignature) {
+    // 조표에 샵이 있는 음표인지 확인
+    if (keySignature.sharps.includes(note.name)) {
+      return `${note.name}#`;
+    }
+    // 조표에 플랫이 있는 음표인지 확인
+    if (keySignature.flats.includes(note.name)) {
+      return `${note.name}b`;
+    }
+  }
+
+  // 조표도 없고 임시표도 없으면 기본 음표
+  return note.name;
 }
 
 /**
@@ -405,9 +433,12 @@ function areEnharmonicEquivalents(note1: string, note2: string): boolean {
  */
 export function validateAnswer(question: Question, userAnswer: Note): boolean {
   // 문제의 음표 (조표와 임시표가 적용된 최종 음표)
-  const questionNoteStr = getNoteWithAccidental(question.note);
+  const questionNoteStr = getNoteWithAccidental(
+    question.displayNote,
+    question.keySignature
+  );
 
-  // 사용자 답안 음표
+  // 사용자 답안 음표 (조표 정보 없이 - 사용자가 입력한 그대로)
   const userAnswerStr = getNoteWithAccidental(userAnswer);
 
   // 이명동음 확인

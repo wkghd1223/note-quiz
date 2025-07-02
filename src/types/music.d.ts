@@ -16,7 +16,7 @@ type Octave = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 // 완전한 음표 정보
 interface Note {
   name: NoteName;
-  accidental: Accidental;
+  accidental: Accidental | null;
   octave: Octave;
 }
 
