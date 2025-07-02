@@ -23,8 +23,8 @@ export default function HomePage() {
       priceCurrency: "USD",
     },
     creator: {
-      "@type": "Organization",
-      name: "Note Quiz Team",
+      "@type": "Person",
+      name: "JEON HYEONTAE",
     },
     keywords:
       "music education, note reading, sight reading, music theory, piano practice, harmonica, music quiz",

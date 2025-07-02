@@ -8,32 +8,14 @@ I created this game to support my harmonica learning journey. When reading sheet
 
 ## ✨ Features
 
-### 🎹 Interactive Learning
-
-- **Piano Keyboard Input**: Click on piano keys to answer questions
-- **Solfege Input Mode**: Use Do-Re-Mi notation for traditional music education
-- **Visual Staff Display**: Learn to read notes on treble and bass clefs
-- **Audio Playback**: Train your ear with real piano sounds
-
-### ⚙️ Customizable Settings
-
-- **Multiple Clefs**: Treble clef, bass clef, or random selection
-- **Key Signatures**: Practice with various key signatures (sharps and flats)
-- **Accidentals**: Enable sharps, flats, and naturals for advanced training
-- **Ledger Lines**: Extend the staff range for comprehensive note coverage
-- **Time Limits**: Optional time constraints for focused practice
-
-### 📊 Progress Tracking
-
-- **Real-time Feedback**: Instant correct/incorrect responses
-- **Performance Statistics**: Track accuracy and response times
-- **Question History**: Review recent answers with time spent
-- **Personal Records**: Monitor your best performance times
-
-### 🌍 Accessibility
-
-- **Bilingual Support**: English and Korean languages
-- **Mobile Responsive**: Optimized for phones, tablets, and desktop
+- **Multiple Clefs**: Treble, Bass, Alto, and Tenor clef support
+- **Key Signatures**: All major and minor key signatures with accidentals
+- **Answer Input Methods**: Piano keyboard and Solfege (Do-Re-Mi) input
+- **Customizable Settings**: Adjust clefs, key signatures, time limits, and difficulty
+- **Real-time Feedback**: Instant validation with visual and audio cues
+- **Responsive Design**: Optimized for both desktop and mobile devices
+- **Multi-language Support**: English and Korean (한국어)
+- **Progress Tracking**: Detailed statistics and score monitoring
 - **Enharmonic Recognition**: Accepts equivalent notes (C# = Db, E# = F, etc.)
 
 ## 🚀 Getting Started
@@ -75,6 +57,11 @@ pnpm dev
 4. **Open your browser:**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
+## 🌐 Live Demo
+
+The application is deployed on AWS Amplify and available at:
+**[https://note-quiz.com](https://note-quiz.com)**
+
 ## 🛠️ Tech Stack
 
 - **Framework**: Next.js 15 with App Router
@@ -111,22 +98,6 @@ src/
 ├── types/               # TypeScript definitions
 └── hooks/               # Custom React hooks
 ```
-
-## 🎵 Music Theory Features
-
-### Supported Elements
-
-- **Clefs**: Treble (G clef), Bass (F clef)
-- **Key Signatures**: All major and minor keys
-- **Accidentals**: Sharp (♯), Flat (♭), Natural (♮)
-- **Note Range**: Extended with ledger lines
-- **Enharmonic Equivalents**: Automatic recognition of equivalent notes
-
-### Educational Approach
-
-- **Immediate Feedback**: Learn from mistakes instantly
-- **Spaced Repetition**: Review challenging notes more frequently
-- **Multi-modal Learning**: Visual, auditory, and kinesthetic input methods
 
 ## 🤝 Contributing
 
