@@ -3,7 +3,7 @@
 import React, { useState, useCallback } from "react";
 import { playPianoNote } from "@/lib/music/audio";
 import { PIANO_KEYS } from "@/lib/music/constants";
-import { useTranslation } from "@/hooks/useTranslation";
+// import { useTranslation } from "@/hooks/useTranslation";
 
 interface PianoKeyboardProps {
   onNoteClick?: (note: Note) => void;
@@ -27,7 +27,7 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
   showLabels = true,
   className = "",
 }) => {
-  const { t } = useTranslation();
+  // const { t } = useTranslation();
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
 
   // 키보드 키 생성
@@ -115,21 +115,20 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
   return (
     <div className={`piano-keyboard ${className}`}>
       {/* 키보드 정보 */}
-      <div className="mt-4 mb-2 text-center text-sm text-gray-600">
+      {/* <div className="mt-4 mb-2 text-center text-sm text-gray-600">
         <p>{t.piano.instruction}</p>
         <p className="mt-1 font-medium text-blue-600">
           {t.piano.selectedNote}:
           {selectedNote && (
             <>
-              {" "}
               {selectedNote.name}
               {selectedNote.accidental === "sharp" && "#"}
               {selectedNote.accidental === "flat" && "♭"}
-              {/* {selectedNote.octave} */}
+              {selectedNote.octave}
             </>
           )}
         </p>
-      </div>
+      </div> */}
 
       <div
         className="relative select-none"
@@ -146,9 +145,9 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
               <button
                 key={keyId}
                 className={`
-                  white-key relative border border-gray-300 bg-white hover:bg-gray-50
-                  transition-colors duration-75 focus:outline-none focus:ring-2 focus:ring-blue-500
-                  ${isPressed ? "bg-gray-200 shadow-inner" : ""}
+                  white-key relative border border-gray-300 bg-white md:hover:bg-gray-50
+                  transition-colors duration-75
+                  ${isPressed ? "brightness-90 shadow-inner" : ""}
                   ${isSelected ? "bg-blue-100 border-blue-400" : ""}
                   ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
                 `}
@@ -191,9 +190,9 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
               <button
                 key={keyId}
                 className={`
-                  black-key absolute border border-gray-800 bg-gray-900 hover:bg-gray-800
-                  text-white transition-colors duration-75 focus:outline-none focus:ring-2 focus:ring-blue-500
-                  ${isPressed ? "bg-gray-700 shadow-inner" : ""}
+                  black-key absolute border border-gray-800 bg-gray-900 md:hover:bg-gray-800
+                  text-white transition-colors duration-75
+                  ${isPressed ? "opacity-70 shadow-inner" : ""}
                   ${isSelected ? "bg-blue-800 border-blue-600" : ""}
                   ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
                 `}
