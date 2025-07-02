@@ -30,13 +30,6 @@ export interface Translations {
     random: string;
   };
 
-  // 게임 모드
-  gameModes: {
-    visual: string;
-    audio: string;
-    both: string;
-  };
-
   // 답안 입력 방식
   answerModes: {
     piano: string;
@@ -58,8 +51,6 @@ export interface Translations {
     octaveRange: string;
     octaveMin: string;
     octaveMax: string;
-    difficulty: string;
-    gameMode: string;
     answerMode: string;
     language: string;
     enableSound: string;
@@ -138,6 +129,7 @@ export interface Translations {
     yourAnswer: string;
     playSound: string;
     startGameInstruction: string;
+    gameCompleteInstruction: string;
   };
 
   // 단위
@@ -152,7 +144,6 @@ export interface Translations {
     welcome: string;
     description: string;
     features: {
-      gameMode: string;
       customSettings: string;
       realTimeFeedback: string;
     };
@@ -191,12 +182,6 @@ export const translations: Record<Language, Translations> = {
       random: "Random",
     },
 
-    gameModes: {
-      visual: "Visual",
-      audio: "Audio",
-      both: "Both",
-    },
-
     answerModes: {
       piano: "Piano Keys",
       solfege: "Solfege",
@@ -215,8 +200,6 @@ export const translations: Record<Language, Translations> = {
       octaveRange: "Octave Range",
       octaveMin: "Min",
       octaveMax: "Max",
-      difficulty: "Difficulty",
-      gameMode: "Game Mode",
       answerMode: "Answer Mode",
       language: "Language",
       enableSound: "Enable Sound",
@@ -290,6 +273,8 @@ export const translations: Record<Language, Translations> = {
       yourAnswer: "Your Answer",
       playSound: "🔊 Play Sound",
       startGameInstruction: 'Adjust settings and click "Start Game" button.',
+      gameCompleteInstruction:
+        "Game complete! Check your results on the scoreboard.",
     },
 
     units: {
@@ -302,7 +287,6 @@ export const translations: Record<Language, Translations> = {
       welcome: "Welcome to Note Quiz Game!",
       description: "Learn to read musical notes by sight and sound!",
       features: {
-        gameMode: "Various Game Modes",
         customSettings: "Customizable Settings",
         realTimeFeedback: "Real-time Feedback",
       },
@@ -342,12 +326,6 @@ export const translations: Record<Language, Translations> = {
       random: "랜덤",
     },
 
-    gameModes: {
-      visual: "시각적",
-      audio: "청각적",
-      both: "시청각",
-    },
-
     answerModes: {
       piano: "피아노 건반",
       solfege: "도레미",
@@ -366,8 +344,6 @@ export const translations: Record<Language, Translations> = {
       octaveRange: "옥타브 범위",
       octaveMin: "최소",
       octaveMax: "최대",
-      difficulty: "난이도",
-      gameMode: "게임 모드",
       answerMode: "답안 입력 방식",
       language: "언어",
       enableSound: "소리 재생",
@@ -441,6 +417,8 @@ export const translations: Record<Language, Translations> = {
       yourAnswer: "당신의 답안",
       playSound: "🔊 소리 듣기",
       startGameInstruction: '설정을 조정한 후 "게임 시작" 버튼을 클릭하세요.',
+      gameCompleteInstruction:
+        "게임이 완료되었습니다. 점수판에서 결과를 확인하세요.",
     },
 
     units: {
@@ -453,7 +431,6 @@ export const translations: Record<Language, Translations> = {
       welcome: "계이름 맞추기 게임에 오신 것을 환영합니다!",
       description: "시각적 학습과 청각적 훈련을 통해 음악 실력을 향상시키세요.",
       features: {
-        gameMode: "다양한 게임 모드",
         customSettings: "맞춤형 설정",
         realTimeFeedback: "실시간 피드백",
       },

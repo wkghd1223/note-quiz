@@ -12,6 +12,7 @@ import PianoKeyboard from "@/components/game/PianoKeyboard";
 import SolfegeKeyboard from "@/components/game/SolfegeKeyboard";
 import Timer from "@/components/game/Timer";
 import ScoreBoard from "@/components/game/ScoreBoard";
+import GameControl from "@/components/game/GameControl";
 
 const GameMain: React.FC = () => {
   const { t } = useTranslation();
@@ -59,13 +60,11 @@ const GameMain: React.FC = () => {
     // 문제별 타이머 시작
     startQuestionTimer();
 
-    // 오디오 모드일 때 소리 재생
-    if (settings.gameMode === "audio" || settings.gameMode === "both") {
-      if (settings.enableSound && isAudioInitialized) {
-        setTimeout(() => {
-          playPianoNote(question.displayNote, 1000).catch(console.error);
-        }, 500);
-      }
+    // 소리 재생
+    if (settings.enableSound && isAudioInitialized) {
+      setTimeout(() => {
+        playPianoNote(question.displayNote, 1000).catch(console.error);
+      }, 500);
     }
   }, [
     settings,
@@ -139,10 +138,15 @@ const GameMain: React.FC = () => {
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 overflow-hidden relative">
-        {/* 왼쪽: 타이머와 점수판 (데스크톱만) */}
-        <div className="hidden md:block md:col-span-1 space-y-6">
-          <Timer />
-          <ScoreBoard />
+        <div>
+          {/* 왼쪽: 타이머와 점수판 (데스크톱만) */}
+          <div className="md:block hidden mb-3">
+            <GameControl />
+          </div>
+          <div className="hidden md:block md:col-span-1 space-y-6">
+            <Timer />
+            <ScoreBoard />
+          </div>
         </div>
 
         {/* 중앙: 게임 영역 */}
@@ -172,19 +176,17 @@ const GameMain: React.FC = () => {
             </div>
 
             {/* 오선지 */}
-            {currentQuestion &&
-              (settings.gameMode === "visual" ||
-                settings.gameMode === "both") && (
-                <div className="mb-6">
-                  <Staff
-                    clef={currentQuestion.clef}
-                    keySignature={currentQuestion.keySignature}
-                    note={currentQuestion.displayNote}
-                    originalNote={currentQuestion.note}
-                    className="flex justify-center"
-                  />
-                </div>
-              )}
+            {currentQuestion && (
+              <div className="mb-6">
+                <Staff
+                  clef={currentQuestion.clef}
+                  keySignature={currentQuestion.keySignature}
+                  note={currentQuestion.displayNote}
+                  originalNote={currentQuestion.note}
+                  className="flex justify-center"
+                />
+              </div>
+            )}
 
             {/* 소리 재생 버튼 */}
             {currentQuestion && settings.enableSound && isAudioInitialized && (
@@ -238,7 +240,7 @@ const GameMain: React.FC = () => {
                   {t.messages.gameComplete}
                 </h2>
                 <p className="text-gray-600">
-                  Check your results on the scoreboard!
+                  {t.messages.gameCompleteInstruction}
                 </p>
               </div>
             )}

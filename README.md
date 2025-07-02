@@ -21,7 +21,6 @@ I created this game to support my harmonica learning journey. When reading sheet
 - **Key Signatures**: Practice with various key signatures (sharps and flats)
 - **Accidentals**: Enable sharps, flats, and naturals for advanced training
 - **Ledger Lines**: Extend the staff range for comprehensive note coverage
-- **Difficulty Levels**: Beginner, intermediate, advanced, and endurance modes
 - **Time Limits**: Optional time constraints for focused practice
 
 ### 📊 Progress Tracking
@@ -125,7 +124,6 @@ src/
 
 ### Educational Approach
 
-- **Progressive Difficulty**: Start simple, gradually increase complexity
 - **Immediate Feedback**: Learn from mistakes instantly
 - **Spaced Repetition**: Review challenging notes more frequently
 - **Multi-modal Learning**: Visual, auditory, and kinesthetic input methods

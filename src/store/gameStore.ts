@@ -176,8 +176,6 @@ export const useGameStore = create<GameStore>()(
         trackGameStart({
           clef: settings.clef,
           keySignature: settings.keySignature,
-          difficulty: settings.difficulty,
-          gameMode: settings.gameMode,
           answerMode: settings.answerMode,
         });
 

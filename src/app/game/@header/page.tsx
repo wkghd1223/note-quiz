@@ -1,5 +1,5 @@
 import Header from "@/components/layouts/header";
-import Timer from "@/components/game/Timer";
+import GameControl from "@/components/game/GameControl";
 
 export default function GameHeader() {
   return (
@@ -7,9 +7,11 @@ export default function GameHeader() {
       {/* 헤더 */}
       <Header />
 
-      {/* 타이머 - 모바일에서 헤더 아래 sticky */}
+      {/* 게임 컨트롤 - 모바일에서만 */}
       <div className="md:hidden mt-4">
-        <Timer className="mx-auto" />
+        <div className="max-w-7xl mx-auto px-4 py-2">
+          <GameControl />
+        </div>
       </div>
     </>
   );

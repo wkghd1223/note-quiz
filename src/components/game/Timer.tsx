@@ -108,7 +108,7 @@ const Timer: React.FC<TimerProps> = ({ className = "" }) => {
                   />
                 </div>
                 <div className="text-xs text-gray-500 mt-1">
-                  {settings.timeLimit}초 제한
+                  {settings.timeLimit}
                 </div>
               </div>
             )}
@@ -127,7 +127,7 @@ const Timer: React.FC<TimerProps> = ({ className = "" }) => {
           )}
         </div>
         {/* 게임 상태 표시 */}
-        <div className="mt-2 place-self-center">
+        <div className="mt-2 place-self-center flex justify-spacebetween items-center space-x-4">
           <span
             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
               gameState === "playing"
@@ -139,10 +139,10 @@ const Timer: React.FC<TimerProps> = ({ className = "" }) => {
                     : "bg-gray-100 text-gray-800"
             }`}
           >
-            {gameState === "playing" && "진행 중"}
-            {gameState === "paused" && "일시정지"}
-            {gameState === "finished" && "완료"}
-            {gameState === "idle" && "대기"}
+            {gameState === "playing" && t.gameStates.playing}
+            {gameState === "paused" && t.gameStates.paused}
+            {gameState === "finished" && t.gameStates.finished}
+            {gameState === "idle" && t.gameStates.idle}
           </span>
         </div>
       </div>
