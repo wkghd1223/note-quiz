@@ -13,6 +13,7 @@ import SolfegeKeyboard from "@/components/game/SolfegeKeyboard";
 import Timer from "@/components/game/Timer";
 import ScoreBoard from "@/components/game/ScoreBoard";
 import GameControl from "@/components/game/GameControl";
+import { useLanguageStore } from "@/store/languageStore";
 
 const GameMain: React.FC = () => {
   const { t } = useTranslation();
@@ -122,6 +123,13 @@ const GameMain: React.FC = () => {
       t,
     ]
   );
+
+  const { isInitialized } = useLanguageStore();
+
+  // 언어 초기화가 완료될 때까지 로딩
+  if (!isInitialized) {
+    return null;
+  }
 
   // 소리 재생 (문제 다시 듣기)
   // const handlePlaySound = useCallback(async () => {
