@@ -127,7 +127,7 @@ const Timer: React.FC<TimerProps> = ({ className = "" }) => {
           )}
         </div>
         {/* 게임 상태 표시 */}
-        <div className="mt-2 place-self-center flex justify-spacebetween items-center space-x-4">
+        <div className="mt-2 flex md:justify-spacebetween justify-center items-center space-x-4">
           <span
             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
               gameState === "playing"

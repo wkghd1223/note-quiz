@@ -35,28 +35,7 @@ export const SOLFEGE_TO_NOTE_MAPPING: Record<SolfegeNote, NoteName> = {
 };
 
 // 음자리표 정보
-export const CLEFS: Record<ClefType, Clef> = {
-  treble: {
-    type: "treble",
-    name: "Treble Clef",
-    nameKo: "높은음자리표",
-  },
-  bass: {
-    type: "bass",
-    name: "Bass Clef",
-    nameKo: "낮은음자리표",
-  },
-  alto: {
-    type: "alto",
-    name: "Alto Clef",
-    nameKo: "알토음자리표",
-  },
-  tenor: {
-    type: "tenor",
-    name: "Tenor Clef",
-    nameKo: "테너음자리표",
-  },
-};
+export const CLEFS: ClefType[] = ["treble", "bass", "alto", "tenor"];
 
 // 주요 조표들
 export const KEY_SIGNATURES: Record<string, KeySignature> = {
