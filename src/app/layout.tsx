@@ -4,6 +4,7 @@ import "@/styles/globals.css";
 import { defaultMetadata } from "@/lib/metadata";
 import Footer from "@/components/layouts/footer";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
+import LanguageInitializer from "@/components/providers/LanguageInitializer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,6 +30,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <LanguageInitializer />
         <GoogleAnalytics />
         {modals}
 

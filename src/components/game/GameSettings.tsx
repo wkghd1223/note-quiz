@@ -96,17 +96,17 @@ const GameSettings: React.FC<GameSettingsProps> = ({
               >
                 {t.settingsLabels.random}
               </button>
-              {Object.entries(CLEFS).map(([key, clef]) => (
+              {CLEFS.map((key) => (
                 <button
                   key={key}
-                  onClick={() => handleClefChange(key as ClefType)}
+                  onClick={() => handleClefChange(key)}
                   className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
                     settings.clef === key
                       ? "bg-blue-100 border-blue-300 text-blue-700"
                       : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                   }`}
                 >
-                  {clef.name}
+                  {t.clefs[key]}
                 </button>
               ))}
             </div>

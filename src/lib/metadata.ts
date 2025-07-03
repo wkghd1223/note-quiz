@@ -25,6 +25,28 @@ export const siteConfig = {
   ],
 };
 
+export const jsonLdSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "Note Quiz",
+  description:
+    "Learn to read musical notes by sight and sound! A comprehensive web-based music note identification game designed to help musicians improve their sight-reading skills.",
+  url: siteUrl,
+  applicationCategory: "EducationalApplication",
+  operatingSystem: "Web Browser",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+  },
+  creator: {
+    "@type": "Person",
+    name: "JEON HYEONTAE",
+  },
+  keywords:
+    "music education, note reading, sight reading, music theory, piano practice, harmonica, music quiz",
+};
+
 export const defaultMetadata: Metadata = {
   title: {
     default: siteConfig.name,
@@ -80,5 +102,8 @@ export const defaultMetadata: Metadata = {
   },
   verification: {
     google: "G-RHJP137HQZ",
+  },
+  other: {
+    "application/ld+json": JSON.stringify(jsonLdSchema),
   },
 };

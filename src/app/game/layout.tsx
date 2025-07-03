@@ -1,6 +1,31 @@
 import { Metadata } from "next";
 import Timer from "@/components/game/Timer";
 
+const gameJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Game",
+  name: "Note Quiz Game",
+  description:
+    "Interactive music note identification game for sight-reading practice",
+  url: "https://note-quiz.com/game",
+  applicationCategory: "EducationalApplication",
+  gameItem: {
+    "@type": "Thing",
+    name: "Musical Note",
+    description: "Musical notes on staff notation",
+  },
+  educationalUse: "Music Education",
+  learningResourceType: "Interactive Game",
+  audience: {
+    "@type": "EducationalAudience",
+    educationalRole: "student",
+  },
+  creator: {
+    "@type": "Person",
+    name: "JEON HYEONTAE",
+  },
+};
+
 export const metadata: Metadata = {
   title: "Play Game",
   description:
@@ -9,6 +34,9 @@ export const metadata: Metadata = {
     title: "Note Quiz - Play Now",
     description:
       "Test your music sight-reading skills with our interactive note identification game.",
+  },
+  other: {
+    "application/ld+json": JSON.stringify(gameJsonLd),
   },
 };
 

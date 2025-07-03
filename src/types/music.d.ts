@@ -20,13 +20,6 @@ interface Note {
   octave: Octave;
 }
 
-// 음자리표 정보
-interface Clef {
-  type: ClefType;
-  name: string;
-  nameKo: string;
-}
-
 // 조표 정보 (Key Signature)
 interface KeySignature {
   key: string;
@@ -39,7 +32,7 @@ interface KeySignature {
 type AnswerMode = "piano" | "solfege";
 
 // 언어 설정
-type Language = "en" | "ko";
+type Language = "en" | "ko" | "ja" | "es" | "de" | "fr";
 
 // 게임 설정
 interface GameSettings {

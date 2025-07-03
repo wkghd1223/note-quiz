@@ -483,6 +483,640 @@ export const translations: Record<Language, Translations> = {
         "보조선이 많을수록 더 넓은 음역대의 문제가 출제됩니다.",
     },
   },
+
+  ja: {
+    gameTitle: "音符クイズ",
+    startGame: "ゲーム開始",
+    pauseGame: "一時停止",
+    resumeGame: "再開",
+    endGame: "ゲーム終了",
+    resetGame: "リセット",
+    settings: "設定",
+
+    gameStates: {
+      idle: "待機中",
+      playing: "プレイ中",
+      paused: "一時停止",
+      finished: "完了",
+    },
+
+    clefs: {
+      treble: "ト音記号",
+      bass: "ヘ音記号",
+      alto: "アルト記号",
+      tenor: "テナー記号",
+      random: "ランダム",
+    },
+
+    answerModes: {
+      piano: "ピアノ鍵盤",
+      solfege: "ドレミ",
+    },
+
+    difficulties: {
+      easy: "簡単",
+      medium: "普通",
+      hard: "難しい",
+      expert: "エキスパート",
+    },
+
+    keySignatures: {
+      random: "ランダム",
+    },
+
+    settingsLabels: {
+      clef: "音部記号",
+      keySignature: "調号",
+      octaveRange: "オクターブ範囲",
+      octaveMin: "最小",
+      octaveMax: "最大",
+      answerMode: "回答方式",
+      language: "言語",
+      enableSound: "音を有効にする",
+      timeLimit: "制限時間（秒）",
+      timeLimitEnable: "制限時間を有効にする",
+      resetToDefault: "デフォルトにリセット",
+      cancel: "キャンセル",
+      apply: "適用",
+      random: "ランダム",
+      staffRange: "譜表範囲",
+      ledgerLinesAbove: "上の加線",
+      ledgerLinesBelow: "下の加線",
+      ledgerLinesInstruction:
+        "加線が多いほど、より広い音域の音符が生成されます。",
+      accidentals: "臨時記号",
+      accidentalProbability: "臨時記号の確率",
+      resetAllStats: "全統計をリセット",
+    },
+
+    piano: {
+      instruction: "クリックして音符を選択してください",
+      selectedNote: "選択された音符",
+    },
+
+    solfege: {
+      title: "ドレミ入力",
+      instruction: "ドレミをクリックして音符を選択してください",
+      selectedNote: "選択された音符",
+      notes: {
+        C: "ド",
+        "C#": "ド♯",
+        D: "レ",
+        "D#": "レ♯",
+        E: "ミ",
+        F: "ファ",
+        "F#": "ファ♯",
+        G: "ソ",
+        "G#": "ソ♯",
+        A: "ラ",
+        "A#": "ラ♯",
+        B: "シ",
+      },
+    },
+
+    messages: {
+      correct: "正解！",
+      incorrect: "不正解",
+      timeUp: "時間切れ！",
+      gameComplete: "ゲーム完了！",
+      newRecord: "新記録！",
+      correctAnswer: "正解",
+      yourAnswer: "あなたの回答",
+      playSound: "音を再生",
+      startGameInstruction: "ゲームを開始するには設定を確認してください。",
+      gameCompleteInstruction:
+        "ゲームが完了しました。スコアボードで結果を確認してください。",
+    },
+
+    scoreboard: {
+      title: "スコアボード",
+      correct: "正解",
+      total: "合計",
+      accuracy: "正解率",
+      gameResult: "ゲーム結果",
+      finalScore: "最終スコア",
+      finalAccuracy: "最終正解率",
+      totalTime: "総時間",
+      averageTime: "平均時間",
+      overallStats: "全体統計",
+      gamesPlayed: "プレイ回数",
+      bestAccuracy: "最高正解率",
+      bestTime: "最短時間",
+      overallAccuracy: "全体正解率",
+      recentAnswers: "最近の回答",
+      achievements: "実績",
+    },
+
+    timer: {
+      elapsed: "経過時間",
+      remaining: "残り時間",
+      timeLimit: "秒制限",
+    },
+
+    achievements: {
+      perfect: "🏆 完璧！",
+      excellent: "⭐ 優秀",
+      good: "👍 良好",
+      endurance: "💪 持久力",
+      fast: "⚡ 高速",
+    },
+
+    units: {
+      seconds: "秒",
+      games: "ゲーム",
+      questions: "問題",
+    },
+
+    ui: {
+      welcome: "音符クイズへようこそ！",
+      description: "視覚と聴覚で音符を学ぼう！",
+      features: {
+        customSettings: "カスタム設定",
+        realTimeFeedback: "リアルタイムフィードバック",
+      },
+      currentQuestionTime: "現在の問題時間",
+      accidentalDescription:
+        "臨時記号が有効になると、調号とは別に個別の音符に♯、♭、♮が追加される場合があります。",
+      ledgerLinesDescription:
+        "加線が多いほど、より広い音域の問題が出題されます。",
+    },
+  },
+
+  es: {
+    gameTitle: "Quiz de Notas",
+    startGame: "Iniciar Juego",
+    pauseGame: "Pausar",
+    resumeGame: "Reanudar",
+    endGame: "Terminar Juego",
+    resetGame: "Reiniciar",
+    settings: "Configuración",
+
+    gameStates: {
+      idle: "En espera",
+      playing: "Jugando",
+      paused: "Pausado",
+      finished: "Terminado",
+    },
+
+    clefs: {
+      treble: "Clave de Sol",
+      bass: "Clave de Fa",
+      alto: "Clave de Do en 3ª",
+      tenor: "Clave de Do en 4ª",
+      random: "Aleatorio",
+    },
+
+    answerModes: {
+      piano: "Teclas de Piano",
+      solfege: "Solfeo",
+    },
+
+    difficulties: {
+      easy: "Fácil",
+      medium: "Medio",
+      hard: "Difícil",
+      expert: "Experto",
+    },
+
+    keySignatures: {
+      random: "Aleatorio",
+    },
+
+    settingsLabels: {
+      clef: "Clave",
+      keySignature: "Armadura",
+      octaveRange: "Rango de Octavas",
+      octaveMin: "Mín",
+      octaveMax: "Máx",
+      answerMode: "Modo de Respuesta",
+      language: "Idioma",
+      enableSound: "Habilitar Sonido",
+      timeLimit: "Límite de Tiempo (segundos)",
+      timeLimitEnable: "Habilitar Límite de Tiempo",
+      resetToDefault: "Restablecer por Defecto",
+      cancel: "Cancelar",
+      apply: "Aplicar",
+      random: "Aleatorio",
+      staffRange: "Rango del Pentagrama",
+      ledgerLinesAbove: "Líneas Adicionales Arriba",
+      ledgerLinesBelow: "Líneas Adicionales Abajo",
+      ledgerLinesInstruction:
+        "Más líneas adicionales permiten un rango más amplio de notas.",
+      accidentals: "Alteraciones",
+      accidentalProbability: "Probabilidad de Alteraciones",
+      resetAllStats: "Restablecer Todas las Estadísticas",
+    },
+
+    piano: {
+      instruction: "Haz clic para seleccionar una nota",
+      selectedNote: "Nota Seleccionada",
+    },
+
+    solfege: {
+      title: "Entrada de Solfeo",
+      instruction: "Haz clic en el solfeo para seleccionar una nota",
+      selectedNote: "Nota Seleccionada",
+      notes: {
+        C: "Do",
+        "C#": "Do♯",
+        D: "Re",
+        "D#": "Re♯",
+        E: "Mi",
+        F: "Fa",
+        "F#": "Fa♯",
+        G: "Sol",
+        "G#": "Sol♯",
+        A: "La",
+        "A#": "La♯",
+        B: "Si",
+      },
+    },
+
+    messages: {
+      correct: "¡Correcto!",
+      incorrect: "Incorrecto",
+      timeUp: "¡Tiempo agotado!",
+      gameComplete: "¡Juego completado!",
+      newRecord: "¡Nuevo récord!",
+      correctAnswer: "Respuesta correcta",
+      yourAnswer: "Tu respuesta",
+      playSound: "Reproducir sonido",
+      startGameInstruction: "Revisa la configuración para comenzar el juego.",
+      gameCompleteInstruction:
+        "Juego completado. Revisa tus resultados en el marcador.",
+    },
+
+    scoreboard: {
+      title: "Marcador",
+      correct: "Correcto",
+      total: "Total",
+      accuracy: "Precisión",
+      gameResult: "Resultado del Juego",
+      finalScore: "Puntuación Final",
+      finalAccuracy: "Precisión Final",
+      totalTime: "Tiempo Total",
+      averageTime: "Tiempo Promedio",
+      overallStats: "Estadísticas Generales",
+      gamesPlayed: "Juegos Jugados",
+      bestAccuracy: "Mejor Precisión",
+      bestTime: "Mejor Tiempo",
+      overallAccuracy: "Precisión General",
+      recentAnswers: "Respuestas Recientes",
+      achievements: "Logros",
+    },
+
+    timer: {
+      elapsed: "Tiempo Transcurrido",
+      remaining: "Tiempo Restante",
+      timeLimit: "límite de tiempo",
+    },
+
+    achievements: {
+      perfect: "🏆 ¡Perfecto!",
+      excellent: "⭐ Excelente",
+      good: "👍 Bien",
+      endurance: "💪 Resistencia",
+      fast: "⚡ Rápido",
+    },
+
+    units: {
+      seconds: "seg",
+      games: "juegos",
+      questions: "preguntas",
+    },
+
+    ui: {
+      welcome: "¡Bienvenido al Quiz de Notas!",
+      description: "¡Aprende a leer notas musicales por vista y sonido!",
+      features: {
+        customSettings: "Configuración Personalizada",
+        realTimeFeedback: "Retroalimentación en Tiempo Real",
+      },
+      currentQuestionTime: "Tiempo de Pregunta Actual",
+      accidentalDescription:
+        "Cuando las alteraciones están habilitadas, se pueden agregar ♯, ♭, ♮ a notas individuales además de la armadura.",
+      ledgerLinesDescription:
+        "Más líneas adicionales permiten un rango más amplio de preguntas.",
+    },
+  },
+
+  de: {
+    gameTitle: "Noten-Quiz",
+    startGame: "Spiel starten",
+    pauseGame: "Pausieren",
+    resumeGame: "Fortsetzen",
+    endGame: "Spiel beenden",
+    resetGame: "Zurücksetzen",
+    settings: "Einstellungen",
+
+    gameStates: {
+      idle: "Bereit",
+      playing: "Spielend",
+      paused: "Pausiert",
+      finished: "Beendet",
+    },
+
+    clefs: {
+      treble: "Violinschlüssel",
+      bass: "Bassschlüssel",
+      alto: "Altschlüssel",
+      tenor: "Tenorschlüssel",
+      random: "Zufällig",
+    },
+
+    answerModes: {
+      piano: "Klaviertasten",
+      solfege: "Solmisation",
+    },
+
+    difficulties: {
+      easy: "Einfach",
+      medium: "Mittel",
+      hard: "Schwer",
+      expert: "Experte",
+    },
+
+    keySignatures: {
+      random: "Zufällig",
+    },
+
+    settingsLabels: {
+      clef: "Notenschlüssel",
+      keySignature: "Vorzeichen",
+      octaveRange: "Oktavbereich",
+      octaveMin: "Min",
+      octaveMax: "Max",
+      answerMode: "Antwortmodus",
+      language: "Sprache",
+      enableSound: "Ton aktivieren",
+      timeLimit: "Zeitlimit (Sekunden)",
+      timeLimitEnable: "Zeitlimit aktivieren",
+      resetToDefault: "Auf Standard zurücksetzen",
+      cancel: "Abbrechen",
+      apply: "Anwenden",
+      random: "Zufällig",
+      staffRange: "Notenlinienbereich",
+      ledgerLinesAbove: "Hilfslinien oben",
+      ledgerLinesBelow: "Hilfslinien unten",
+      ledgerLinesInstruction:
+        "Mehr Hilfslinien ermöglichen einen größeren Notenbereich.",
+      accidentals: "Vorzeichen",
+      accidentalProbability: "Vorzeichen-Wahrscheinlichkeit",
+      resetAllStats: "Alle Statistiken zurücksetzen",
+    },
+
+    piano: {
+      instruction: "Klicken Sie, um eine Note auszuwählen",
+      selectedNote: "Ausgewählte Note",
+    },
+
+    solfege: {
+      title: "Solmisation-Eingabe",
+      instruction: "Klicken Sie auf Solmisation, um eine Note auszuwählen",
+      selectedNote: "Ausgewählte Note",
+      notes: {
+        C: "Do",
+        "C#": "Do♯",
+        D: "Re",
+        "D#": "Re♯",
+        E: "Mi",
+        F: "Fa",
+        "F#": "Fa♯",
+        G: "Sol",
+        "G#": "Sol♯",
+        A: "La",
+        "A#": "La♯",
+        B: "Si",
+      },
+    },
+
+    messages: {
+      correct: "Richtig!",
+      incorrect: "Falsch",
+      timeUp: "Zeit abgelaufen!",
+      gameComplete: "Spiel beendet!",
+      newRecord: "Neuer Rekord!",
+      correctAnswer: "Richtige Antwort",
+      yourAnswer: "Ihre Antwort",
+      playSound: "Ton abspielen",
+      startGameInstruction:
+        "Überprüfen Sie die Einstellungen, um das Spiel zu starten.",
+      gameCompleteInstruction:
+        "Spiel beendet. Überprüfen Sie Ihre Ergebnisse auf der Anzeigetafel.",
+    },
+
+    scoreboard: {
+      title: "Anzeigetafel",
+      correct: "Richtig",
+      total: "Gesamt",
+      accuracy: "Genauigkeit",
+      gameResult: "Spielergebnis",
+      finalScore: "Endpunktzahl",
+      finalAccuracy: "Endgenauigkeit",
+      totalTime: "Gesamtzeit",
+      averageTime: "Durchschnittszeit",
+      overallStats: "Gesamtstatistiken",
+      gamesPlayed: "Gespielte Spiele",
+      bestAccuracy: "Beste Genauigkeit",
+      bestTime: "Beste Zeit",
+      overallAccuracy: "Gesamtgenauigkeit",
+      recentAnswers: "Letzte Antworten",
+      achievements: "Erfolge",
+    },
+
+    timer: {
+      elapsed: "Verstrichene Zeit",
+      remaining: "Verbleibende Zeit",
+      timeLimit: "Zeitlimit",
+    },
+
+    achievements: {
+      perfect: "🏆 Perfekt!",
+      excellent: "⭐ Ausgezeichnet",
+      good: "👍 Gut",
+      endurance: "💪 Ausdauer",
+      fast: "⚡ Schnell",
+    },
+
+    units: {
+      seconds: "Sek",
+      games: "Spiele",
+      questions: "Fragen",
+    },
+
+    ui: {
+      welcome: "Willkommen beim Noten-Quiz!",
+      description: "Lernen Sie, Musiknoten durch Sehen und Hören zu lesen!",
+      features: {
+        customSettings: "Benutzerdefinierte Einstellungen",
+        realTimeFeedback: "Echtzeit-Feedback",
+      },
+      currentQuestionTime: "Aktuelle Fragenzeit",
+      accidentalDescription:
+        "Wenn Vorzeichen aktiviert sind, können ♯, ♭, ♮ zu einzelnen Noten zusätzlich zur Tonart hinzugefügt werden.",
+      ledgerLinesDescription:
+        "Mehr Hilfslinien ermöglichen einen größeren Bereich von Fragen.",
+    },
+  },
+
+  fr: {
+    gameTitle: "Quiz des Notes",
+    startGame: "Commencer le Jeu",
+    pauseGame: "Pause",
+    resumeGame: "Reprendre",
+    endGame: "Terminer le Jeu",
+    resetGame: "Réinitialiser",
+    settings: "Paramètres",
+
+    gameStates: {
+      idle: "En attente",
+      playing: "En cours",
+      paused: "En pause",
+      finished: "Terminé",
+    },
+
+    clefs: {
+      treble: "Clé de Sol",
+      bass: "Clé de Fa",
+      alto: "Clé d'Ut 3ème",
+      tenor: "Clé d'Ut 4ème",
+      random: "Aléatoire",
+    },
+
+    answerModes: {
+      piano: "Touches de Piano",
+      solfege: "Solfège",
+    },
+
+    difficulties: {
+      easy: "Facile",
+      medium: "Moyen",
+      hard: "Difficile",
+      expert: "Expert",
+    },
+
+    keySignatures: {
+      random: "Aléatoire",
+    },
+
+    settingsLabels: {
+      clef: "Clé",
+      keySignature: "Armure",
+      octaveRange: "Gamme d'Octaves",
+      octaveMin: "Min",
+      octaveMax: "Max",
+      answerMode: "Mode de Réponse",
+      language: "Langue",
+      enableSound: "Activer le Son",
+      timeLimit: "Limite de Temps (secondes)",
+      timeLimitEnable: "Activer la Limite de Temps",
+      resetToDefault: "Rétablir par Défaut",
+      cancel: "Annuler",
+      apply: "Appliquer",
+      random: "Aléatoire",
+      staffRange: "Gamme de Portée",
+      ledgerLinesAbove: "Lignes Supplémentaires Au-dessus",
+      ledgerLinesBelow: "Lignes Supplémentaires En-dessous",
+      ledgerLinesInstruction:
+        "Plus de lignes supplémentaires permettent une gamme plus large de notes.",
+      accidentals: "Altérations",
+      accidentalProbability: "Probabilité d'Altérations",
+      resetAllStats: "Réinitialiser Toutes les Statistiques",
+    },
+
+    piano: {
+      instruction: "Cliquez pour sélectionner une note",
+      selectedNote: "Note Sélectionnée",
+    },
+
+    solfege: {
+      title: "Entrée Solfège",
+      instruction: "Cliquez sur le solfège pour sélectionner une note",
+      selectedNote: "Note Sélectionnée",
+      notes: {
+        C: "Do",
+        "C#": "Do♯",
+        D: "Ré",
+        "D#": "Ré♯",
+        E: "Mi",
+        F: "Fa",
+        "F#": "Fa♯",
+        G: "Sol",
+        "G#": "Sol♯",
+        A: "La",
+        "A#": "La♯",
+        B: "Si",
+      },
+    },
+
+    messages: {
+      correct: "Correct !",
+      incorrect: "Incorrect",
+      timeUp: "Temps écoulé !",
+      gameComplete: "Jeu terminé !",
+      newRecord: "Nouveau record !",
+      correctAnswer: "Bonne réponse",
+      yourAnswer: "Votre réponse",
+      playSound: "Jouer le son",
+      startGameInstruction: "Vérifiez les paramètres pour commencer le jeu.",
+      gameCompleteInstruction:
+        "Jeu terminé. Vérifiez vos résultats sur le tableau de bord.",
+    },
+
+    scoreboard: {
+      title: "Tableau de Bord",
+      correct: "Correct",
+      total: "Total",
+      accuracy: "Précision",
+      gameResult: "Résultat du Jeu",
+      finalScore: "Score Final",
+      finalAccuracy: "Précision Finale",
+      totalTime: "Temps Total",
+      averageTime: "Temps Moyen",
+      overallStats: "Statistiques Générales",
+      gamesPlayed: "Jeux Joués",
+      bestAccuracy: "Meilleure Précision",
+      bestTime: "Meilleur Temps",
+      overallAccuracy: "Précision Générale",
+      recentAnswers: "Réponses Récentes",
+      achievements: "Réussites",
+    },
+
+    timer: {
+      elapsed: "Temps Écoulé",
+      remaining: "Temps Restant",
+      timeLimit: "limite de temps",
+    },
+
+    achievements: {
+      perfect: "🏆 Parfait !",
+      excellent: "⭐ Excellent",
+      good: "👍 Bien",
+      endurance: "💪 Endurance",
+      fast: "⚡ Rapide",
+    },
+
+    units: {
+      seconds: "sec",
+      games: "jeux",
+      questions: "questions",
+    },
+
+    ui: {
+      welcome: "Bienvenue au Quiz des Notes !",
+      description:
+        "Apprenez à lire les notes de musique par la vue et l'ouïe !",
+      features: {
+        customSettings: "Paramètres Personnalisés",
+        realTimeFeedback: "Retour en Temps Réel",
+      },
+      currentQuestionTime: "Temps de Question Actuel",
+      accidentalDescription:
+        "Lorsque les altérations sont activées, ♯, ♭, ♮ peuvent être ajoutés aux notes individuelles en plus de l'armure.",
+      ledgerLinesDescription:
+        "Plus de lignes supplémentaires permettent une gamme plus large de questions.",
+    },
+  },
 };
 
 export function getTranslation(language: Language): Translations {
