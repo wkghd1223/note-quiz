@@ -32,7 +32,7 @@ interface KeySignature {
 type AnswerMode = "piano" | "solfege";
 
 // 언어 설정
-type Language = "en" | "ko" | "ja" | "es";
+type Language = "en" | "ko" | "ja" | "es" | "de" | "fr";
 
 // 게임 설정
 interface GameSettings {
