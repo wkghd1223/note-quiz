@@ -116,6 +116,20 @@ export interface Translations {
     title: string;
     instruction: string;
     selectedNote: string;
+    notes: {
+      C: string;
+      "C#": string;
+      D: string;
+      "D#": string;
+      E: string;
+      F: string;
+      "F#": string;
+      G: string;
+      "G#": string;
+      A: string;
+      "A#": string;
+      B: string;
+    };
   };
 
   // 일반 메시지
@@ -261,6 +275,20 @@ export const translations: Record<Language, Translations> = {
       title: "Solfege Input",
       instruction: "Click solfege to select a note",
       selectedNote: "Selected Note",
+      notes: {
+        C: "Do",
+        "C#": "Do♯",
+        D: "Re",
+        "D#": "Re♯",
+        E: "Mi",
+        F: "Fa",
+        "F#": "Fa♯",
+        G: "Sol",
+        "G#": "Sol♯",
+        A: "La",
+        "A#": "La♯",
+        B: "Ti",
+      },
     },
 
     messages: {
@@ -405,6 +433,20 @@ export const translations: Record<Language, Translations> = {
       title: "도레미 입력",
       instruction: "도레미를 클릭하여 음표를 선택하세요",
       selectedNote: "선택된 음표",
+      notes: {
+        C: "도",
+        "C#": "도♯",
+        D: "레",
+        "D#": "레♯",
+        E: "미",
+        F: "파",
+        "F#": "파♯",
+        G: "솔",
+        "G#": "솔♯",
+        A: "라",
+        "A#": "라♯",
+        B: "시",
+      },
     },
 
     messages: {

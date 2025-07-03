@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from "react";
 import { playPianoNote } from "@/lib/music/audio";
-// import { useTranslation } from "@/hooks/useTranslation";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface SolfegeKeyboardProps {
   onNoteClick?: (note: Note) => void;
@@ -13,25 +13,24 @@ interface SolfegeKeyboardProps {
 
 // 도레미 키보드 레이아웃 (반음 포함)
 type SolfegeKey = {
-  solfege: string;
   note: string;
   accidental: "natural" | "sharp";
   color: "white" | "black";
 };
 
 const SOLFEGE_LAYOUT: SolfegeKey[] = [
-  { solfege: "도", note: "C", accidental: "natural", color: "white" },
-  { solfege: "도♯", note: "C", accidental: "sharp", color: "black" },
-  { solfege: "레", note: "D", accidental: "natural", color: "white" },
-  { solfege: "레♯", note: "D", accidental: "sharp", color: "black" },
-  { solfege: "미", note: "E", accidental: "natural", color: "white" },
-  { solfege: "파", note: "F", accidental: "natural", color: "white" },
-  { solfege: "파♯", note: "F", accidental: "sharp", color: "black" },
-  { solfege: "솔", note: "G", accidental: "natural", color: "white" },
-  { solfege: "솔♯", note: "G", accidental: "sharp", color: "black" },
-  { solfege: "라", note: "A", accidental: "natural", color: "white" },
-  { solfege: "라♯", note: "A", accidental: "sharp", color: "black" },
-  { solfege: "시", note: "B", accidental: "natural", color: "white" },
+  { note: "C", accidental: "natural", color: "white" },
+  { note: "C", accidental: "sharp", color: "black" },
+  { note: "D", accidental: "natural", color: "white" },
+  { note: "D", accidental: "sharp", color: "black" },
+  { note: "E", accidental: "natural", color: "white" },
+  { note: "F", accidental: "natural", color: "white" },
+  { note: "F", accidental: "sharp", color: "black" },
+  { note: "G", accidental: "natural", color: "white" },
+  { note: "G", accidental: "sharp", color: "black" },
+  { note: "A", accidental: "natural", color: "white" },
+  { note: "A", accidental: "sharp", color: "black" },
+  { note: "B", accidental: "natural", color: "white" },
 ];
 
 const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
@@ -40,8 +39,18 @@ const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
   disabled = false,
   className = "",
 }) => {
-  // const { t } = useTranslation();
+  const { t } = useTranslation();
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
+
+  // 도레미 텍스트 가져오기 함수
+  const getSolfegeText = useCallback(
+    (keyData: SolfegeKey): string => {
+      const noteKey =
+        keyData.accidental === "sharp" ? `${keyData.note}#` : keyData.note;
+      return t.solfege.notes[noteKey as keyof typeof t.solfege.notes];
+    },
+    [t]
+  );
 
   // 키 클릭 핸들러
   const handleKeyClick = useCallback(
@@ -54,7 +63,7 @@ const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
         octave: 4, // 기본 옥타브 (옥타브 무관하므로 고정값)
       };
 
-      const keyId = keyData.solfege;
+      const keyId = getSolfegeText(keyData);
 
       // 키 눌림 상태 업데이트
       setPressedKeys((prev) => new Set(prev).add(keyId));
@@ -78,7 +87,7 @@ const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
       // 부모 컴포넌트에 알림
       onNoteClick?.(note);
     },
-    [disabled, onNoteClick]
+    [disabled, onNoteClick, getSolfegeText]
   );
 
   // 선택된 키인지 확인
@@ -120,13 +129,14 @@ const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
         {/* 도레미 키보드 */}
         <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-12 gap-2">
           {SOLFEGE_LAYOUT.map((keyData) => {
-            const isPressed = pressedKeys.has(keyData.solfege);
+            const solfegeText = getSolfegeText(keyData);
+            const isPressed = pressedKeys.has(solfegeText);
             const isSelected = isKeySelected(keyData);
             const isBlackKey = keyData.color === "black";
 
             return (
               <button
-                key={keyData.solfege}
+                key={solfegeText}
                 className={`
                     solfege-key p-3 sm:p-4 rounded-lg border-2 font-bold text-sm sm:text-base
                     transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500
@@ -157,10 +167,10 @@ const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
                   `}
                 onClick={() => handleKeyClick(keyData)}
                 disabled={disabled}
-                aria-label={keyData.solfege}
+                aria-label={solfegeText}
               >
                 <div className="text-center">
-                  <div className="text-lg sm:text-xl">{keyData.solfege}</div>
+                  <div className="text-lg sm:text-xl">{solfegeText}</div>
                   <div className="text-xs text-current opacity-75 mt-1">
                     {keyData.note}
                     {keyData.accidental === "sharp" && "♯"}
