@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useGameStore } from "@/store/gameStore";
 import { useTranslation } from "@/hooks/useTranslation";
-import { generateQuestion } from "@/lib/music/utils";
+import { applyKeySignature, generateQuestion } from "@/lib/music/utils";
 import { playPianoNote, initializeAudio } from "@/lib/music/audio";
 
 const GameControl: React.FC = () => {
@@ -56,7 +56,8 @@ const GameControl: React.FC = () => {
     // 소리 재생
     if (settings.enableSound && isAudioInitialized) {
       setTimeout(() => {
-        playPianoNote(question.displayNote, 1000).catch(console.error);
+        const note = applyKeySignature(question.note, question.keySignature);
+        playPianoNote(note, 1000).catch(console.error);
       }, 500);
     }
   }, [
