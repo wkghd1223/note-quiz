@@ -72,7 +72,7 @@ const GameControl: React.FC = () => {
   // 게임 시작 시 첫 문제 생성
   useEffect(() => {
     if (gameState === "playing" && !currentQuestion) {
-      generateNewQuestion();
+      // generateNewQuestion();
     }
   }, [gameState, currentQuestion, generateNewQuestion]);
 

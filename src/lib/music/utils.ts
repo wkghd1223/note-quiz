@@ -34,21 +34,27 @@ export function applyKeySignature(
   note: Note,
   keySignature: KeySignature
 ): Note {
-  const { name, octave } = note;
-  let accidental: Accidental = "natural";
+  const { name, octave, accidental } = note;
+
+  // 이미 임시표가 있는 음표는 조표를 적용하지 않음
+  if (accidental !== null && accidental !== "natural") {
+    return note;
+  }
+
+  let newAccidental: Accidental | null = null;
 
   // 샾이 적용되는 음표인지 확인
   if (keySignature.sharps.includes(name)) {
-    accidental = "sharp";
+    newAccidental = "sharp";
   }
   // 플랫이 적용되는 음표인지 확인
   else if (keySignature.flats.includes(name)) {
-    accidental = "flat";
+    newAccidental = "flat";
   }
 
   return {
     name,
-    accidental,
+    accidental: newAccidental,
     octave,
   };
 }
@@ -348,10 +354,10 @@ export function generateQuestion(settings: GameSettings): Question {
   baseNote = addAccidental(baseNote, settings, keySignature);
 
   // 조표 적용 (임시표가 있으면 조표는 무시됨)
-  const displayNote =
-    baseNote.accidental !== "natural"
-      ? baseNote
-      : applyKeySignature(baseNote, keySignature);
+  // applyKeySignature 함수 내에서 임시표 여부를 확인하므로 항상 호출 가능
+  const displayNote = applyKeySignature(baseNote, keySignature);
+
+  console.log(baseNote, displayNote);
 
   return {
     id: `question_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -434,7 +440,7 @@ function areEnharmonicEquivalents(note1: string, note2: string): boolean {
 export function validateAnswer(question: Question, userAnswer: Note): boolean {
   // 문제의 음표 (조표와 임시표가 적용된 최종 음표)
   const questionNoteStr = getNoteWithAccidental(
-    question.displayNote,
+    question.note,
     question.keySignature
   );
 
