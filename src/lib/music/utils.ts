@@ -37,7 +37,7 @@ export function applyKeySignature(
   const { name, octave, accidental } = note;
 
   // 이미 임시표가 있는 음표는 조표를 적용하지 않음
-  if (accidental !== null && accidental !== "natural") {
+  if (accidental !== null) {
     return note;
   }
 
@@ -356,8 +356,6 @@ export function generateQuestion(settings: GameSettings): Question {
   // 조표 적용 (임시표가 있으면 조표는 무시됨)
   // applyKeySignature 함수 내에서 임시표 여부를 확인하므로 항상 호출 가능
   const displayNote = applyKeySignature(baseNote, keySignature);
-
-  console.log(baseNote, displayNote);
 
   return {
     id: `question_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
