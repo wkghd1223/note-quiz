@@ -1,0 +1,9 @@
+# ads.txt for note-quiz.com
+# This file contains the authorized digital sellers for note-quiz.com
+# Format: domain, publisher_id, account_type, certification_authority
+
+# Google AdSense
+google.com, ca-pub-8230725169133274, DIRECT, f08c47fec0942fa0
+
+# Add more authorized sellers below as needed
+
