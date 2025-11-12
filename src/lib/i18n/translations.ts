@@ -165,6 +165,96 @@ export interface Translations {
     accidentalDescription: string;
     ledgerLinesDescription: string;
   };
+
+  // 홈페이지 콘텐츠
+  home: {
+    hero: {
+      title: string;
+      description: string;
+      cta: string;
+    };
+    features: {
+      title: string;
+      soundPlayback: {
+        title: string;
+        description: string;
+      };
+      variousClefs: {
+        title: string;
+        description: string;
+      };
+      instantFeedback: {
+        title: string;
+        description: string;
+      };
+      multiLanguage: {
+        title: string;
+        description: string;
+      };
+    };
+    howToUse: {
+      title: string;
+      step1: {
+        title: string;
+        description: string;
+      };
+      step2: {
+        title: string;
+        description: string;
+      };
+      step3: {
+        title: string;
+        description: string;
+      };
+      step4: {
+        title: string;
+        description: string;
+      };
+    };
+    faq: {
+      title: string;
+      q1: {
+        question: string;
+        answer: string;
+      };
+      q2: {
+        question: string;
+        answer: string;
+      };
+      q3: {
+        question: string;
+        answer: string;
+      };
+      q4: {
+        question: string;
+        answer: string;
+      };
+      q5: {
+        question: string;
+        answer: string;
+      };
+      q6: {
+        question: string;
+        answer: string;
+      };
+    };
+    about: {
+      title: string;
+      description1: string;
+      description2: string;
+      description3: string;
+      description4: string;
+    };
+    cta: {
+      title: string;
+      description: string;
+      button: string;
+    };
+    footer: {
+      copyright: string;
+      tagline: string;
+    };
+  };
 }
 
 export const translations: Record<Language, Translations> = {
@@ -324,6 +414,109 @@ export const translations: Record<Language, Translations> = {
       ledgerLinesDescription:
         "The more ledger lines, the wider range of notes will be generated.",
     },
+
+    home: {
+      hero: {
+        title: "Note Quiz",
+        description: "Learn to read musical notes by sight and sound!",
+        cta: "Start Game",
+      },
+      features: {
+        title: "Key Features",
+        soundPlayback: {
+          title: "Sound Playback",
+          description:
+            "Listen to the accurate sound of each note while learning",
+        },
+        variousClefs: {
+          title: "Various Clefs",
+          description: "Support for Treble, Bass, Alto, and Tenor clefs",
+        },
+        instantFeedback: {
+          title: "Instant Feedback",
+          description: "Check your answers immediately and learn",
+        },
+        multiLanguage: {
+          title: "Multi-Language Support",
+          description: "Support for 6 languages worldwide",
+        },
+      },
+      howToUse: {
+        title: "How to Use",
+        step1: {
+          title: "Start Game",
+          description: "Click the 'Start Game' button to begin learning notes",
+        },
+        step2: {
+          title: "Check Note",
+          description: "View the note on the staff and listen to the sound",
+        },
+        step3: {
+          title: "Enter Answer",
+          description:
+            "Input your answer using the piano keyboard or solfege buttons",
+        },
+        step4: {
+          title: "Continue Learning",
+          description:
+            "Keep solving problems to improve your note reading skills",
+        },
+      },
+      faq: {
+        title: "Frequently Asked Questions",
+        q1: {
+          question: "What is Note Quiz?",
+          answer:
+            "Note Quiz is an interactive learning game designed to improve your ability to read musical notes from sheet music. It provides visual notation and sound together to quickly improve note recognition skills.",
+        },
+        q2: {
+          question: "What clefs are supported?",
+          answer:
+            "We support Treble Clef, Bass Clef, Alto Clef, and Tenor Clef. You can learn each clef separately.",
+        },
+        q3: {
+          question: "Can I learn key signatures?",
+          answer:
+            "Yes, you can solve problems with various key signatures. You can select a specific key signature in the game settings or set it to random.",
+        },
+        q4: {
+          question: "What languages are supported?",
+          answer:
+            "We support 6 languages: English, Korean, Japanese, Spanish, German, and French. The language is automatically selected based on your browser settings.",
+        },
+        q5: {
+          question: "Is there a cost?",
+          answer:
+            "No, Note Quiz is completely free. You can use it anytime without registration or payment.",
+        },
+        q6: {
+          question: "Can I use it on mobile?",
+          answer:
+            "Yes, Note Quiz is a responsive web application that works perfectly on all devices (desktop, tablet, mobile).",
+        },
+      },
+      about: {
+        title: "About Note Quiz",
+        description1:
+          "Note Quiz is an interactive learning platform designed for music learners to develop the ability to quickly recognize notes from sheet music.",
+        description2:
+          "Especially for people learning instruments like harmonica, piano, and vocals who struggle with note reading, this game allows you to learn in a fun way.",
+        description3:
+          "It provides an effective learning experience through visual notation display, accurate sound playback, and instant feedback. It also supports various clefs, key signatures, and accidentals, making it suitable for music learners of all levels.",
+        description4:
+          "Improve your note reading skills with Note Quiz and experience the joy of music learning!",
+      },
+      cta: {
+        title: "Start Now!",
+        description:
+          "Improve your note reading skills and make music learning more enjoyable.",
+        button: "Start Game",
+      },
+      footer: {
+        copyright: "© 2024 Note Quiz. All rights reserved.",
+        tagline: "Interactive note recognition game for music learning",
+      },
+    },
   },
 
   ko: {
@@ -481,6 +674,107 @@ export const translations: Record<Language, Translations> = {
         "임시표가 활성화되면 조표와 별개로 개별 음표에 ♯, ♭, ♮이 추가될 수 있습니다.",
       ledgerLinesDescription:
         "보조선이 많을수록 더 넓은 음역대의 문제가 출제됩니다.",
+    },
+
+    home: {
+      hero: {
+        title: "계이름 맞추기 게임",
+        description:
+          "시각적 학습과 청각적 훈련을 통해 음악 실력을 향상시키세요.",
+        cta: "게임 시작",
+      },
+      features: {
+        title: "주요 기능",
+        soundPlayback: {
+          title: "음성 재생",
+          description: "각 음표의 정확한 음성을 들으며 학습하세요",
+        },
+        variousClefs: {
+          title: "다양한 악보",
+          description: "트레블, 베이스, 알토, 테너 음자리표 지원",
+        },
+        instantFeedback: {
+          title: "즉시 피드백",
+          description: "정답 여부를 즉시 확인하고 학습하세요",
+        },
+        multiLanguage: {
+          title: "다국어 지원",
+          description: "6개 언어로 전 세계 사용자 지원",
+        },
+      },
+      howToUse: {
+        title: "이용 방법",
+        step1: {
+          title: "게임 시작",
+          description: '"게임 시작" 버튼을 클릭하여 음표 학습을 시작하세요',
+        },
+        step2: {
+          title: "음표 확인",
+          description: "악보에 표시된 음표를 확인하고 음성을 들으세요",
+        },
+        step3: {
+          title: "답변 입력",
+          description: "피아노 건반이나 도레미 버튼으로 정답을 입력하세요",
+        },
+        step4: {
+          title: "학습 진행",
+          description: "계속 문제를 풀며 음표 읽기 능력을 향상시키세요",
+        },
+      },
+      faq: {
+        title: "자주 묻는 질문 (FAQ)",
+        q1: {
+          question: "Note Quiz는 무엇인가요?",
+          answer:
+            "Note Quiz는 음악 악보에서 음표를 읽는 능력을 향상시키기 위한 대화형 학습 게임입니다. 시각적 악보와 음성을 함께 제공하여 음표 인식 능력을 빠르게 개선할 수 있습니다.",
+        },
+        q2: {
+          question: "어떤 악보를 지원하나요?",
+          answer:
+            "트레블 음자리표(Treble Clef), 베이스 음자리표(Bass Clef), 알토 음자리표(Alto Clef), 테너 음자리표(Tenor Clef)를 모두 지원합니다. 각 음자리표별로 학습할 수 있습니다.",
+        },
+        q3: {
+          question: "조표(Key Signature)를 학습할 수 있나요?",
+          answer:
+            "네, 다양한 조표를 포함한 문제를 풀 수 있습니다. 게임 설정에서 특정 조표를 선택하거나 랜덤으로 설정하여 조표 학습을 진행할 수 있습니다.",
+        },
+        q4: {
+          question: "어떤 언어를 지원하나요?",
+          answer:
+            "영어, 한국어, 일본어, 스페인어, 독일어, 프랑스어 총 6개 언어를 지원합니다. 브라우저 언어 설정에 따라 자동으로 언어가 선택됩니다.",
+        },
+        q5: {
+          question: "비용이 드나요?",
+          answer:
+            "아니요, Note Quiz는 완전히 무료입니다. 회원가입이나 결제 없이 누구나 언제든지 이용할 수 있습니다.",
+        },
+        q6: {
+          question: "모바일에서도 사용할 수 있나요?",
+          answer:
+            "네, Note Quiz는 반응형 웹 애플리케이션으로 모든 기기(데스크톱, 태블릿, 모바일)에서 완벽하게 작동합니다.",
+        },
+      },
+      about: {
+        title: "Note Quiz에 대해",
+        description1:
+          "Note Quiz는 음악 학습자들이 악보에서 음표를 빠르게 인식하는 능력을 개발하기 위해 설계된 대화형 학습 플랫폼입니다.",
+        description2:
+          "특히 하모니카, 피아노, 성악 등 악기를 배우는 사람들이 음표 읽기에 어려움을 겪을 때, 이 게임을 통해 재미있게 학습할 수 있습니다.",
+        description3:
+          "시각적 악보 표시, 정확한 음성 재생, 즉시 피드백을 통해 효과적인 학습 경험을 제공합니다. 또한 다양한 음자리표, 조표, 임시표를 지원하여 모든 수준의 음악 학습자에게 적합합니다.",
+        description4:
+          "Note Quiz와 함께 음표 읽기 능력을 향상시키고, 음악 학습의 즐거움을 경험해보세요!",
+      },
+      cta: {
+        title: "지금 바로 시작하세요!",
+        description:
+          "음표 읽기 능력을 향상시키고 음악 학습을 더욱 즐겁게 만들어보세요.",
+        button: "게임 시작하기",
+      },
+      footer: {
+        copyright: "© 2024 Note Quiz. All rights reserved.",
+        tagline: "음악 학습을 위한 대화형 음표 인식 게임",
+      },
     },
   },
 
@@ -640,6 +934,106 @@ export const translations: Record<Language, Translations> = {
       ledgerLinesDescription:
         "加線が多いほど、より広い音域の問題が出題されます。",
     },
+
+    home: {
+      hero: {
+        title: "音符クイズ",
+        description: "視覚と聴覚で音符を学ぼう！",
+        cta: "ゲーム開始",
+      },
+      features: {
+        title: "主な機能",
+        soundPlayback: {
+          title: "音声再生",
+          description: "各音符の正確な音を聞きながら学習できます",
+        },
+        variousClefs: {
+          title: "様々な音部記号",
+          description: "ト音記号、ヘ音記号、アルト記号、テノール記号に対応",
+        },
+        instantFeedback: {
+          title: "即座フィードバック",
+          description: "正解・不正解をすぐに確認して学習できます",
+        },
+        multiLanguage: {
+          title: "多言語対応",
+          description: "6言語で世界中のユーザーをサポート",
+        },
+      },
+      howToUse: {
+        title: "使い方",
+        step1: {
+          title: "ゲーム開始",
+          description: '"ゲーム開始"ボタンをクリックして音符学習を始めましょう',
+        },
+        step2: {
+          title: "音符確認",
+          description: "楽譜に表示された音符を確認して音を聞きましょう",
+        },
+        step3: {
+          title: "答え入力",
+          description:
+            "ピアノキーボードまたはドレミボタンで答えを入力してください",
+        },
+        step4: {
+          title: "学習継続",
+          description: "問題を解き続けて音符読み能力を向上させましょう",
+        },
+      },
+      faq: {
+        title: "よくある質問（FAQ）",
+        q1: {
+          question: "Note Quizとは何ですか？",
+          answer:
+            "Note Quizは、楽譜から音符を読む能力を向上させるための対話型学習ゲームです。視覚的な楽譜表示と音声を組み合わせて、音符認識能力を素早く向上させることができます。",
+        },
+        q2: {
+          question: "どの音部記号に対応していますか？",
+          answer:
+            "ト音記号（Treble Clef）、ヘ音記号（Bass Clef）、アルト記号（Alto Clef）、テノール記号（Tenor Clef）に対応しています。各音部記号ごとに学習できます。",
+        },
+        q3: {
+          question: "調号を学習できますか？",
+          answer:
+            "はい、様々な調号を含む問題を解くことができます。ゲーム設定で特定の調号を選択するか、ランダムに設定して調号学習を進めることができます。",
+        },
+        q4: {
+          question: "どの言語に対応していますか？",
+          answer:
+            "英語、日本語、韓国語、スペイン語、ドイツ語、フランス語の6言語に対応しています。ブラウザの言語設定に基づいて自動的に言語が選択されます。",
+        },
+        q5: {
+          question: "費用はかかりますか？",
+          answer:
+            "いいえ、Note Quizは完全に無料です。登録や支払いなしに、誰でもいつでも利用できます。",
+        },
+        q6: {
+          question: "モバイルでも使用できますか？",
+          answer:
+            "はい、Note Quizはレスポンシブウェブアプリケーションで、すべてのデバイス（デスクトップ、タブレット、モバイル）で完璧に動作します。",
+        },
+      },
+      about: {
+        title: "Note Quizについて",
+        description1:
+          "Note Quizは、音楽学習者が楽譜から音符を素早く認識する能力を開発するために設計された対話型学習プラットフォームです。",
+        description2:
+          "特にハーモニカ、ピアノ、ボーカルなどの楽器を学んでいる人が音符読みに困っているときに、このゲームを通じて楽しく学習できます。",
+        description3:
+          "視覚的な楽譜表示、正確な音声再生、即座フィードバックを通じて効果的な学習体験を提供します。また、様々な音部記号、調号、臨時記号に対応しており、すべてのレベルの音楽学習者に適しています。",
+        description4:
+          "Note Quizで音符読み能力を向上させ、音楽学習の喜びを体験してください！",
+      },
+      cta: {
+        title: "今すぐ始めましょう！",
+        description: "音符読み能力を向上させ、音楽学習をより楽しくしましょう。",
+        button: "ゲーム開始",
+      },
+      footer: {
+        copyright: "© 2024 Note Quiz. All rights reserved.",
+        tagline: "音楽学習のための対話型音符認識ゲーム",
+      },
+    },
   },
 
   es: {
@@ -797,6 +1191,111 @@ export const translations: Record<Language, Translations> = {
         "Cuando las alteraciones están habilitadas, se pueden agregar ♯, ♭, ♮ a notas individuales además de la armadura.",
       ledgerLinesDescription:
         "Más líneas adicionales permiten un rango más amplio de preguntas.",
+    },
+
+    home: {
+      hero: {
+        title: "Quiz de Notas",
+        description: "¡Aprende a leer notas musicales por vista y sonido!",
+        cta: "Iniciar Juego",
+      },
+      features: {
+        title: "Características Principales",
+        soundPlayback: {
+          title: "Reproducción de Sonido",
+          description:
+            "Escucha el sonido preciso de cada nota mientras aprendes",
+        },
+        variousClefs: {
+          title: "Varios Claves",
+          description: "Soporte para claves de Sol, Fa, Do (Alto) y Do (Tenor)",
+        },
+        instantFeedback: {
+          title: "Retroalimentación Instantánea",
+          description: "Verifica tus respuestas inmediatamente y aprende",
+        },
+        multiLanguage: {
+          title: "Soporte Multilingüe",
+          description: "Soporte para 6 idiomas en todo el mundo",
+        },
+      },
+      howToUse: {
+        title: "Cómo Usar",
+        step1: {
+          title: "Iniciar Juego",
+          description:
+            'Haz clic en el botón "Iniciar Juego" para comenzar a aprender notas',
+        },
+        step2: {
+          title: "Verificar Nota",
+          description: "Visualiza la nota en el pentagrama y escucha el sonido",
+        },
+        step3: {
+          title: "Ingresar Respuesta",
+          description:
+            "Ingresa tu respuesta usando el teclado de piano o botones de solfeo",
+        },
+        step4: {
+          title: "Continuar Aprendiendo",
+          description:
+            "Sigue resolviendo problemas para mejorar tu habilidad de lectura de notas",
+        },
+      },
+      faq: {
+        title: "Preguntas Frecuentes (FAQ)",
+        q1: {
+          question: "¿Qué es Note Quiz?",
+          answer:
+            "Note Quiz es un juego de aprendizaje interactivo diseñado para mejorar tu capacidad de leer notas musicales en partituras. Proporciona notación visual y sonido juntos para mejorar rápidamente la capacidad de reconocimiento de notas.",
+        },
+        q2: {
+          question: "¿Qué claves se admiten?",
+          answer:
+            "Admitimos Clave de Sol, Clave de Fa, Clave de Do (Alto) y Clave de Do (Tenor). Puedes aprender cada clave por separado.",
+        },
+        q3: {
+          question: "¿Puedo aprender armaduras?",
+          answer:
+            "Sí, puedes resolver problemas con varias armaduras. Puedes seleccionar una armadura específica en la configuración del juego o establecerla en aleatorio.",
+        },
+        q4: {
+          question: "¿Qué idiomas se admiten?",
+          answer:
+            "Admitimos 6 idiomas: inglés, coreano, japonés, español, alemán y francés. El idioma se selecciona automáticamente según la configuración de tu navegador.",
+        },
+        q5: {
+          question: "¿Hay algún costo?",
+          answer:
+            "No, Note Quiz es completamente gratuito. Puedes usarlo en cualquier momento sin registro ni pago.",
+        },
+        q6: {
+          question: "¿Puedo usarlo en dispositivos móviles?",
+          answer:
+            "Sí, Note Quiz es una aplicación web receptiva que funciona perfectamente en todos los dispositivos (escritorio, tableta, móvil).",
+        },
+      },
+      about: {
+        title: "Acerca de Note Quiz",
+        description1:
+          "Note Quiz es una plataforma de aprendizaje interactiva diseñada para que los músicos desarrollen la capacidad de reconocer rápidamente notas de partituras.",
+        description2:
+          "Especialmente para personas que aprenden instrumentos como armónica, piano y canto que tienen dificultades con la lectura de notas, este juego permite aprender de manera divertida.",
+        description3:
+          "Proporciona una experiencia de aprendizaje efectiva a través de la visualización de partituras, reproducción de sonido preciso y retroalimentación instantánea. También admite varios claves, armaduras y alteraciones, lo que lo hace adecuado para músicos de todos los niveles.",
+        description4:
+          "¡Mejora tu habilidad de lectura de notas con Note Quiz y experimenta la alegría del aprendizaje musical!",
+      },
+      cta: {
+        title: "¡Comienza Ahora!",
+        description:
+          "Mejora tu habilidad de lectura de notas y haz que el aprendizaje musical sea más agradable.",
+        button: "Iniciar Juego",
+      },
+      footer: {
+        copyright: "© 2024 Note Quiz. All rights reserved.",
+        tagline:
+          "Juego interactivo de reconocimiento de notas para aprendizaje musical",
+      },
     },
   },
 
@@ -957,6 +1456,111 @@ export const translations: Record<Language, Translations> = {
       ledgerLinesDescription:
         "Mehr Hilfslinien ermöglichen einen größeren Bereich von Fragen.",
     },
+
+    home: {
+      hero: {
+        title: "Noten-Quiz",
+        description: "Lernen Sie, Musiknoten durch Sehen und Hören zu lesen!",
+        cta: "Spiel starten",
+      },
+      features: {
+        title: "Hauptmerkmale",
+        soundPlayback: {
+          title: "Soundwiedergabe",
+          description: "Hören Sie den genauen Klang jeder Note beim Lernen",
+        },
+        variousClefs: {
+          title: "Verschiedene Notenschlüssel",
+          description:
+            "Unterstützung für Violinschlüssel, Bassschlüssel, Alt- und Tenorschlüssel",
+        },
+        instantFeedback: {
+          title: "Sofortiges Feedback",
+          description: "Überprüfen Sie Ihre Antworten sofort und lernen Sie",
+        },
+        multiLanguage: {
+          title: "Mehrsprachige Unterstützung",
+          description: "Unterstützung für 6 Sprachen weltweit",
+        },
+      },
+      howToUse: {
+        title: "Anleitung",
+        step1: {
+          title: "Spiel starten",
+          description:
+            'Klicken Sie auf die Schaltfläche "Spiel starten", um mit dem Notenlernen zu beginnen',
+        },
+        step2: {
+          title: "Note überprüfen",
+          description:
+            "Sehen Sie sich die Note auf dem Notensystem an und hören Sie den Klang",
+        },
+        step3: {
+          title: "Antwort eingeben",
+          description:
+            "Geben Sie Ihre Antwort mit der Klaviertastatur oder Solmisations-Schaltflächen ein",
+        },
+        step4: {
+          title: "Lernen fortsetzen",
+          description:
+            "Lösen Sie weiterhin Aufgaben, um Ihre Notenlese-Fähigkeiten zu verbessern",
+        },
+      },
+      faq: {
+        title: "Häufig gestellte Fragen (FAQ)",
+        q1: {
+          question: "Was ist Note Quiz?",
+          answer:
+            "Note Quiz ist ein interaktives Lernspiel, das entwickelt wurde, um Ihre Fähigkeit zu verbessern, Musiknoten aus Noten zu lesen. Es bietet visuelle Notation und Klang zusammen, um die Notenerkennung schnell zu verbessern.",
+        },
+        q2: {
+          question: "Welche Notenschlüssel werden unterstützt?",
+          answer:
+            "Wir unterstützen Violinschlüssel, Bassschlüssel, Altschlüssel und Tenorschlüssel. Sie können jeden Notenschlüssel separat erlernen.",
+        },
+        q3: {
+          question: "Kann ich Tonarten lernen?",
+          answer:
+            "Ja, Sie können Aufgaben mit verschiedenen Tonarten lösen. Sie können eine bestimmte Tonart in den Spieleinstellungen auswählen oder auf Zufallsmodus einstellen.",
+        },
+        q4: {
+          question: "Welche Sprachen werden unterstützt?",
+          answer:
+            "Wir unterstützen 6 Sprachen: Englisch, Koreanisch, Japanisch, Spanisch, Deutsch und Französisch. Die Sprache wird automatisch basierend auf Ihren Browsereinstellungen ausgewählt.",
+        },
+        q5: {
+          question: "Kostet es etwas?",
+          answer:
+            "Nein, Note Quiz ist völlig kostenlos. Sie können es jederzeit ohne Registrierung oder Zahlung nutzen.",
+        },
+        q6: {
+          question: "Kann ich es auf Mobilgeräten verwenden?",
+          answer:
+            "Ja, Note Quiz ist eine responsive Webanwendung, die auf allen Geräten (Desktop, Tablet, Mobilgerät) perfekt funktioniert.",
+        },
+      },
+      about: {
+        title: "Über Note Quiz",
+        description1:
+          "Note Quiz ist eine interaktive Lernplattform, die entwickelt wurde, damit Musikschüler die Fähigkeit entwickeln, Noten aus Noten schnell zu erkennen.",
+        description2:
+          "Besonders für Menschen, die Instrumente wie Mundharmonika, Klavier und Gesang lernen und Schwierigkeiten beim Notenlesen haben, ermöglicht dieses Spiel unterhaltsames Lernen.",
+        description3:
+          "Es bietet ein effektives Lernerlebnis durch visuelle Notenanzeigte, genaue Soundwiedergabe und sofortiges Feedback. Es unterstützt auch verschiedene Notenschlüssel, Tonarten und Vorzeichen und ist daher für Musikschüler aller Niveaus geeignet.",
+        description4:
+          "Verbessern Sie Ihre Notenlese-Fähigkeiten mit Note Quiz und erleben Sie die Freude des Musiklernens!",
+      },
+      cta: {
+        title: "Jetzt beginnen!",
+        description:
+          "Verbessern Sie Ihre Notenlese-Fähigkeiten und machen Sie das Musiklernen angenehmer.",
+        button: "Spiel starten",
+      },
+      footer: {
+        copyright: "© 2024 Note Quiz. All rights reserved.",
+        tagline: "Interaktives Notenerkennung-Spiel zum Musiklernen",
+      },
+    },
   },
 
   fr: {
@@ -1115,6 +1719,112 @@ export const translations: Record<Language, Translations> = {
         "Lorsque les altérations sont activées, ♯, ♭, ♮ peuvent être ajoutés aux notes individuelles en plus de l'armure.",
       ledgerLinesDescription:
         "Plus de lignes supplémentaires permettent une gamme plus large de questions.",
+    },
+
+    home: {
+      hero: {
+        title: "Quiz des Notes",
+        description:
+          "Apprenez à lire les notes de musique par la vue et l'ouïe !",
+        cta: "Commencer le Jeu",
+      },
+      features: {
+        title: "Caractéristiques Principales",
+        soundPlayback: {
+          title: "Lecture Audio",
+          description: "Écoutez le son précis de chaque note en apprenant",
+        },
+        variousClefs: {
+          title: "Diverses Clés",
+          description:
+            "Support pour les clés de Sol, Fa, Do (Alto) et Do (Ténor)",
+        },
+        instantFeedback: {
+          title: "Retour Instantané",
+          description: "Vérifiez vos réponses immédiatement et apprenez",
+        },
+        multiLanguage: {
+          title: "Support Multilingue",
+          description: "Support pour 6 langues dans le monde",
+        },
+      },
+      howToUse: {
+        title: "Comment Utiliser",
+        step1: {
+          title: "Commencer le Jeu",
+          description:
+            'Cliquez sur le bouton "Commencer le Jeu" pour commencer à apprendre les notes',
+        },
+        step2: {
+          title: "Vérifier la Note",
+          description: "Visualisez la note sur la portée et écoutez le son",
+        },
+        step3: {
+          title: "Entrer la Réponse",
+          description:
+            "Entrez votre réponse en utilisant le clavier de piano ou les boutons de solfège",
+        },
+        step4: {
+          title: "Continuer l'Apprentissage",
+          description:
+            "Continuez à résoudre des problèmes pour améliorer vos compétences en lecture de notes",
+        },
+      },
+      faq: {
+        title: "Questions Fréquemment Posées (FAQ)",
+        q1: {
+          question: "Qu'est-ce que Note Quiz ?",
+          answer:
+            "Note Quiz est un jeu d'apprentissage interactif conçu pour améliorer votre capacité à lire les notes de musique à partir de partitions. Il fournit la notation visuelle et le son ensemble pour améliorer rapidement la capacité de reconnaissance des notes.",
+        },
+        q2: {
+          question: "Quelles clés sont supportées ?",
+          answer:
+            "Nous supportons la clé de Sol, la clé de Fa, la clé de Do (Alto) et la clé de Do (Ténor). Vous pouvez apprendre chaque clé séparément.",
+        },
+        q3: {
+          question: "Puis-je apprendre les armures ?",
+          answer:
+            "Oui, vous pouvez résoudre des problèmes avec diverses armures. Vous pouvez sélectionner une armure spécifique dans les paramètres du jeu ou la définir sur aléatoire.",
+        },
+        q4: {
+          question: "Quelles langues sont supportées ?",
+          answer:
+            "Nous supportons 6 langues : anglais, coréen, japonais, espagnol, allemand et français. La langue est automatiquement sélectionnée en fonction des paramètres de votre navigateur.",
+        },
+        q5: {
+          question: "Y a-t-il un coût ?",
+          answer:
+            "Non, Note Quiz est complètement gratuit. Vous pouvez l'utiliser à tout moment sans inscription ni paiement.",
+        },
+        q6: {
+          question: "Puis-je l'utiliser sur mobile ?",
+          answer:
+            "Oui, Note Quiz est une application web réactive qui fonctionne parfaitement sur tous les appareils (ordinateur de bureau, tablette, mobile).",
+        },
+      },
+      about: {
+        title: "À Propos de Note Quiz",
+        description1:
+          "Note Quiz est une plateforme d'apprentissage interactive conçue pour que les musiciens développent la capacité à reconnaître rapidement les notes à partir de partitions.",
+        description2:
+          "Particulièrement pour les personnes qui apprennent des instruments comme l'harmonica, le piano et le chant qui ont du mal à lire les notes, ce jeu permet d'apprendre de manière amusante.",
+        description3:
+          "Il offre une expérience d'apprentissage efficace grâce à l'affichage visuel des partitions, la lecture audio précise et le retour instantané. Il supporte également diverses clés, armures et altérations, ce qui le rend adapté aux musiciens de tous les niveaux.",
+        description4:
+          "Améliorez vos compétences en lecture de notes avec Note Quiz et découvrez la joie de l'apprentissage musical !",
+      },
+      cta: {
+        title: "Commencez Maintenant !",
+        description:
+          "Améliorez vos compétences en lecture de notes et rendez l'apprentissage musical plus agréable.",
+        button: "Commencer le Jeu",
+      },
+      footer: {
+        copyright: "© 2024 Note Quiz. All rights reserved.",
+        tagline:
+          "Jeu interactif de reconnaissance des notes pour l'apprentissage musical",
+      },
     },
   },
 };

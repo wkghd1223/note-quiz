@@ -6,6 +6,7 @@ import Footer from "@/components/layouts/footer";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import LanguageInitializer from "@/components/providers/LanguageInitializer";
 import GoogleAdsense from "@/components/adsense/GoogleAdsense";
+import Head from "next/head";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,14 +29,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
+      <Head>
+        <GoogleAnalytics />
+        <GoogleAdsense />
+      </Head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <LanguageInitializer />
-        <GoogleAdsense />
-        <GoogleAnalytics />
         {modals}
-
         {children}
         <Footer />
       </body>
