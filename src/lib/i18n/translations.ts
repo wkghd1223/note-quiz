@@ -370,8 +370,8 @@ export const translations: Record<Language, Translations> = {
     },
 
     settingsLabels: {
-      // TODO(aboutsblank@2025-12-16T21:14:34+01): translation needed
-      clefs: "MISSING TRANSLATION [CLEFS]",
+      // TODO(aboutsblank@2025-12-16): verify translation
+      clefs: "음자리표",
       clef: "음자리표",
       keySignature: "조표",
       octaveRange: "옥타브 범위",
@@ -530,8 +530,8 @@ export const translations: Record<Language, Translations> = {
     },
 
     settingsLabels: {
-      // TODO(aboutsblank@2025-12-16T21:14:34+01): translation needed
-      clefs: "MISSING TRANSLATION [CLEFS]",
+      // TODO(aboutsblank@2025-12-16): verify translation
+      clefs: "音部記号",
       clef: "音部記号",
       keySignature: "調号",
       octaveRange: "オクターブ範囲",
@@ -690,8 +690,8 @@ export const translations: Record<Language, Translations> = {
     },
 
     settingsLabels: {
-      // TODO(aboutsblank@2025-12-16T21:14:34+01): translation needed
-      clefs: "MISSING TRANSLATION [CLEFS]",
+      // TODO(aboutsblank): verify translation
+      clefs: "Claves",
       clef: "Clave",
       keySignature: "Armadura",
       octaveRange: "Rango de Octavas",
@@ -850,8 +850,8 @@ export const translations: Record<Language, Translations> = {
     },
 
     settingsLabels: {
-      // TODO(aboutsblank@2025-12-16T21:14:34+01): translation needed
-      clefs: "MISSING TRANSLATION [CLEFS]",
+      // TODO(aboutsblank@2025-12-16): verify translation
+      clefs: "Notenschlüssel",
       clef: "Notenschlüssel",
       keySignature: "Vorzeichen",
       octaveRange: "Oktavbereich",
@@ -1011,8 +1011,8 @@ export const translations: Record<Language, Translations> = {
     },
 
     settingsLabels: {
-      // TODO(aboutsblank@2025-12-16T21:14:34+01): translation needed
-      clefs: "MISSING TRANSLATION [CLEFS]",
+      // TODO(aboutsblank): verify translation
+      clefs: "Clés",
       clef: "Clé",
       keySignature: "Armure",
       octaveRange: "Gamme d'Octaves",
