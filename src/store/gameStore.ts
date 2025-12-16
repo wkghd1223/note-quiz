@@ -1,7 +1,8 @@
+import { trackAnswer, trackGameStart } from "@/lib/analytics";
+
+import { DEFAULT_GAME_SETTINGS } from "@/lib/music/constants";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { DEFAULT_GAME_SETTINGS } from "@/lib/music/constants";
-import { trackGameStart, trackAnswer } from "@/lib/analytics";
 
 interface GameStore {
   // 게임 설정
@@ -174,6 +175,8 @@ export const useGameStore = create<GameStore>()(
 
         // Google Analytics 이벤트 추적
         trackGameStart({
+          // TODO(aboutsblank@2025-12-16T20:44:57+01): test support for multiple clefs
+          clefs: settings.clefs.join(","),
           clef: settings.clef,
           keySignature: settings.keySignature,
           answerMode: settings.answerMode,

@@ -46,6 +46,8 @@ export interface Translations {
 
   // 설정 관련
   settingsLabels: {
+    // TODO(aboutsblank@2025-12-16T21:13:27+01): test support for multiple clefs
+    clefs: string;
     clef: string;
     keySignature: string;
     octaveRange: string;
@@ -209,6 +211,7 @@ export const translations: Record<Language, Translations> = {
     },
 
     settingsLabels: {
+      clefs: "Clefs",
       clef: "Clef",
       keySignature: "Key Signature",
       octaveRange: "Octave Range",
@@ -367,6 +370,8 @@ export const translations: Record<Language, Translations> = {
     },
 
     settingsLabels: {
+      // TODO(aboutsblank@2025-12-16T21:14:34+01): translation needed
+      clefs: "MISSING TRANSLATION [CLEFS]",
       clef: "음자리표",
       keySignature: "조표",
       octaveRange: "옥타브 범위",
@@ -525,6 +530,8 @@ export const translations: Record<Language, Translations> = {
     },
 
     settingsLabels: {
+      // TODO(aboutsblank@2025-12-16T21:14:34+01): translation needed
+      clefs: "MISSING TRANSLATION [CLEFS]",
       clef: "音部記号",
       keySignature: "調号",
       octaveRange: "オクターブ範囲",
@@ -683,6 +690,8 @@ export const translations: Record<Language, Translations> = {
     },
 
     settingsLabels: {
+      // TODO(aboutsblank@2025-12-16T21:14:34+01): translation needed
+      clefs: "MISSING TRANSLATION [CLEFS]",
       clef: "Clave",
       keySignature: "Armadura",
       octaveRange: "Rango de Octavas",
@@ -841,6 +850,8 @@ export const translations: Record<Language, Translations> = {
     },
 
     settingsLabels: {
+      // TODO(aboutsblank@2025-12-16T21:14:34+01): translation needed
+      clefs: "MISSING TRANSLATION [CLEFS]",
       clef: "Notenschlüssel",
       keySignature: "Vorzeichen",
       octaveRange: "Oktavbereich",
@@ -1000,6 +1011,8 @@ export const translations: Record<Language, Translations> = {
     },
 
     settingsLabels: {
+      // TODO(aboutsblank@2025-12-16T21:14:34+01): translation needed
+      clefs: "MISSING TRANSLATION [CLEFS]",
       clef: "Clé",
       keySignature: "Armure",
       octaveRange: "Gamme d'Octaves",
