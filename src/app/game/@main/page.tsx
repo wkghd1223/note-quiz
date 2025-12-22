@@ -1,23 +1,23 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import { useGameStore } from "@/store/gameStore";
-import { useTranslation } from "@/hooks/useTranslation";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   applyKeySignature,
   generateQuestion,
   validateAnswer,
 } from "@/lib/music/utils";
-import { playPianoNote, initializeAudio } from "@/lib/music/audio";
+import { initializeAudio, playPianoNote } from "@/lib/music/audio";
 
+import GameControl from "@/components/game/GameControl";
+import PianoKeyboard from "@/components/game/PianoKeyboard";
+import ScoreBoard from "@/components/game/ScoreBoard";
+import SolfegeKeyboard from "@/components/game/SolfegeKeyboard";
 // 컴포넌트 임포트
 import Staff from "@/components/game/Staff";
-import PianoKeyboard from "@/components/game/PianoKeyboard";
-import SolfegeKeyboard from "@/components/game/SolfegeKeyboard";
 import Timer from "@/components/game/Timer";
-import ScoreBoard from "@/components/game/ScoreBoard";
-import GameControl from "@/components/game/GameControl";
+import { useGameStore } from "@/store/gameStore";
 import { useLanguageStore } from "@/store/languageStore";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const GameMain: React.FC = () => {
   const { t } = useTranslation();
@@ -100,6 +100,7 @@ const GameMain: React.FC = () => {
       const timeSpent = getQuestionElapsedTime();
       const answerData = {
         note: answer,
+        correctNote: currentQuestion.note,
         timestamp: Date.now(),
         isCorrect,
         timeSpent,
