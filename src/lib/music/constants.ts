@@ -279,8 +279,6 @@ export const NOTE_FREQUENCIES: Record<string, number> = {
 
 // 게임 기본 설정
 export const DEFAULT_GAME_SETTINGS = {
-  // TODO(aboutblank@2025-12-16T20:42:20+01): test support for multiple clefs
-  clefs: [] as ClefType[],
   clef: "treble" as ClefType,
   keySignature: "C",
   staffRange: {

@@ -1,8 +1,7 @@
 "use client";
 
-import { CLEFS, KEY_SIGNATURES } from "@/lib/music/constants";
-
 import React from "react";
+import { CLEFS, KEY_SIGNATURES } from "@/lib/music/constants";
 import { useGameStore } from "@/store/gameStore";
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -22,18 +21,6 @@ const GameSettings: React.FC<GameSettingsProps> = ({
     useGameStore();
 
   if (!isOpen) return null;
-
-  // TODO(aboutsblank@2025-12-16T21:07:23+01): test support for multiple clefs
-  const handleClefsChange = (clef: ClefType) => {
-    const currentClefs = settings.clefs;
-    let newClefs: ClefType[] = [];
-    if (currentClefs.includes(clef)) {
-      newClefs = currentClefs.filter((c) => c !== clef);
-    } else {
-      newClefs = [...currentClefs, clef];
-    }
-    updateSettings({ clefs: newClefs });
-  };
 
   const handleClefChange = (clef: ClefType | "random") => {
     updateSettings({ clef });
@@ -91,34 +78,9 @@ const GameSettings: React.FC<GameSettingsProps> = ({
           </button>
         </div>
 
-        {/* 설정 내용 | settings content */}
+        {/* 설정 내용 */}
         <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-          {/* TODO(aboutsblank2025-12-16T21:10:00+01): test support for multiple clefs*/}
-          <div className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
-            <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
-              {t.settingsLabels.clefs}
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {CLEFS.map((key) => {
-                const isSelected = settings.clefs.includes(key);
-                return (
-                  <button
-                    key={key}
-                    onClick={() => handleClefsChange(key)}
-                    className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
-                      isSelected
-                        ? "bg-blue-100 border-blue-300 text-blue-700"
-                        : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    {t.clefs[key]}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 음자리표 설정 | clef settings */}
+          {/* 음자리표 설정 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
               {t.settingsLabels.clef}
@@ -150,7 +112,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
             </div>
           </div>
 
-          {/* 조표 설정 | key signature settings*/}
+          {/* 조표 설정 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
               {t.settingsLabels.keySignature}
