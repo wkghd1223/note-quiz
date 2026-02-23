@@ -100,6 +100,7 @@ const GameMain: React.FC = () => {
       const timeSpent = getQuestionElapsedTime();
       const answerData = {
         note: answer,
+        correctNote: currentQuestion.note,
         timestamp: Date.now(),
         isCorrect,
         timeSpent,

@@ -167,6 +167,9 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({ className = "" }) => {
                         {answer.note.accidental === "sharp" && "#"}
                         {answer.note.accidental === "flat" && "♭"}
                         {answer.note.octave}
+                        {answer.isCorrect
+                          ? ""
+                          : " (" + answer.correctNote.name + ")"}
                       </span>
                       <span
                         className={`text-xs ${
