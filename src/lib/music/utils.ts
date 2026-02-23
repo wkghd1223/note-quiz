@@ -1,10 +1,10 @@
 import {
-  DEFAULT_OCTAVE_RANGES,
-  KEY_SIGNATURES,
-  NOTE_FREQUENCIES,
   NOTE_NAMES,
   NOTE_NAME_MAPPING,
   SOLFEGE_TO_NOTE_MAPPING,
+  KEY_SIGNATURES,
+  DEFAULT_OCTAVE_RANGES,
+  NOTE_FREQUENCIES,
 } from "./constants";
 
 /**
@@ -333,25 +333,13 @@ function addAccidental(
  * 게임 설정에 따른 문제 생성
  */
 export function generateQuestion(settings: GameSettings): Question {
-  // TODO(aboutsblank@2025-12-16T20:58:15+01): test support for multiple clefs
-  const allClefs: ClefType[] = ["treble", "bass", "alto", "tenor"];
-  const availableClefs =
-    !settings.clefs ||
-    settings.clefs.length === 0 ||
-    settings.clefs.length === 4
-      ? allClefs
-      : settings.clefs;
-
-  const clef =
-    availableClefs[Math.floor(Math.random() * availableClefs.length)];
-
   // 음자리표 결정
-  // const clef =
-  //   settings.clef === "random"
-  //     ? (["treble", "bass", "alto", "tenor"] as ClefType[])[
-  //         Math.floor(Math.random() * 4)
-  //       ]
-  //     : settings.clef;
+  const clef =
+    settings.clef === "random"
+      ? (["treble", "bass", "alto", "tenor"] as ClefType[])[
+          Math.floor(Math.random() * 4)
+        ]
+      : settings.clef;
 
   // 조표 결정
   const keySignature =
