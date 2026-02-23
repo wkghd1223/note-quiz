@@ -36,6 +36,8 @@ type Language = "en" | "ko" | "ja" | "es" | "de" | "fr";
 
 // 게임 설정
 interface GameSettings {
+  // TODO(aboutsblank@2025-12-16T20:40:35+01): test support for multiple clefs
+  clefs: ClefType[];
   clef: ClefType | "random";
   keySignature: string | "random";
   staffRange: {

@@ -13,6 +13,8 @@ declare global {
 
 // 게임 시작 이벤트
 export const trackGameStart = (settings: {
+  // TODO (aboutsblank@2025-12-16T21:01:58+01): test support for multiple clefs
+  clefs: string;
   clef: string;
   keySignature: string;
   answerMode: string;
@@ -21,6 +23,7 @@ export const trackGameStart = (settings: {
     window.gtag("event", "game_start", {
       event_category: "Game",
       event_label: "Game Started",
+      clefs: settings.clefs,
       clef: settings.clef,
       key_signature: settings.keySignature,
       answer_mode: settings.answerMode,
