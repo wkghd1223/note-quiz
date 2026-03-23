@@ -125,9 +125,9 @@ const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
           </p>
         </div> */}
 
-      <div className="max-w-4xl mx-auto">
+      <div className="mx-auto max-w-5xl">
         {/* 도레미 키보드 */}
-        <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-12 gap-2">
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-12">
           {SOLFEGE_LAYOUT.map((keyData) => {
             const solfegeText = getSolfegeText(keyData);
             const isPressed = pressedKeys.has(solfegeText);
@@ -138,14 +138,13 @@ const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
               <button
                 key={solfegeText}
                 className={`
-                    solfege-key p-3 sm:p-4 rounded-lg border-2 font-bold text-sm sm:text-base
-                    transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500
+                    solfege-key rounded-[1.4rem] border-2 p-4 text-sm font-bold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#c4b5fd] sm:p-5 sm:text-base
                     ${
                       isPressed
-                        ? "shadow-inner transform scale-95"
-                        : "hover:shadow-md"
+                        ? "scale-95 shadow-inner"
+                        : "hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(76,29,149,0.12)]"
                     }
-                    ${isSelected ? "ring-2 ring-blue-300" : ""}
+                    ${isSelected ? "ring-2 ring-[#c4b5fd]" : ""}
                     ${
                       disabled
                         ? "cursor-not-allowed opacity-50"
@@ -154,24 +153,26 @@ const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
                     ${
                       isBlackKey
                         ? isPressed
-                          ? "bg-gray-600 border-gray-700 text-white"
+                          ? "border-[#4c1d95] bg-[#4c1d95] text-white"
                           : isSelected
-                            ? "bg-gray-700 border-gray-800 text-white"
-                            : "bg-gray-800 border-gray-900 text-white hover:bg-gray-700"
+                            ? "border-[#4c1d95] bg-gradient-to-br from-[#6d28d9] to-[#4c1d95] text-white"
+                            : "border-[#0f172a] bg-[#0f172a] text-white hover:bg-[#1e293b]"
                         : isPressed
-                          ? "bg-blue-200 border-blue-400 text-blue-800"
+                          ? "border-[#7c3aed] bg-[#ede9fe] text-[#5b21b6]"
                           : isSelected
-                            ? "bg-blue-100 border-blue-400 text-blue-700"
-                            : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400"
+                            ? "border-[#7c3aed] bg-[#ede9fe] text-[#5b21b6]"
+                            : "border-[#d7deea] bg-white text-slate-700 hover:border-[#c4b5fd] hover:bg-[#faf9fe]"
                     }
                   `}
                 onClick={() => handleKeyClick(keyData)}
                 disabled={disabled}
                 aria-label={solfegeText}
               >
-                <div className="text-center">
-                  <div className="text-lg sm:text-xl">{solfegeText}</div>
-                  <div className="text-xs text-current opacity-75 mt-1">
+                <div className="min-w-0 text-center">
+                  <div className="break-words text-base leading-tight sm:text-lg xl:text-xl">
+                    {solfegeText}
+                  </div>
+                  <div className="mt-1 break-words text-[10px] uppercase tracking-[0.12em] text-current opacity-75 sm:text-xs sm:tracking-[0.14em]">
                     {keyData.note}
                     {keyData.accidental === "sharp" && "♯"}
                   </div>
