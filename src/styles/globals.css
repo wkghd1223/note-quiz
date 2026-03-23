@@ -3,19 +3,67 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f4f2f8;
+  --foreground: #0f172a;
+  --surface: #ffffff;
+  --surface-muted: #f1ecfb;
+  --surface-soft: #faf9fe;
+  --border: #ded6f7;
+  --border-strong: #5b21b6;
+  --primary: #5b21b6;
+  --primary-strong: #4c1d95;
+  --primary-soft: #ede9fe;
+  --shadow-card:
+    0 14px 40px rgba(76, 29, 149, 0.08),
+    0 2px 6px rgba(15, 23, 42, 0.04);
+  --shadow-button: 0 10px 24px rgba(91, 33, 182, 0.28);
 }
-/* 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-} */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+}
+
+a,
+button,
+select,
+input,
+textarea {
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease,
+    opacity 160ms ease;
+}
+
+::selection {
+  background: rgba(124, 58, 237, 0.18);
+  color: var(--foreground);
+}
+
+.app-shell {
+  position: relative;
+}
+
+.app-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at top left, rgba(124, 58, 237, 0.1), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(91, 33, 182, 0.08), transparent 24%);
+  z-index: -1;
 }

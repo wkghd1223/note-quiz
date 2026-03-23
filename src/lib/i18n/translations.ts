@@ -172,6 +172,8 @@ export interface Translations {
       title: string;
       description: string;
       cta: string;
+      previewTitle: string;
+      previewSubtitle: string;
     };
     features: {
       title: string;
@@ -420,6 +422,8 @@ export const translations: Record<Language, Translations> = {
         title: "Note Quiz",
         description: "Learn to read musical notes by sight and sound!",
         cta: "Start Game",
+        previewTitle: "Real Gameplay Preview",
+        previewSubtitle: "Sight-read, answer, repeat",
       },
       features: {
         title: "Key Features",
@@ -682,6 +686,8 @@ export const translations: Record<Language, Translations> = {
         description:
           "시각적 학습과 청각적 훈련을 통해 음악 실력을 향상시키세요.",
         cta: "게임 시작",
+        previewTitle: "실제 게임 화면",
+        previewSubtitle: "악보를 보고, 답하고, 반복해서 익히세요",
       },
       features: {
         title: "주요 기능",
@@ -940,6 +946,8 @@ export const translations: Record<Language, Translations> = {
         title: "音符クイズ",
         description: "視覚と聴覚で音符を学ぼう！",
         cta: "ゲーム開始",
+        previewTitle: "実際のゲーム画面",
+        previewSubtitle: "譜面を見て、答えて、繰り返し練習",
       },
       features: {
         title: "主な機能",
@@ -1198,6 +1206,8 @@ export const translations: Record<Language, Translations> = {
         title: "Quiz de Notas",
         description: "¡Aprende a leer notas musicales por vista y sonido!",
         cta: "Iniciar Juego",
+        previewTitle: "Vista previa del juego real",
+        previewSubtitle: "Lee, responde y repite",
       },
       features: {
         title: "Características Principales",
@@ -1462,6 +1472,8 @@ export const translations: Record<Language, Translations> = {
         title: "Noten-Quiz",
         description: "Lernen Sie, Musiknoten durch Sehen und Hören zu lesen!",
         cta: "Spiel starten",
+        previewTitle: "Echte Spielvorschau",
+        previewSubtitle: "Noten lesen, antworten, wiederholen",
       },
       features: {
         title: "Hauptmerkmale",
@@ -1727,6 +1739,8 @@ export const translations: Record<Language, Translations> = {
         description:
           "Apprenez à lire les notes de musique par la vue et l'ouïe !",
         cta: "Commencer le Jeu",
+        previewTitle: "Apercu reel du jeu",
+        previewSubtitle: "Lisez, repondez, recommencez",
       },
       features: {
         title: "Caractéristiques Principales",

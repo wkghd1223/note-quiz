@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { CLEFS, KEY_SIGNATURES } from "@/lib/music/constants";
 import { useGameStore } from "@/store/gameStore";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -17,10 +18,26 @@ const GameSettings: React.FC<GameSettingsProps> = ({
   className = "",
 }) => {
   const { t } = useTranslation();
+  const [mounted, setMounted] = useState(false);
   const { settings, updateSettings, resetSettings, resetStats } =
     useGameStore();
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || !isOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isOpen, mounted]);
+
+  if (!isOpen || !mounted) return null;
 
   const handleClefChange = (clef: ClefType | "random") => {
     updateSettings({ clef });
@@ -60,38 +77,38 @@ const GameSettings: React.FC<GameSettingsProps> = ({
     updateSettings({ accidentalProbability });
   };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  return createPortal(
+    <div className="fixed inset-0 z-[120] overflow-y-auto bg-slate-950/45 p-3 sm:p-4">
       <div
-        className={`bg-white rounded-lg shadow-xl max-w-2xl w-full mx-2 sm:mx-4 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto ${className}`}
+        className={`mx-auto my-4 w-full max-w-2xl rounded-[2rem] border border-[#ded6f7] bg-white shadow-[0_24px_60px_rgba(15,23,42,0.18)] sm:my-8 ${className}`}
       >
         {/* 헤더 */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+        <div className="flex items-center justify-between border-b border-[#ede9fe] p-4 sm:p-6">
+          <h2 className="text-xl font-black tracking-[-0.04em] text-slate-950 sm:text-2xl">
             {t.settings}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl sm:text-2xl font-bold"
+            className="text-xl font-bold text-slate-400 hover:text-slate-700 sm:text-2xl"
           >
             ×
           </button>
         </div>
 
         {/* 설정 내용 */}
-        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+        <div className="space-y-5 p-4 sm:space-y-6 sm:p-6">
           {/* 음자리표 설정 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
+            <label className="mb-2 block text-sm font-bold uppercase tracking-[0.14em] text-slate-500 sm:mb-3">
               {t.settingsLabels.clef}
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               <button
                 onClick={() => handleClefChange("random")}
-                className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
+                className={`rounded-2xl border p-3 text-sm font-bold transition-colors ${
                   settings.clef === "random"
-                    ? "bg-blue-100 border-blue-300 text-blue-700"
-                    : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                    ? "border-[#7c3aed] bg-[#ede9fe] text-[#5b21b6]"
+                    : "border-[#ded6f7] bg-white text-slate-700 hover:bg-[#faf9fe]"
                 }`}
               >
                 {t.settingsLabels.random}
@@ -100,10 +117,10 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                 <button
                   key={key}
                   onClick={() => handleClefChange(key)}
-                  className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
+                  className={`rounded-2xl border p-3 text-sm font-bold transition-colors ${
                     settings.clef === key
-                      ? "bg-blue-100 border-blue-300 text-blue-700"
-                      : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                      ? "border-[#7c3aed] bg-[#ede9fe] text-[#5b21b6]"
+                      : "border-[#ded6f7] bg-white text-slate-700 hover:bg-[#faf9fe]"
                   }`}
                 >
                   {t.clefs[key]}
@@ -114,16 +131,16 @@ const GameSettings: React.FC<GameSettingsProps> = ({
 
           {/* 조표 설정 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="mb-3 block text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
               {t.settingsLabels.keySignature}
             </label>
             <div className="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto">
               <button
                 onClick={() => handleKeySignatureChange("random")}
-                className={`p-2 rounded-lg border text-sm font-medium transition-colors ${
+                className={`rounded-2xl border p-2 text-sm font-bold transition-colors ${
                   settings.keySignature === "random"
-                    ? "bg-blue-100 border-blue-300 text-blue-700"
-                    : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                    ? "border-[#7c3aed] bg-[#ede9fe] text-[#5b21b6]"
+                    : "border-[#ded6f7] bg-white text-slate-700 hover:bg-[#faf9fe]"
                 }`}
               >
                 {t.settingsLabels.random}
@@ -132,10 +149,10 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                 <button
                   key={`${key}_${keySignature}`}
                   onClick={() => handleKeySignatureChange(key)}
-                  className={`p-2 rounded-lg border text-sm font-medium transition-colors ${
+                  className={`rounded-2xl border p-2 text-sm font-bold transition-colors ${
                     settings.keySignature === key
-                      ? "bg-blue-100 border-blue-300 text-blue-700"
-                      : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                      ? "border-[#7c3aed] bg-[#ede9fe] text-[#5b21b6]"
+                      : "border-[#ded6f7] bg-white text-slate-700 hover:bg-[#faf9fe]"
                   }`}
                 >
                   {key}
@@ -146,12 +163,12 @@ const GameSettings: React.FC<GameSettingsProps> = ({
 
           {/* 오선지 범위 설정 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="mb-3 block text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
               {t.settingsLabels.staffRange}
             </label>
             <div className="flex items-center space-x-4">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">
+                <label className="mb-1 block text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
                   {t.settingsLabels.ledgerLinesAbove}
                 </label>
                 <select
@@ -162,7 +179,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                       parseInt(e.target.value)
                     )
                   }
-                  className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  className="rounded-2xl border border-[#ded6f7] px-3 py-2 text-sm font-semibold text-slate-700"
                 >
                   {[0, 1, 2, 3, 4, 5].map((lines) => (
                     <option key={lines} value={lines}>
@@ -172,7 +189,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">
+                <label className="mb-1 block text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
                   {t.settingsLabels.ledgerLinesBelow}
                 </label>
                 <select
@@ -183,7 +200,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                       parseInt(e.target.value)
                     )
                   }
-                  className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  className="rounded-2xl border border-[#ded6f7] px-3 py-2 text-sm font-semibold text-slate-700"
                 >
                   {[0, 1, 2, 3, 4, 5].map((lines) => (
                     <option key={lines} value={lines}>
@@ -193,14 +210,14 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                 </select>
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="mt-2 text-xs leading-6 text-slate-500">
               {t.settingsLabels.ledgerLinesInstruction}
             </p>
           </div>
 
           {/* 답안 입력 방식 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="mb-3 block text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
               {t.settingsLabels.answerMode}
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -208,10 +225,10 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                 <button
                   key={mode}
                   onClick={() => handleAnswerModeChange(mode)}
-                  className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
+                  className={`rounded-2xl border p-3 text-sm font-bold transition-colors ${
                     settings.answerMode === mode
-                      ? "bg-blue-100 border-blue-300 text-blue-700"
-                      : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                      ? "border-[#7c3aed] bg-[#ede9fe] text-[#5b21b6]"
+                      : "border-[#ded6f7] bg-white text-slate-700 hover:bg-[#faf9fe]"
                   }`}
                 >
                   {mode === "piano" && t.answerModes.piano}
@@ -228,9 +245,9 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                 type="checkbox"
                 checked={settings.enableSound}
                 onChange={(e) => handleSoundToggle(e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                className="h-4 w-4 rounded border-[#ded6f7] text-[#5b21b6] focus:ring-[#7c3aed]"
               />
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-bold text-slate-700">
                 {t.settingsLabels.enableSound}
               </span>
             </label>
@@ -238,7 +255,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
 
           {/* 시간 제한 설정 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="mb-3 block text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
               {t.settingsLabels.timeLimit}
             </label>
             <div className="flex items-center space-x-2">
@@ -248,9 +265,9 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                 onChange={(e) =>
                   handleTimeLimitChange(e.target.checked ? 30 : undefined)
                 }
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                className="h-4 w-4 rounded border-[#ded6f7] text-[#5b21b6] focus:ring-[#7c3aed]"
               />
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-slate-600">
                 {t.settingsLabels.timeLimitEnable}
               </span>
               {settings.timeLimit !== undefined && (
@@ -262,7 +279,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                   onChange={(e) =>
                     handleTimeLimitChange(parseInt(e.target.value))
                   }
-                  className="border border-gray-300 rounded-md px-2 py-1 text-sm w-20"
+                  className="w-20 rounded-2xl border border-[#ded6f7] px-2 py-1 text-sm font-semibold text-slate-700"
                 />
               )}
             </div>
@@ -270,7 +287,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
 
           {/* 임시표 설정 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="mb-3 block text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
               {t.settingsLabels.accidentals} (♯, ♭, ♮)
             </label>
             <div className="space-y-3">
@@ -279,16 +296,16 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                   type="checkbox"
                   checked={settings.enableAccidentals}
                   onChange={(e) => handleAccidentalsToggle(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="h-4 w-4 rounded border-[#ded6f7] text-[#5b21b6] focus:ring-[#7c3aed]"
                 />
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-bold text-slate-700">
                   {t.settingsLabels.accidentals}
                 </span>
               </label>
 
               {settings.enableAccidentals && (
                 <div>
-                  <label className="block text-xs text-gray-500 mb-2">
+                  <label className="mb-2 block text-xs text-slate-500">
                     {t.settingsLabels.accidentalProbability}:{" "}
                     {Math.round(settings.accidentalProbability * 100)}%
                   </label>
@@ -303,33 +320,33 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                         parseFloat(e.target.value)
                       )
                     }
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                    className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-[#ede9fe]"
                   />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <div className="mt-1 flex justify-between text-xs text-slate-500">
                     <span>10%</span>
                     <span>100%</span>
                   </div>
                 </div>
               )}
             </div>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="mt-2 text-xs leading-6 text-slate-500">
               {t.ui.accidentalDescription}
             </p>
           </div>
         </div>
 
         {/* 버튼 */}
-        <div className="flex items-center justify-between p-6 border-t bg-gray-50 flex-wrap space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#ede9fe] bg-[#faf9fe] p-6">
           <div className="flex space-x-3">
             <button
               onClick={resetSettings}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="rounded-2xl border border-[#ded6f7] bg-white px-4 py-2 text-sm font-bold text-slate-700"
             >
               {t.settingsLabels.resetToDefault}
             </button>
             <button
               onClick={resetStats}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="rounded-2xl border border-[#ded6f7] bg-white px-4 py-2 text-sm font-bold text-slate-700"
             >
               {t.settingsLabels.resetAllStats}
             </button>
@@ -337,20 +354,21 @@ const GameSettings: React.FC<GameSettingsProps> = ({
           <div className="flex space-x-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="rounded-2xl border border-[#ded6f7] bg-white px-4 py-2 text-sm font-bold text-slate-700"
             >
               {t.settingsLabels.cancel}
             </button>
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="rounded-2xl bg-gradient-to-r from-[#5b21b6] to-[#6d28d9] px-4 py-2 text-sm font-bold text-white shadow-[0_10px_24px_rgba(91,33,182,0.22)]"
             >
               {t.settingsLabels.apply}
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

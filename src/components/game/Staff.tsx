@@ -63,11 +63,10 @@ const Staff: React.FC<StaffProps> = ({
         width={width}
         style={{
           minHeight: `${height}px`,
-          padding: "20px 0",
-          // margin: "50px 0 60px 0",
+          padding: "28px 0",
           overflow: "visible",
         }}
-        className="staff-svg md:mt-10 md:mb-10 mt-5 mb-5"
+        className="staff-svg my-5 rounded-[1.75rem] border border-[#d9e0ea] bg-[#fbfcff] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.65)] md:my-8"
       >
         {/* 오선 (5줄) */}
         {[0, 1, 2, 3, 4].map((lineIndex) => (
@@ -77,8 +76,8 @@ const Staff: React.FC<StaffProps> = ({
             y1={staffStartY + lineIndex * staffLineSpacing}
             x2={width - 20}
             y2={staffStartY + lineIndex * staffLineSpacing}
-            stroke="#000"
-            strokeWidth="1"
+            stroke="#c8d0dd"
+            strokeWidth="1.6"
           />
         ))}
 
@@ -144,8 +143,8 @@ const Staff: React.FC<StaffProps> = ({
             y1={staffStartY + (8 - linePosition) * (staffLineSpacing / 2)}
             x2={noteX + 20}
             y2={staffStartY + (8 - linePosition) * (staffLineSpacing / 2)}
-            stroke="#000"
-            strokeWidth="1"
+            stroke="#6b7280"
+            strokeWidth="1.3"
           />
         ))}
 
