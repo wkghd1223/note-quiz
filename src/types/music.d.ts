@@ -64,8 +64,9 @@ interface Question {
 // 답안 정보
 interface Answer {
   note: Note;
-  timestamp: number;
+  correctNote: Note;
   isCorrect: boolean;
+  timestamp: number;
   timeSpent: number; // 해당 문제에 걸린 시간 (밀리초)
 }
 

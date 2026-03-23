@@ -48,22 +48,18 @@ export default function Layout({
   main: React.ReactNode;
 }>) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f4f2f8]">
       {/* 헤더 */}
-      <div className="bg-gray-50 md:bg-transparent">
-        <div className="max-w-7xl mx-auto px-4 pt-4 md:pt-0 md:bg-transparent bg-white">
-          {header}
-        </div>
+      <div className="relative z-50 border-b border-[#ded6f7] bg-white/70">
+        <div className="mx-auto max-w-7xl px-4 py-4 lg:py-5">{header}</div>
       </div>
 
       {/* 타이머 - 모바일에서만 sticky */}
-      <div className="md:hidden sticky top-0 z-40 bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-2">
-          <Timer className="mx-auto" />
-        </div>
+      <div className="sticky top-0 z-40 shadow-sm lg:hidden">
+        <Timer className="mx-auto" />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 pb-4">
+      <div className="mx-auto max-w-7xl px-4 pb-8 pt-6">
         {/* 메인 게임 영역 */}
         {main}
       </div>

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useGameStore } from "@/store/gameStore";
 import { useTranslation } from "@/hooks/useTranslation";
+import GameControl from "./GameControl";
 
 interface TimerProps {
   className?: string;
@@ -75,19 +76,22 @@ const Timer: React.FC<TimerProps> = ({ className = "" }) => {
 
   return (
     <div className={`timer-container ${className}`}>
-      <div className="bg-white rounded-lg md:shadow-md md:p-4 p-1">
-        <div className="text-center md:block flex items-center justify-center">
-          <div className="min-w-[30%]">
-            <div className="text-sm font-medium text-gray-600 mb-1">
+      <div className="rounded-[1rem] border border-[#ded6f7] bg-white px-2 py-2 shadow-[0_4px_14px_rgba(15,23,42,0.05)] lg:rounded-[1.5rem] lg:p-5">
+        <div className="mb-2 border-b border-[#ede9fe] pb-2 lg:mb-4 lg:pb-4">
+          <GameControl />
+        </div>
+        <div className="flex items-center gap-2 lg:grid lg:grid-cols-1 lg:gap-4">
+          <div className="min-w-0 flex-1 rounded-xl bg-[#faf9fe] px-2.5 py-2 text-center lg:min-w-0 lg:rounded-2xl lg:border lg:border-[#ede9fe] lg:px-5 lg:py-4">
+            <div className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500 lg:mb-1 lg:text-sm lg:tracking-[0.2em]">
               {settings.timeLimit ? t.timer.remaining : t.timer.elapsed}
             </div>
             <div
-              className={`md:text-3xl text-base font-mono font-bold transition-colors duration-200 ${
+              className={`font-mono text-lg font-black leading-none transition-colors duration-200 lg:text-4xl ${
                 isTimeRunningOut
-                  ? "text-red-600 animate-pulse"
+                  ? "animate-pulse text-red-500"
                   : gameState === "playing"
-                    ? "text-blue-600"
-                    : "text-gray-800"
+                    ? "text-[#5b21b6]"
+                    : "text-slate-900"
               }`}
             >
               {settings.timeLimit
@@ -96,18 +100,20 @@ const Timer: React.FC<TimerProps> = ({ className = "" }) => {
             </div>
             {/* 시간 제한이 있을 때 진행 바 */}
             {settings.timeLimit && (
-              <div className="mt-3">
-                <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="mt-1.5 lg:mt-3">
+                <div className="h-2 w-full rounded-full bg-[#ede9fe]">
                   <div
                     className={`h-2 rounded-full transition-all duration-200 ${
-                      isTimeRunningOut ? "bg-red-500" : "bg-blue-500"
+                      isTimeRunningOut
+                        ? "bg-red-500"
+                        : "bg-gradient-to-r from-[#4c1d95] to-[#7c3aed]"
                     }`}
                     style={{
                       width: `${(remainingTime / (settings.timeLimit * 1000)) * 100}%`,
                     }}
                   />
                 </div>
-                <div className="text-xs text-gray-500 mt-1">
+                <div className="mt-1 text-[9px] font-semibold text-slate-500 lg:text-xs">
                   {settings.timeLimit}
                 </div>
               </div>
@@ -116,34 +122,34 @@ const Timer: React.FC<TimerProps> = ({ className = "" }) => {
 
           {/* 문제별 시간 표시 */}
           {gameState === "playing" && (
-            <div className="md:mt-3 md:pt-3 md:border-t md:border-gray-200 min-w-[30%]">
-              <div className="text-xs font-medium text-gray-500 mb-1">
+            <div className="min-w-0 flex-1 rounded-xl bg-[#faf9fe] px-2.5 py-2 text-center lg:min-w-0 lg:rounded-2xl lg:border lg:border-[#ede9fe] lg:px-5 lg:py-4">
+              <div className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500 lg:mb-1 lg:text-xs lg:tracking-[0.16em]">
                 {t.ui.currentQuestionTime}
               </div>
-              <div className="text-base md:text-lg font-mono font-semibold text-purple-600">
+              <div className="font-mono text-lg font-bold leading-none text-[#6d28d9] lg:text-3xl">
                 {formatTime(questionTime)}
               </div>
             </div>
           )}
-        </div>
-        {/* 게임 상태 표시 */}
-        <div className="mt-2 flex md:justify-spacebetween justify-center items-center space-x-4">
-          <span
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-              gameState === "playing"
-                ? "bg-green-100 text-green-800"
-                : gameState === "paused"
-                  ? "bg-yellow-100 text-yellow-800"
-                  : gameState === "finished"
-                    ? "bg-red-100 text-red-800"
-                    : "bg-gray-100 text-gray-800"
-            }`}
-          >
-            {gameState === "playing" && t.gameStates.playing}
-            {gameState === "paused" && t.gameStates.paused}
-            {gameState === "finished" && t.gameStates.finished}
-            {gameState === "idle" && t.gameStates.idle}
-          </span>
+
+          <div className="flex min-w-[5.4rem] items-center justify-center lg:min-w-0">
+            <span
+              className={`inline-flex w-full items-center justify-center rounded-xl px-2 py-2 text-[9px] font-bold uppercase tracking-[0.08em] lg:rounded-full lg:px-4 lg:py-2 lg:text-xs lg:tracking-[0.15em] ${
+                gameState === "playing"
+                  ? "bg-[#dcfce7] text-[#166534]"
+                  : gameState === "paused"
+                    ? "bg-[#fef3c7] text-[#92400e]"
+                    : gameState === "finished"
+                      ? "bg-[#fee2e2] text-[#991b1b]"
+                      : "bg-[#ede9fe] text-[#5b21b6]"
+              }`}
+            >
+              {gameState === "playing" && t.gameStates.playing}
+              {gameState === "paused" && t.gameStates.paused}
+              {gameState === "finished" && t.gameStates.finished}
+              {gameState === "idle" && t.gameStates.idle}
+            </span>
+          </div>
         </div>
       </div>
     </div>

@@ -31,12 +31,12 @@ const GameControl: React.FC = () => {
   };
 
   return (
-    <div className="">
-      <div className="flex items-center justify-center space-x-4">
+    <div className="w-full">
+      <div className="flex flex-wrap items-center justify-center gap-1.5 md:gap-3">
         {gameState === "idle" && (
           <button
             onClick={handleStartGame}
-            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-s font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="inline-flex min-w-[5.8rem] items-center justify-center rounded-xl bg-gradient-to-r from-[#5b21b6] to-[#6d28d9] px-2.5 py-1.5 text-[11px] font-bold text-white shadow-[0_10px_24px_rgba(91,33,182,0.26)] hover:-translate-y-0.5 md:min-w-[9rem] md:rounded-2xl md:px-5 md:py-3 md:text-sm"
           >
             {t.startGame}
           </button>
@@ -45,7 +45,7 @@ const GameControl: React.FC = () => {
         {gameState === "playing" && (
           <button
             onClick={handlePauseGame}
-            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-s font-medium text-white bg-yellow-600 border border-transparent rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            className="inline-flex min-w-[5.8rem] items-center justify-center rounded-xl bg-[#f59e0b] px-2.5 py-1.5 text-[11px] font-bold text-white shadow-[0_10px_24px_rgba(245,158,11,0.24)] hover:-translate-y-0.5 md:min-w-[9rem] md:rounded-2xl md:px-5 md:py-3 md:text-sm"
           >
             {t.pauseGame}
           </button>
@@ -54,7 +54,7 @@ const GameControl: React.FC = () => {
         {gameState === "paused" && (
           <button
             onClick={handleResumeGame}
-            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-s font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="inline-flex min-w-[5.8rem] items-center justify-center rounded-xl bg-[#10b981] px-2.5 py-1.5 text-[11px] font-bold text-white shadow-[0_10px_24px_rgba(16,185,129,0.24)] hover:-translate-y-0.5 md:min-w-[9rem] md:rounded-2xl md:px-5 md:py-3 md:text-sm"
           >
             {t.resumeGame}
           </button>
@@ -63,7 +63,7 @@ const GameControl: React.FC = () => {
         {(gameState === "playing" || gameState === "paused") && (
           <button
             onClick={handleEndGame}
-            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-s font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="inline-flex min-w-[5.8rem] items-center justify-center rounded-xl bg-[#ef4444] px-2.5 py-1.5 text-[11px] font-bold text-white shadow-[0_10px_24px_rgba(239,68,68,0.22)] hover:-translate-y-0.5 md:min-w-[9rem] md:rounded-2xl md:px-5 md:py-3 md:text-sm"
           >
             {t.endGame}
           </button>
@@ -72,7 +72,7 @@ const GameControl: React.FC = () => {
         {gameState === "finished" && (
           <button
             onClick={handleResetGame}
-            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-s font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="inline-flex min-w-[5.8rem] items-center justify-center rounded-xl bg-gradient-to-r from-[#5b21b6] to-[#6d28d9] px-2.5 py-1.5 text-[11px] font-bold text-white shadow-[0_10px_24px_rgba(91,33,182,0.26)] hover:-translate-y-0.5 md:min-w-[9rem] md:rounded-2xl md:px-5 md:py-3 md:text-sm"
           >
             {t.resetGame}
           </button>

@@ -11,30 +11,32 @@ const Header = () => {
   const [showSettings, setShowSettings] = useState(false);
   return (
     <>
-      <header className="flex justify-between items-center md:mr-4 md:ml-4 md:mb-4">
-        <Link
-          className="flex items-center space-x-2 md:m-4 cursor-pointer"
-          href="/"
-        >
+      <header className="relative z-[70] flex items-center justify-between rounded-[1.75rem] border border-[#ded6f7] bg-white px-4 py-4 shadow-[0_14px_40px_rgba(76,29,149,0.08)] lg:px-6">
+        <Link className="flex cursor-pointer items-center space-x-3" href="/">
           <Image
             src="/logo.svg"
             alt="Logo"
-            className="w-12 h-12"
-            width={12}
-            height={12}
+            className="h-12 w-12 rounded-2xl"
+            width={48}
+            height={48}
           />
-          <h1 className="md:text-3xl text-xl font-bold text-gray-900">
-            {t.gameTitle}
-          </h1>
+          <div>
+            <h1 className="text-xl font-black tracking-[-0.04em] text-slate-950 lg:text-3xl">
+              {t.gameTitle}
+            </h1>
+            <p className="text-sm font-medium text-[#6d28d9]">
+              Master the Musical Staff
+            </p>
+          </div>
         </Link>
 
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {/* 언어 선택기 */}
-            <LanguageSelector />
+            <LanguageSelector className="w-[4.75rem]" />
             <button
               onClick={() => setShowSettings(true)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="rounded-2xl border border-[#ded6f7] bg-[#faf9fe] px-4 py-2 text-sm font-bold text-slate-700 shadow-[0_8px_18px_rgba(76,29,149,0.08)] hover:-translate-y-0.5 hover:border-[#c4b5fd]"
             >
               {t.settings}
             </button>
