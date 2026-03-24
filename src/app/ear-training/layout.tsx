@@ -4,7 +4,7 @@ import Header from "@/components/layouts/header";
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://note-quiz.com";
 
 export const metadata: Metadata = {
-  title: "Ear Training",
+  title: "Perfect Pitch Ear Training Note Quiz",
   description:
     "Practice ear training, note recognition, absolute pitch, and perfect pitch with interactive listening exercises in Note Quiz.",
   keywords: [
