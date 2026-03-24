@@ -8,6 +8,7 @@ interface SolfegeKeyboardProps {
   onNoteClick?: (note: Note) => void;
   selectedNote?: Note | null;
   disabled?: boolean;
+  showAccidentals?: boolean;
   className?: string;
 }
 
@@ -37,6 +38,7 @@ const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
   onNoteClick,
   selectedNote,
   disabled = false,
+  showAccidentals = true,
   className = "",
 }) => {
   const { t } = useTranslation();
@@ -128,7 +130,7 @@ const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
       <div className="mx-auto max-w-5xl">
         {/* 도레미 키보드 */}
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-12">
-          {SOLFEGE_LAYOUT.map((keyData) => {
+          {SOLFEGE_LAYOUT.filter((keyData) => showAccidentals || keyData.color === "white").map((keyData) => {
             const solfegeText = getSolfegeText(keyData);
             const isPressed = pressedKeys.has(solfegeText);
             const isSelected = isKeySelected(keyData);

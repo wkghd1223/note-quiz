@@ -4,6 +4,7 @@ import "@/styles/globals.css";
 import { defaultMetadata } from "@/lib/metadata";
 import Footer from "@/components/layouts/footer";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
+import GoogleAnalyticsRouteTracker from "@/components/analytics/GoogleAnalyticsRouteTracker";
 import LanguageInitializer from "@/components/providers/LanguageInitializer";
 import GoogleAdsense from "@/components/adsense/GoogleAdsense";
 // import Head from "next/head";/
@@ -37,6 +38,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <LanguageInitializer />
+        <GoogleAnalyticsRouteTracker />
         {modals}
         {children}
         <Footer />

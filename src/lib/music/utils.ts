@@ -5,6 +5,7 @@ import {
   KEY_SIGNATURES,
   DEFAULT_OCTAVE_RANGES,
   NOTE_FREQUENCIES,
+  CHROMATIC_NOTE_PATTERN,
 } from "./constants";
 
 /**
@@ -447,6 +448,44 @@ export function validateAnswer(question: Question, userAnswer: Note): boolean {
 
   // 이명동음 확인
   return areEnharmonicEquivalents(questionNoteStr, userAnswerStr);
+}
+
+export function generateEarTrainingQuestion(
+  settings: EarTrainingSettings
+): EarTrainingQuestion {
+  const octave =
+    Math.floor(
+      Math.random() * (settings.octaveRange.max - settings.octaveRange.min + 1)
+    ) + settings.octaveRange.min;
+
+  const target =
+    settings.noteSet === "chromatic"
+      ? CHROMATIC_NOTE_PATTERN[
+          Math.floor(Math.random() * CHROMATIC_NOTE_PATTERN.length)
+        ]
+      : {
+          name: NOTE_NAMES[Math.floor(Math.random() * NOTE_NAMES.length)],
+          accidental: "natural" as const,
+        };
+
+  return {
+    id: `ear_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+    targetNote: {
+      name: target.name,
+      accidental: target.accidental,
+      octave: octave as Octave,
+    },
+  };
+}
+
+export function validateEarTrainingAnswer(
+  question: EarTrainingQuestion,
+  userAnswer: Note
+): boolean {
+  return (
+    question.targetNote.name === userAnswer.name &&
+    question.targetNote.accidental === userAnswer.accidental
+  );
 }
 
 /**

@@ -15,7 +15,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
   //   const { t } = useTranslation();
 
   const languages = [
-    { code: "en" as Language, name: "English", flag: "🇺🇸" },
+    { code: "en" as Language, name: "English", flag: "🇬🇧" },
     { code: "ko" as Language, name: "한국어", flag: "🇰🇷" },
     { code: "ja" as Language, name: "日本語", flag: "🇯🇵" },
     { code: "es" as Language, name: "Español", flag: "🇪🇸" },

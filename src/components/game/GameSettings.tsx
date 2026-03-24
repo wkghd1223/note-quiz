@@ -82,27 +82,29 @@ const GameSettings: React.FC<GameSettingsProps> = ({
       <div
         className={`mx-auto my-4 w-full max-w-2xl rounded-[2rem] border border-[#ded6f7] bg-white shadow-[0_24px_60px_rgba(15,23,42,0.18)] sm:my-8 ${className}`}
       >
-        {/* 헤더 */}
         <div className="flex items-center justify-between border-b border-[#ede9fe] p-4 sm:p-6">
-          <h2 className="text-xl font-black tracking-[-0.04em] text-slate-950 sm:text-2xl">
-            {t.settings}
-          </h2>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6d28d9]">
+              {t.settings}
+            </p>
+            <h2 className="mt-1 text-xl font-black tracking-[-0.04em] text-slate-950 sm:text-2xl">
+              {t.settings}
+            </h2>
+          </div>
           <button
             onClick={onClose}
-            className="text-xl font-bold text-slate-400 hover:text-slate-700 sm:text-2xl"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-[#ede9fe] bg-[#faf9fe] text-xl font-bold text-slate-400 hover:text-slate-700 sm:text-2xl"
           >
             ×
           </button>
         </div>
 
-        {/* 설정 내용 */}
         <div className="space-y-5 p-4 sm:space-y-6 sm:p-6">
-          {/* 음자리표 설정 */}
-          <div>
-            <label className="mb-2 block text-sm font-bold uppercase tracking-[0.14em] text-slate-500 sm:mb-3">
+          <div className="rounded-[1.5rem] border border-[#ede9fe] bg-[#faf9fe] p-4">
+            <label className="mb-3 block text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
               {t.settingsLabels.clef}
             </label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               <button
                 onClick={() => handleClefChange("random")}
                 className={`rounded-2xl border p-3 text-sm font-bold transition-colors ${
@@ -125,16 +127,15 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                 >
                   {t.clefs[key]}
                 </button>
-              ))}
+                ))}
             </div>
           </div>
 
-          {/* 조표 설정 */}
-          <div>
+          <div className="rounded-[1.5rem] border border-[#ede9fe] bg-[#faf9fe] p-4">
             <label className="mb-3 block text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
               {t.settingsLabels.keySignature}
             </label>
-            <div className="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto">
+            <div className="grid max-h-40 grid-cols-4 gap-2 overflow-y-auto pr-1">
               <button
                 onClick={() => handleKeySignatureChange("random")}
                 className={`rounded-2xl border p-2 text-sm font-bold transition-colors ${
@@ -157,17 +158,16 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                 >
                   {key}
                 </button>
-              ))}
+                ))}
             </div>
           </div>
 
-          {/* 오선지 범위 설정 */}
-          <div>
+          <div className="rounded-[1.5rem] border border-[#ede9fe] bg-[#faf9fe] p-4">
             <label className="mb-3 block text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
               {t.settingsLabels.staffRange}
             </label>
-            <div className="flex items-center space-x-4">
-              <div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-[#ded6f7] bg-white p-3">
                 <label className="mb-1 block text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
                   {t.settingsLabels.ledgerLinesAbove}
                 </label>
@@ -188,7 +188,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                   ))}
                 </select>
               </div>
-              <div>
+              <div className="rounded-2xl border border-[#ded6f7] bg-white p-3">
                 <label className="mb-1 block text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
                   {t.settingsLabels.ledgerLinesBelow}
                 </label>
@@ -215,8 +215,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
             </p>
           </div>
 
-          {/* 답안 입력 방식 */}
-          <div>
+          <div className="rounded-[1.5rem] border border-[#ede9fe] bg-[#faf9fe] p-4">
             <label className="mb-3 block text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
               {t.settingsLabels.answerMode}
             </label>
@@ -238,9 +237,8 @@ const GameSettings: React.FC<GameSettingsProps> = ({
             </div>
           </div>
 
-          {/* 소리 설정 */}
-          <div>
-            <label className="flex items-center space-x-3">
+          <div className="rounded-[1.5rem] border border-[#ede9fe] bg-[#faf9fe] p-4">
+            <label className="flex items-center gap-3 rounded-2xl border border-[#ded6f7] bg-white px-4 py-3">
               <input
                 type="checkbox"
                 checked={settings.enableSound}
@@ -253,12 +251,11 @@ const GameSettings: React.FC<GameSettingsProps> = ({
             </label>
           </div>
 
-          {/* 시간 제한 설정 */}
-          <div>
+          <div className="rounded-[1.5rem] border border-[#ede9fe] bg-[#faf9fe] p-4">
             <label className="mb-3 block text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
               {t.settingsLabels.timeLimit}
             </label>
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#ded6f7] bg-white p-3">
               <input
                 type="checkbox"
                 checked={settings.timeLimit !== undefined}
@@ -267,7 +264,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                 }
                 className="h-4 w-4 rounded border-[#ded6f7] text-[#5b21b6] focus:ring-[#7c3aed]"
               />
-              <span className="text-sm text-slate-600">
+              <span className="text-sm font-medium text-slate-600">
                 {t.settingsLabels.timeLimitEnable}
               </span>
               {settings.timeLimit !== undefined && (
@@ -285,13 +282,12 @@ const GameSettings: React.FC<GameSettingsProps> = ({
             </div>
           </div>
 
-          {/* 임시표 설정 */}
-          <div>
+          <div className="rounded-[1.5rem] border border-[#ede9fe] bg-[#faf9fe] p-4">
             <label className="mb-3 block text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
               {t.settingsLabels.accidentals} (♯, ♭, ♮)
             </label>
             <div className="space-y-3">
-              <label className="flex items-center space-x-3">
+              <label className="flex items-center gap-3 rounded-2xl border border-[#ded6f7] bg-white px-4 py-3">
                 <input
                   type="checkbox"
                   checked={settings.enableAccidentals}
@@ -304,7 +300,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
               </label>
 
               {settings.enableAccidentals && (
-                <div>
+                <div className="rounded-2xl border border-[#ded6f7] bg-white p-4">
                   <label className="mb-2 block text-xs text-slate-500">
                     {t.settingsLabels.accidentalProbability}:{" "}
                     {Math.round(settings.accidentalProbability * 100)}%
@@ -335,9 +331,8 @@ const GameSettings: React.FC<GameSettingsProps> = ({
           </div>
         </div>
 
-        {/* 버튼 */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#ede9fe] bg-[#faf9fe] p-6">
-          <div className="flex space-x-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#ede9fe] bg-[#faf9fe] p-4 sm:p-6">
+          <div className="flex flex-wrap gap-3">
             <button
               onClick={resetSettings}
               className="rounded-2xl border border-[#ded6f7] bg-white px-4 py-2 text-sm font-bold text-slate-700"
@@ -351,7 +346,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
               {t.settingsLabels.resetAllStats}
             </button>
           </div>
-          <div className="flex space-x-3">
+          <div className="flex flex-wrap gap-3">
             <button
               onClick={onClose}
               className="rounded-2xl border border-[#ded6f7] bg-white px-4 py-2 text-sm font-bold text-slate-700"

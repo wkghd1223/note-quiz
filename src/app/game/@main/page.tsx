@@ -16,6 +16,7 @@ import PianoKeyboard from "@/components/game/PianoKeyboard";
 import SolfegeKeyboard from "@/components/game/SolfegeKeyboard";
 import Timer from "@/components/game/Timer";
 import ScoreBoard from "@/components/game/ScoreBoard";
+import GameSettingsTrigger from "@/components/game/GameSettingsTrigger";
 import { useLanguageStore } from "@/store/languageStore";
 
 const GameMain: React.FC = () => {
@@ -151,7 +152,7 @@ const GameMain: React.FC = () => {
 
   return (
     <>
-      <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)]">
+      <div className="relative grid grid-cols-1 gap-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
         <div className="min-w-0">
           <div className="hidden space-y-6 lg:block">
             <Timer />
@@ -161,18 +162,21 @@ const GameMain: React.FC = () => {
 
         {/* 중앙: 게임 영역 */}
         <div className="min-w-0">
-          {/* 모바일 점수판 버튼 */}
-          <div className="lg:hidden mb-4 flex justify-end">
+          <div className="mb-4 lg:hidden">
+            <Timer />
+          </div>
+
+          <div className="mb-4 flex lg:hidden">
             <button
               onClick={() => setShowScoreBoardModal(true)}
-              className="rounded-2xl border border-[#c4b5fd] bg-[#ede9fe] px-4 py-2 text-sm font-bold text-[#5b21b6] shadow-[0_8px_18px_rgba(76,29,149,0.08)]"
+              className="inline-flex items-center rounded-2xl border border-[#ded6f7] bg-white px-4 py-2.5 text-sm font-bold text-[#5b21b6] shadow-[0_10px_24px_rgba(76,29,149,0.08)]"
             >
               📊 {t.scoreboard.title}
             </button>
           </div>
           <div className="overflow-hidden rounded-[2rem] border border-[#ded6f7] bg-white shadow-[0_18px_50px_rgba(76,29,149,0.08)]">
             <div className="h-1.5 w-full bg-gradient-to-r from-[#5b21b6] via-[#6d28d9] to-[#ede9fe]" />
-            <div className="p-6 lg:p-8">
+            <div className="bg-[radial-gradient(circle_at_top,_rgba(124,58,237,0.08),transparent_42%),linear-gradient(180deg,_#ffffff_0%,_#faf9fe_100%)] p-4 sm:p-6 lg:p-8">
               {/* 피드백 메시지 */}
               <div
                 className={`mb-4 rounded-2xl border text-center font-bold fixed bottom-[50%] right-[50%] z-10
@@ -187,93 +191,122 @@ const GameMain: React.FC = () => {
                 {feedback?.message}
               </div>
 
-              <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+              <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#6d28d9]">
+                  <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#6d28d9] sm:text-sm sm:tracking-[0.2em]">
                     {currentQuestion
                       ? t.clefs[currentQuestion.clef]
                       : t.gameTitle}
                   </p>
-                  {/* <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] text-slate-950">
-                  {t.ui.welcome}
-                </h2> */}
+                  <h2 className="mt-2 text-2xl font-black tracking-[-0.05em] text-slate-950 sm:text-3xl">
+                    {currentQuestion
+                      ? t.messages.whichNoteShown
+                      : t.ui.welcome}
+                  </h2>
+                  {!currentQuestion && (
+                    <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+                      {t.messages.startGameInstruction}
+                    </p>
+                  )}
                 </div>
-                <div className="rounded-full bg-[#ede9fe] px-4 py-2 text-sm font-bold text-[#5b21b6]">
+                <div className="rounded-full bg-[#ede9fe] px-4 py-2 text-sm font-bold text-[#5b21b6] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
                   {t.scoreboard.total}:{" "}
                   {currentQuestion ? answers.length + 1 : answers.length}
                 </div>
               </div>
 
-              {/* 오선지 */}
-              {currentQuestion && (
-                <div className="mb-6 rounded-[1.75rem] bg-[#f8fafc] p-5 lg:p-8">
-                  <Staff
-                    clef={currentQuestion.clef}
-                    keySignature={currentQuestion.keySignature}
-                    note={currentQuestion.displayNote}
-                    originalNote={currentQuestion.note}
-                    className="flex justify-center"
-                  />
-                </div>
-              )}
+              {currentQuestion ? (
+                <div className="rounded-[1.75rem] border border-[#ece7fb] bg-[#faf9fe] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] sm:p-4 lg:p-5">
+                  <div className="rounded-[1.5rem] border border-[#e2e8f0] bg-white p-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)] sm:p-5 lg:p-6">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+                        {t.clefs[currentQuestion.clef]}
+                      </p>
+                      <span className="rounded-full bg-[#ede9fe] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#5b21b6]">
+                        {settings.answerMode === "piano"
+                          ? t.answerModes.piano
+                          : t.answerModes.solfege}
+                      </span>
+                    </div>
 
-              {/* 소리 재생 버튼 */}
-              {/* {currentQuestion && settings.enableSound && isAudioInitialized && (
-              <div className="mb-6 text-center">
-                <button
-                  onClick={handlePlaySound}
-                  className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {t.messages.playSound}
-                </button>
-              </div>
-            )} */}
-
-              {/* 답안 입력 영역 */}
-              {isGameActive() && (
-                <div className="mt-6">
-                  {settings.answerMode === "piano" ? (
-                    <PianoKeyboard
-                      onNoteClick={handleAnswerSubmit}
-                      selectedNote={currentAnswer}
-                      disabled={!isGameActive()}
-                      className="flex flex-col items-center justify-center"
-                    />
-                  ) : (
-                    <SolfegeKeyboard
-                      onNoteClick={handleAnswerSubmit}
-                      selectedNote={currentAnswer}
-                      disabled={!isGameActive()}
+                    <Staff
+                      clef={currentQuestion.clef}
+                      keySignature={currentQuestion.keySignature}
+                      note={currentQuestion.displayNote}
+                      originalNote={currentQuestion.note}
                       className="flex justify-center"
                     />
+                  </div>
+
+                  {isGameActive() && (
+                    <div className="mt-5 rounded-[1.4rem] border border-[#ede9fe] bg-white p-3 sm:p-4">
+                      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+                          {t.messages.whichNoteShown}
+                        </p>
+                        <span className="rounded-full bg-[#faf9fe] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">
+                          {t.ui.currentQuestionTime}:{" "}
+                          {(getQuestionElapsedTime() / 1000).toFixed(1)}
+                          {t.units.seconds}
+                        </span>
+                      </div>
+
+                      {settings.answerMode === "piano" ? (
+                        <PianoKeyboard
+                          onNoteClick={handleAnswerSubmit}
+                          selectedNote={currentAnswer}
+                          disabled={!isGameActive()}
+                          className="flex flex-col items-center justify-center"
+                        />
+                      ) : (
+                        <SolfegeKeyboard
+                          onNoteClick={handleAnswerSubmit}
+                          selectedNote={currentAnswer}
+                          disabled={!isGameActive()}
+                          className="flex justify-center"
+                        />
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
+              ) : (
+                <div className="rounded-[1.75rem] border border-[#ece7fb] bg-[#faf9fe] p-3 sm:p-4 lg:p-5">
+                  <div className="rounded-[1.5rem] border border-[#e7e1f5] bg-white px-6 py-12 text-center shadow-[0_10px_24px_rgba(15,23,42,0.04)] sm:px-8">
+                    {gameState === "idle" && (
+                      <>
+                        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#ede9fe] text-2xl text-[#5b21b6] shadow-[0_10px_24px_rgba(91,33,182,0.12)]">
+                          ♪
+                        </div>
+                        <h3 className="text-3xl font-black tracking-[-0.05em] text-slate-950">
+                          {t.ui.welcome}
+                        </h3>
+                        <p className="mx-auto mt-4 max-w-xl text-base leading-8 text-slate-600">
+                          {t.messages.startGameInstruction}
+                        </p>
+                      </>
+                    )}
 
-              {/* 게임 대기 상태 */}
-              {gameState === "idle" && (
-                <div className="py-12 text-center">
-                  <h2 className="mb-4 text-3xl font-black tracking-[-0.04em] text-slate-900">
-                    {t.ui.welcome}
-                  </h2>
-                  <p className="mx-auto max-w-xl leading-8 text-slate-600">
-                    {t.messages.startGameInstruction}
-                  </p>
-                </div>
-              )}
-
-              {/* 게임 완료 상태 */}
-              {gameState === "finished" && (
-                <div className="py-12 text-center">
-                  <h2 className="mb-4 text-3xl font-black tracking-[-0.04em] text-[#10b981]">
-                    {t.messages.gameComplete}
-                  </h2>
-                  <p className="mx-auto max-w-xl leading-8 text-slate-600">
-                    {t.messages.gameCompleteInstruction}
-                  </p>
+                    {gameState === "finished" && (
+                      <>
+                        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#dcfce7] text-2xl text-[#10b981] shadow-[0_10px_24px_rgba(16,185,129,0.12)]">
+                          ✓
+                        </div>
+                        <h3 className="text-3xl font-black tracking-[-0.05em] text-[#10b981]">
+                          {t.messages.gameComplete}
+                        </h3>
+                        <p className="mx-auto mt-4 max-w-xl text-base leading-8 text-slate-600">
+                          {t.messages.gameCompleteInstruction}
+                        </p>
+                      </>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
+          </div>
+
+          <div className="mt-4 lg:hidden">
+            <GameSettingsTrigger variant="mobile-card" />
           </div>
         </div>
       </div>

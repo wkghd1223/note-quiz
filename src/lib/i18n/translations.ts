@@ -1,6 +1,8 @@
 export interface Translations {
   // 게임 제목 및 기본
   gameTitle: string;
+  gameNavTitle: string;
+  brandDescription: string;
   startGame: string;
   pauseGame: string;
   resumeGame: string;
@@ -257,11 +259,46 @@ export interface Translations {
       tagline: string;
     };
   };
+  earTraining: {
+    title: string;
+    subtitle: string;
+    description: string;
+    settings: string;
+    replay: string;
+    start: string;
+    restart: string;
+    stop: string;
+    listenPrompt: string;
+    currentTarget: string;
+    session: {
+      practice: string;
+      timed: string;
+    };
+    noteSet: {
+      title: string;
+      natural: string;
+      chromatic: string;
+    };
+    inputMode: {
+      title: string;
+      piano: string;
+      solfege: string;
+    };
+    result: {
+      title: string;
+      replayCount: string;
+      averageTime: string;
+      bestAccuracy: string;
+      sessionsPlayed: string;
+    };
+  };
 }
 
 export const translations: Record<Language, Translations> = {
   en: {
     gameTitle: "Note Quiz",
+    gameNavTitle: "Note Quiz",
+    brandDescription: "Master the Musical Staff",
     startGame: "Start Game",
     pauseGame: "Pause",
     resumeGame: "Resume",
@@ -521,10 +558,45 @@ export const translations: Record<Language, Translations> = {
         tagline: "Interactive note recognition game for music learning",
       },
     },
+    earTraining: {
+      title: "Ear Training",
+      subtitle: "Absolute Pitch Practice",
+      description: "Listen to a note and identify it as quickly as you can.",
+      settings: "Settings",
+      replay: "Replay Note",
+      start: "Start Session",
+      restart: "Restart",
+      stop: "End Session",
+      listenPrompt: "Listen to the note and choose the correct answer.",
+      currentTarget: "Current Target",
+      session: {
+        practice: "Practice",
+        timed: "Timed",
+      },
+      noteSet: {
+        title: "Note Set",
+        natural: "Natural",
+        chromatic: "Chromatic",
+      },
+      inputMode: {
+        title: "Input Mode",
+        piano: "Piano",
+        solfege: "Solfege",
+      },
+      result: {
+        title: "Session Result",
+        replayCount: "Replays",
+        averageTime: "Average Time",
+        bestAccuracy: "Best Accuracy",
+        sessionsPlayed: "Sessions Played",
+      },
+    },
   },
 
   ko: {
     gameTitle: "계이름 맞추기 게임",
+    gameNavTitle: "음표 퀴즈",
+    brandDescription: "오선 위의 음을 더 빠르게 읽어보세요",
     startGame: "게임 시작",
     pauseGame: "일시정지",
     resumeGame: "계속하기",
@@ -782,10 +854,45 @@ export const translations: Record<Language, Translations> = {
         tagline: "음악 학습을 위한 대화형 음표 인식 게임",
       },
     },
+    earTraining: {
+      title: "청음 훈련",
+      subtitle: "절대음감 연습",
+      description: "재생된 음을 듣고 가능한 한 빠르게 맞혀보세요.",
+      settings: "설정",
+      replay: "다시 듣기",
+      start: "세션 시작",
+      restart: "다시 시작",
+      stop: "세션 종료",
+      listenPrompt: "음을 듣고 올바른 답을 선택하세요.",
+      currentTarget: "현재 음",
+      session: {
+        practice: "연습",
+        timed: "타이머",
+      },
+      noteSet: {
+        title: "음표 세트",
+        natural: "기본음",
+        chromatic: "반음 포함",
+      },
+      inputMode: {
+        title: "입력 방식",
+        piano: "피아노",
+        solfege: "도레미",
+      },
+      result: {
+        title: "세션 결과",
+        replayCount: "다시 듣기 횟수",
+        averageTime: "평균 시간",
+        bestAccuracy: "최고 정확도",
+        sessionsPlayed: "플레이 횟수",
+      },
+    },
   },
 
   ja: {
     gameTitle: "音符クイズ",
+    gameNavTitle: "音符クイズ",
+    brandDescription: "五線譜の音をすばやく読めるように",
     startGame: "ゲーム開始",
     pauseGame: "一時停止",
     resumeGame: "再開",
@@ -1042,10 +1149,45 @@ export const translations: Record<Language, Translations> = {
         tagline: "音楽学習のための対話型音符認識ゲーム",
       },
     },
+    earTraining: {
+      title: "聴音トレーニング",
+      subtitle: "絶対音感の練習",
+      description: "再生された音を聞いて、できるだけ早く答えましょう。",
+      settings: "設定",
+      replay: "もう一度聞く",
+      start: "開始",
+      restart: "再開",
+      stop: "終了",
+      listenPrompt: "音を聞いて正しい答えを選んでください。",
+      currentTarget: "現在の音",
+      session: {
+        practice: "練習",
+        timed: "タイマー",
+      },
+      noteSet: {
+        title: "音セット",
+        natural: "基本音",
+        chromatic: "半音を含む",
+      },
+      inputMode: {
+        title: "入力モード",
+        piano: "ピアノ",
+        solfege: "ドレミ",
+      },
+      result: {
+        title: "結果",
+        replayCount: "再生回数",
+        averageTime: "平均時間",
+        bestAccuracy: "最高正解率",
+        sessionsPlayed: "プレイ回数",
+      },
+    },
   },
 
   es: {
     gameTitle: "Quiz de Notas",
+    gameNavTitle: "Quiz de Notas",
+    brandDescription: "Domina las notas del pentagrama",
     startGame: "Iniciar Juego",
     pauseGame: "Pausar",
     resumeGame: "Reanudar",
@@ -1307,10 +1449,45 @@ export const translations: Record<Language, Translations> = {
           "Juego interactivo de reconocimiento de notas para aprendizaje musical",
       },
     },
+    earTraining: {
+      title: "Entrenamiento Auditivo",
+      subtitle: "Practica de Oido Absoluto",
+      description: "Escucha la nota y responde lo mas rapido posible.",
+      settings: "Configuracion",
+      replay: "Repetir nota",
+      start: "Iniciar sesion",
+      restart: "Reiniciar",
+      stop: "Terminar sesion",
+      listenPrompt: "Escucha la nota y elige la respuesta correcta.",
+      currentTarget: "Nota actual",
+      session: {
+        practice: "Practica",
+        timed: "Con tiempo",
+      },
+      noteSet: {
+        title: "Conjunto de notas",
+        natural: "Naturales",
+        chromatic: "Cromatico",
+      },
+      inputMode: {
+        title: "Modo de entrada",
+        piano: "Piano",
+        solfege: "Solfeo",
+      },
+      result: {
+        title: "Resultado",
+        replayCount: "Repeticiones",
+        averageTime: "Tiempo promedio",
+        bestAccuracy: "Mejor precision",
+        sessionsPlayed: "Sesiones jugadas",
+      },
+    },
   },
 
   de: {
     gameTitle: "Noten-Quiz",
+    gameNavTitle: "Noten-Quiz",
+    brandDescription: "Meistere die Noten auf dem Notensystem",
     startGame: "Spiel starten",
     pauseGame: "Pausieren",
     resumeGame: "Fortsetzen",
@@ -1573,10 +1750,45 @@ export const translations: Record<Language, Translations> = {
         tagline: "Interaktives Notenerkennung-Spiel zum Musiklernen",
       },
     },
+    earTraining: {
+      title: "Gehoertraining",
+      subtitle: "Absolutes Gehoer ueben",
+      description: "Hoeren Sie den Ton und antworten Sie so schnell wie moeglich.",
+      settings: "Einstellungen",
+      replay: "Ton wiederholen",
+      start: "Sitzung starten",
+      restart: "Neu starten",
+      stop: "Sitzung beenden",
+      listenPrompt: "Hoeren Sie den Ton und waehlen Sie die richtige Antwort.",
+      currentTarget: "Aktueller Ton",
+      session: {
+        practice: "Uebung",
+        timed: "Zeitmodus",
+      },
+      noteSet: {
+        title: "Tonset",
+        natural: "Naturtoene",
+        chromatic: "Chromatisch",
+      },
+      inputMode: {
+        title: "Eingabemodus",
+        piano: "Klavier",
+        solfege: "Solmisation",
+      },
+      result: {
+        title: "Ergebnis",
+        replayCount: "Wiederholungen",
+        averageTime: "Durchschnittszeit",
+        bestAccuracy: "Beste Genauigkeit",
+        sessionsPlayed: "Sitzungen",
+      },
+    },
   },
 
   fr: {
     gameTitle: "Quiz des Notes",
+    gameNavTitle: "Quiz des Notes",
+    brandDescription: "Maîtrisez les notes sur la portée",
     startGame: "Commencer le Jeu",
     pauseGame: "Pause",
     resumeGame: "Reprendre",
@@ -1838,6 +2050,39 @@ export const translations: Record<Language, Translations> = {
         copyright: "© 2024 Note Quiz. All rights reserved.",
         tagline:
           "Jeu interactif de reconnaissance des notes pour l'apprentissage musical",
+      },
+    },
+    earTraining: {
+      title: "Entrainement Auditif",
+      subtitle: "Pratique de l'oreille absolue",
+      description: "Ecoutez la note et repondez aussi vite que possible.",
+      settings: "Parametres",
+      replay: "Rejouer la note",
+      start: "Demarrer la session",
+      restart: "Redemarrer",
+      stop: "Terminer la session",
+      listenPrompt: "Ecoutez la note et choisissez la bonne reponse.",
+      currentTarget: "Note actuelle",
+      session: {
+        practice: "Pratique",
+        timed: "Chronometre",
+      },
+      noteSet: {
+        title: "Jeu de notes",
+        natural: "Naturelles",
+        chromatic: "Chromatique",
+      },
+      inputMode: {
+        title: "Mode de saisie",
+        piano: "Piano",
+        solfege: "Solfege",
+      },
+      result: {
+        title: "Resultat",
+        replayCount: "Relectures",
+        averageTime: "Temps moyen",
+        bestAccuracy: "Meilleure precision",
+        sessionsPlayed: "Sessions jouees",
       },
     },
   },

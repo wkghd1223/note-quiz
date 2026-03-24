@@ -1,126 +1,133 @@
-# 🎵 Note Quiz
+# Note Quiz
 
-A comprehensive web-based music note identification game designed to help musicians improve their sight-reading skills through visual and auditory training.
+Note Quiz is a Next.js music training app for note reading and ear training. It currently includes:
 
-## 🎯 Why This Project?
+- Sight-reading practice at `/game`
+- Absolute pitch / ear-training practice at `/ear-training`
+- Audio playback, score tracking, and customizable training settings
+- Mobile-friendly UI with multilingual support
 
-I created this game to support my harmonica learning journey. When reading sheet music, I found myself struggling to instantly recognize notes, which slowed down my practice sessions. This tool provides focused training to develop quick note recognition skills that are essential for any musician.
+## Why This Exists
 
-## ✨ Features
+This project started as a focused practice tool for learning to recognize notes quickly from sheet music. It has grown into a broader training app with both visual note identification and listening-based drills.
 
-- **Multiple Clefs**: Treble, Bass, Alto, and Tenor clef support
-- **Key Signatures**: All major and minor key signatures with accidentals
-- **Answer Input Methods**: Piano keyboard and Solfege (Do-Re-Mi) input
-- **Customizable Settings**: Adjust clefs, key signatures, time limits, and difficulty
-- **Real-time Feedback**: Instant validation with visual and audio cues
-- **Responsive Design**: Optimized for both desktop and mobile devices
-- **Multi-language Support**: English and Korean (한국어)
-- **Progress Tracking**: Detailed statistics and score monitoring
-- **Enharmonic Recognition**: Accepts equivalent notes (C# = Db, E# = F, etc.)
+## Current Features
 
-## 🚀 Getting Started
+### Sight Reading
+
+- Treble, bass, alto, and tenor clefs
+- Key signatures and accidentals
+- Piano-key and solfege answer modes
+- Adjustable staff range and time limits
+- Session stats, score history, and results
+
+### Ear Training
+
+- Single-note listening practice
+- Practice and timed modes
+- Natural-only or chromatic note sets
+- Piano or solfege input
+- Replay current note
+- Session summary and aggregate stats
+
+### General
+
+- Responsive layout for desktop and mobile
+- 6 languages: English, Korean, Japanese, Spanish, German, French
+- Google Analytics event tracking
+- Google AdSense component support
+
+## Tech Stack
+
+- Next.js 15 App Router
+- React 19
+- TypeScript
+- Tailwind CSS
+- Zustand
+- Web Audio API
+- React Icons
+
+## Getting Started
 
 ### Prerequisites
 
-- Node.js 18 or higher
-- npm, yarn, or pnpm
+- Node.js 18+
+- npm
 
-### Installation
-
-1. **Clone the repository:**
-
-```bash
-git clone https://github.com/your-username/note-quiz.git
-cd note-quiz
-```
-
-2. **Install dependencies:**
+### Install
 
 ```bash
 npm install
-# or
-yarn install
-# or
-pnpm install
 ```
 
-3. **Start the development server:**
+### Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
 ```
 
-4. **Open your browser:**
-   Navigate to [http://localhost:3000](http://localhost:3000)
+Open [http://localhost:3000](http://localhost:3000).
 
-## 🌐 Live Demo
+### Lint
 
-The application is deployed on AWS Amplify and available at:
-**[https://note-quiz.com](https://note-quiz.com)**
-
-## 🛠️ Tech Stack
-
-- **Framework**: Next.js 15 with App Router
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **State Management**: Zustand
-- **Audio**: Web Audio API with custom synthesizer
-- **Icons**: React Icons (Font Awesome)
-- **Build Tool**: Turbopack (Next.js 15)
-
-## 📁 Project Structure
-
+```bash
+npm run lint
 ```
+
+## Routes
+
+- `/` landing page
+- `/game` sight-reading game
+- `/ear-training` ear-training mode
+- `/suggest` suggestion page
+
+## Project Structure
+
+```text
 src/
-├── app/                    # Next.js app router
-│   ├── game/              # Game page with parallel routes
-│   │   ├── @control/      # Game control components
-│   │   └── @display/      # Game display components
-│   └── page.tsx           # Home page
-├── components/            # React components
-│   ├── game/             # Game-specific components
-│   │   ├── Staff.tsx     # Musical staff display
-│   │   ├── PianoKeyboard.tsx
-│   │   ├── GameSettings.tsx
-│   │   └── Timer.tsx
-│   └── ui/               # Reusable UI components
-├── lib/                  # Utility libraries
-│   ├── music/           # Music theory engine
-│   │   ├── utils.ts     # Note generation & validation
-│   │   ├── audio.ts     # Web Audio API wrapper
-│   │   └── constants.ts # Musical constants
-│   └── i18n/            # Internationalization
-├── store/               # Zustand state management
-├── types/               # TypeScript definitions
-└── hooks/               # Custom React hooks
+├── app/
+│   ├── ear-training/
+│   ├── game/
+│   ├── suggest/
+│   └── page.tsx
+├── components/
+│   ├── analytics/
+│   ├── ear-training/
+│   ├── game/
+│   ├── layouts/
+│   ├── providers/
+│   └── ui/
+├── lib/
+│   ├── analytics.ts
+│   ├── i18n/
+│   ├── metadata.ts
+│   └── music/
+├── store/
+├── styles/
+└── types/
 ```
 
-## 🤝 Contributing
+## Analytics
 
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+Google Analytics is installed globally in the root layout and route changes are tracked for App Router navigation.
 
-### Development Guidelines
+Current analytics coverage includes:
 
-1. Follow TypeScript best practices
-2. Use Tailwind CSS for styling
-3. Maintain mobile responsiveness
-4. Add appropriate type definitions
-5. Test on multiple devices and browsers
+- page views
+- game start
+- answers
+- ear-training session start
+- ear-training answer submission
+- ear-training completion
+- ear-training replay
+- ear-training settings changes
 
-## 📄 License
+## Notes
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+- Google Analytics tracking ID is currently configured in code.
+- Some UI text and branding are translation-driven.
+- There are existing lint warnings in a couple of legacy hooks/components, but lint passes.
 
-## 🙏 Acknowledgments
+## License
 
-- Inspired by the need for effective music education tools
-- Built for harmonica players and musicians of all levels
-- Designed with accessibility and user experience in mind
-
----
-
-**Happy practicing! 🎶**
+MIT

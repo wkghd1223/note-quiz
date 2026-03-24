@@ -10,6 +10,7 @@ interface PianoKeyboardProps {
   selectedNote?: Note | null;
   disabled?: boolean;
   showLabels?: boolean;
+  showAccidentals?: boolean;
   className?: string;
 }
 
@@ -25,6 +26,7 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
   selectedNote,
   disabled = false,
   showLabels = true,
+  showAccidentals = true,
   className = "",
 }) => {
   // const { t } = useTranslation();
@@ -36,6 +38,9 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
     const octave = 4; // 기본 옥타브
 
     PIANO_KEYS.KEY_PATTERN.forEach(({ note, type }) => {
+      if (!showAccidentals && type === "black") {
+        return;
+      }
       const keyId = `${note}${octave}`;
       keys.push({
         note: note as NoteName,
@@ -46,7 +51,7 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
     });
 
     return keys;
-  }, [pressedKeys]);
+  }, [pressedKeys, showAccidentals]);
 
   // 키 클릭 핸들러
   const handleKeyClick = useCallback(

@@ -80,3 +80,80 @@ export const trackPageView = (pageName: string) => {
     });
   }
 };
+
+export const trackEarTrainingStart = (settings: {
+  inputMode: string;
+  noteSet: string;
+  timeLimit: number | null;
+  sessionType: string;
+}) => {
+  if (typeof window !== "undefined" && window.gtag) {
+    window.gtag("event", "ear_training_started", {
+      event_category: "EarTraining",
+      input_mode: settings.inputMode,
+      note_set: settings.noteSet,
+      time_limit: settings.timeLimit,
+      session_type: settings.sessionType,
+    });
+  }
+};
+
+export const trackEarTrainingAnswer = (payload: {
+  inputMode: string;
+  expectedNote: string;
+  userNote: string;
+  isCorrect: boolean;
+  timeSpent: number;
+}) => {
+  if (typeof window !== "undefined" && window.gtag) {
+    window.gtag("event", "ear_training_answer_submitted", {
+      event_category: "EarTraining",
+      input_mode: payload.inputMode,
+      expected_note: payload.expectedNote,
+      user_note: payload.userNote,
+      is_correct: payload.isCorrect,
+      time_spent_ms: payload.timeSpent,
+    });
+  }
+};
+
+export const trackEarTrainingComplete = (payload: {
+  totalQuestions: number;
+  correctAnswers: number;
+  accuracy: number;
+  averageTime: number;
+  replayCount: number;
+}) => {
+  if (typeof window !== "undefined" && window.gtag) {
+    window.gtag("event", "ear_training_completed", {
+      event_category: "EarTraining",
+      total_questions: payload.totalQuestions,
+      correct_answers: payload.correctAnswers,
+      accuracy: payload.accuracy,
+      average_time_ms: payload.averageTime,
+      replay_count: payload.replayCount,
+    });
+  }
+};
+
+export const trackEarTrainingReplay = () => {
+  if (typeof window !== "undefined" && window.gtag) {
+    window.gtag("event", "ear_training_note_played", {
+      event_category: "EarTraining",
+      source: "replay",
+    });
+  }
+};
+
+export const trackEarTrainingSettingsChange = (
+  setting: string,
+  value: string
+) => {
+  if (typeof window !== "undefined" && window.gtag) {
+    window.gtag("event", "ear_training_settings_changed", {
+      event_category: "EarTraining",
+      setting_name: setting,
+      setting_value: value,
+    });
+  }
+};
