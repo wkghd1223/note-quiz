@@ -136,6 +136,7 @@ export interface Translations {
 
   // 일반 메시지
   messages: {
+    whichNoteShown: string;
     correct: string;
     incorrect: string;
     timeUp: string;
@@ -421,6 +422,7 @@ export const translations: Record<Language, Translations> = {
     },
 
     messages: {
+      whichNoteShown: "Which note is shown?",
       correct: "Correct!",
       incorrect: "Incorrect",
       timeUp: "Time's up!",
@@ -719,6 +721,7 @@ export const translations: Record<Language, Translations> = {
     },
 
     messages: {
+      whichNoteShown: "어떤 음표가 표시되었나요?",
       correct: "정답!",
       incorrect: "틀렸습니다",
       timeUp: "시간 종료!",
@@ -982,6 +985,7 @@ export const translations: Record<Language, Translations> = {
     },
 
     messages: {
+      whichNoteShown: "どの音符が表示されていますか？",
       correct: "正解！",
       incorrect: "不正解",
       timeUp: "時間切れ！",
@@ -1277,6 +1281,7 @@ export const translations: Record<Language, Translations> = {
     },
 
     messages: {
+      whichNoteShown: "¿Cuál nota se muestra?",
       correct: "¡Correcto!",
       incorrect: "Incorrecto",
       timeUp: "¡Tiempo agotado!",
@@ -1577,6 +1582,7 @@ export const translations: Record<Language, Translations> = {
     },
 
     messages: {
+      whichNoteShown: "Welche Note ist angezeigt?",
       correct: "Richtig!",
       incorrect: "Falsch",
       timeUp: "Zeit abgelaufen!",
@@ -1753,7 +1759,8 @@ export const translations: Record<Language, Translations> = {
     earTraining: {
       title: "Gehoertraining",
       subtitle: "Absolutes Gehoer ueben",
-      description: "Hoeren Sie den Ton und antworten Sie so schnell wie moeglich.",
+      description:
+        "Hoeren Sie den Ton und antworten Sie so schnell wie moeglich.",
       settings: "Einstellungen",
       replay: "Ton wiederholen",
       start: "Sitzung starten",
@@ -1878,6 +1885,7 @@ export const translations: Record<Language, Translations> = {
     },
 
     messages: {
+      whichNoteShown: "Quelle note est affichée ?",
       correct: "Correct !",
       incorrect: "Incorrect",
       timeUp: "Temps écoulé !",

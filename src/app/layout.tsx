@@ -22,10 +22,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = defaultMetadata;
 
 export default function RootLayout({
-  modals,
   children,
 }: Readonly<{
-  modals: React.ReactNode;
   children: React.ReactNode;
 }>) {
   return (
@@ -39,7 +37,6 @@ export default function RootLayout({
       >
         <LanguageInitializer />
         <GoogleAnalyticsRouteTracker />
-        {modals}
         {children}
         <Footer />
       </body>
