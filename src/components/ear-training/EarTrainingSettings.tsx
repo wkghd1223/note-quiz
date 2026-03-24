@@ -13,6 +13,19 @@ const EarTrainingSettings: React.FC<EarTrainingSettingsProps> = ({
   onChange,
 }) => {
   const { t } = useTranslation();
+  const octaveValues = [0, 1, 2, 3, 4, 5, 6, 7, 8] as const;
+
+  const handleOctaveChange = (bound: "min" | "max", value: number) => {
+    const nextRange = { ...settings.octaveRange };
+
+    if (bound === "min") {
+      nextRange.min = Math.min(value as Octave, nextRange.max);
+    } else {
+      nextRange.max = Math.max(value as Octave, nextRange.min);
+    }
+
+    onChange({ octaveRange: nextRange });
+  };
 
   return (
     <div className="rounded-[1.5rem] border border-[#ded6f7] bg-white p-5 shadow-[0_14px_40px_rgba(76,29,149,0.08)]">
@@ -115,6 +128,51 @@ const EarTrainingSettings: React.FC<EarTrainingSettingsProps> = ({
                   : t.earTraining.inputMode.solfege}
               </button>
             ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="mb-2 block text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+            {t.settingsLabels.octaveRange}
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-2xl border border-[#ede9fe] bg-[#faf9fe] p-3">
+              <label className="mb-2 block text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">
+                {t.settingsLabels.octaveMin}
+              </label>
+              <select
+                value={settings.octaveRange.min}
+                onChange={(event) =>
+                  handleOctaveChange("min", parseInt(event.target.value, 10))
+                }
+                className="w-full rounded-2xl border border-[#ded6f7] bg-white px-3 py-2 text-sm font-semibold text-slate-700"
+              >
+                {octaveValues.map((octave) => (
+                  <option key={`ear-min-${octave}`} value={octave}>
+                    {octave}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="rounded-2xl border border-[#ede9fe] bg-[#faf9fe] p-3">
+              <label className="mb-2 block text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">
+                {t.settingsLabels.octaveMax}
+              </label>
+              <select
+                value={settings.octaveRange.max}
+                onChange={(event) =>
+                  handleOctaveChange("max", parseInt(event.target.value, 10))
+                }
+                className="w-full rounded-2xl border border-[#ded6f7] bg-white px-3 py-2 text-sm font-semibold text-slate-700"
+              >
+                {octaveValues.map((octave) => (
+                  <option key={`ear-max-${octave}`} value={octave}>
+                    {octave}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
