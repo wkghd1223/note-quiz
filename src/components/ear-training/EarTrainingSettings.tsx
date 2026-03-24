@@ -19,9 +19,9 @@ const EarTrainingSettings: React.FC<EarTrainingSettingsProps> = ({
     const nextRange = { ...settings.octaveRange };
 
     if (bound === "min") {
-      nextRange.min = Math.min(value as Octave, nextRange.max);
+      nextRange.min = Math.min(value as Octave, nextRange.max) as Octave;
     } else {
-      nextRange.max = Math.max(value as Octave, nextRange.min);
+      nextRange.max = Math.max(value as Octave, nextRange.min) as Octave;
     }
 
     onChange({ octaveRange: nextRange });
@@ -45,7 +45,8 @@ const EarTrainingSettings: React.FC<EarTrainingSettingsProps> = ({
                 onClick={() =>
                   onChange({
                     sessionType: type,
-                    timeLimit: type === "timed" ? settings.timeLimit ?? 60 : undefined,
+                    timeLimit:
+                      type === "timed" ? (settings.timeLimit ?? 60) : undefined,
                   })
                 }
                 className={`rounded-2xl border px-4 py-3 text-sm font-bold ${
@@ -90,21 +91,23 @@ const EarTrainingSettings: React.FC<EarTrainingSettingsProps> = ({
             {t.earTraining.noteSet.title}
           </label>
           <div className="grid grid-cols-2 gap-2">
-            {(["natural", "chromatic"] as EarTrainingNoteSet[]).map((noteSet) => (
-              <button
-                key={noteSet}
-                onClick={() => onChange({ noteSet })}
-                className={`rounded-2xl border px-4 py-3 text-sm font-bold ${
-                  settings.noteSet === noteSet
-                    ? "border-[#7c3aed] bg-[#ede9fe] text-[#5b21b6]"
-                    : "border-[#ded6f7] bg-white text-slate-700"
-                }`}
-              >
-                {noteSet === "natural"
-                  ? t.earTraining.noteSet.natural
-                  : t.earTraining.noteSet.chromatic}
-              </button>
-            ))}
+            {(["natural", "chromatic"] as EarTrainingNoteSet[]).map(
+              (noteSet) => (
+                <button
+                  key={noteSet}
+                  onClick={() => onChange({ noteSet })}
+                  className={`rounded-2xl border px-4 py-3 text-sm font-bold ${
+                    settings.noteSet === noteSet
+                      ? "border-[#7c3aed] bg-[#ede9fe] text-[#5b21b6]"
+                      : "border-[#ded6f7] bg-white text-slate-700"
+                  }`}
+                >
+                  {noteSet === "natural"
+                    ? t.earTraining.noteSet.natural
+                    : t.earTraining.noteSet.chromatic}
+                </button>
+              ),
+            )}
           </div>
         </div>
 
@@ -113,21 +116,23 @@ const EarTrainingSettings: React.FC<EarTrainingSettingsProps> = ({
             {t.earTraining.inputMode.title}
           </label>
           <div className="grid grid-cols-2 gap-2">
-            {(["piano", "solfege"] as EarTrainingInputMode[]).map((inputMode) => (
-              <button
-                key={inputMode}
-                onClick={() => onChange({ inputMode })}
-                className={`rounded-2xl border px-4 py-3 text-sm font-bold ${
-                  settings.inputMode === inputMode
-                    ? "border-[#7c3aed] bg-[#ede9fe] text-[#5b21b6]"
-                    : "border-[#ded6f7] bg-white text-slate-700"
-                }`}
-              >
-                {inputMode === "piano"
-                  ? t.earTraining.inputMode.piano
-                  : t.earTraining.inputMode.solfege}
-              </button>
-            ))}
+            {(["piano", "solfege"] as EarTrainingInputMode[]).map(
+              (inputMode) => (
+                <button
+                  key={inputMode}
+                  onClick={() => onChange({ inputMode })}
+                  className={`rounded-2xl border px-4 py-3 text-sm font-bold ${
+                    settings.inputMode === inputMode
+                      ? "border-[#7c3aed] bg-[#ede9fe] text-[#5b21b6]"
+                      : "border-[#ded6f7] bg-white text-slate-700"
+                  }`}
+                >
+                  {inputMode === "piano"
+                    ? t.earTraining.inputMode.piano
+                    : t.earTraining.inputMode.solfege}
+                </button>
+              ),
+            )}
           </div>
         </div>
 
@@ -180,7 +185,9 @@ const EarTrainingSettings: React.FC<EarTrainingSettingsProps> = ({
           <input
             type="checkbox"
             checked={settings.enableSound}
-            onChange={(event) => onChange({ enableSound: event.target.checked })}
+            onChange={(event) =>
+              onChange({ enableSound: event.target.checked })
+            }
             className="h-4 w-4 rounded border-[#ded6f7] text-[#5b21b6] focus:ring-[#7c3aed]"
           />
           {t.settingsLabels.enableSound}

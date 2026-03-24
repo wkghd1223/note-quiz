@@ -1,26 +1,25 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 const GA_TRACKING_ID = "G-RHJP137HQZ";
 
 export default function GoogleAnalyticsRouteTracker() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
     if (typeof window === "undefined" || !window.gtag) {
       return;
     }
 
-    const query = searchParams.toString();
+    const query = window.location.search;
     const pagePath = query ? `${pathname}?${query}` : pathname;
 
     window.gtag("config", GA_TRACKING_ID, {
       page_path: pagePath,
     });
-  }, [pathname, searchParams]);
+  }, [pathname]);
 
   return null;
 }
