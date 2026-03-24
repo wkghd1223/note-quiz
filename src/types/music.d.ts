@@ -30,6 +30,9 @@ interface KeySignature {
 
 // 답안 입력 방식
 type AnswerMode = "piano" | "solfege";
+type EarTrainingInputMode = "piano" | "solfege";
+type EarTrainingNoteSet = "natural" | "chromatic";
+type EarTrainingSessionType = "practice" | "timed";
 
 // 언어 설정
 type Language = "en" | "ko" | "ja" | "es" | "de" | "fr";
@@ -92,4 +95,48 @@ interface GameStats {
 interface Feedback {
   message: string;
   type: "success" | "error";
+}
+
+interface EarTrainingSettings {
+  inputMode: EarTrainingInputMode;
+  noteSet: EarTrainingNoteSet;
+  timeLimit?: number;
+  enableSound: boolean;
+  octaveRange: {
+    min: Octave;
+    max: Octave;
+  };
+  sessionType: EarTrainingSessionType;
+}
+
+interface EarTrainingQuestion {
+  id: string;
+  targetNote: Note;
+}
+
+interface EarTrainingAnswer {
+  note: Note;
+  correctNote: Note;
+  isCorrect: boolean;
+  timestamp: number;
+  timeSpent: number;
+}
+
+interface EarTrainingResult {
+  totalQuestions: number;
+  correctAnswers: number;
+  totalTime: number;
+  averageTime: number;
+  accuracy: number;
+  replayCount: number;
+  answers: EarTrainingAnswer[];
+}
+
+interface EarTrainingStats {
+  sessionsPlayed: number;
+  totalCorrect: number;
+  totalQuestions: number;
+  averageAccuracy: number;
+  bestAccuracy: number;
+  fastestAverageTime: number;
 }

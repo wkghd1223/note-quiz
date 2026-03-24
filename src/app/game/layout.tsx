@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import Timer from "@/components/game/Timer";
 
 const gameJsonLd = {
   "@context": "https://schema.org",
@@ -52,11 +51,6 @@ export default function Layout({
       {/* 헤더 */}
       <div className="relative z-50 border-b border-[#ded6f7] bg-white/70">
         <div className="mx-auto max-w-7xl px-4 py-4 lg:py-5">{header}</div>
-      </div>
-
-      {/* 타이머 - 모바일에서만 sticky */}
-      <div className="sticky top-0 z-40 shadow-sm lg:hidden">
-        <Timer className="mx-auto" />
       </div>
 
       <div className="mx-auto max-w-7xl px-4 pb-8 pt-6">

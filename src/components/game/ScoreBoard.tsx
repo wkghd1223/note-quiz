@@ -30,9 +30,8 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({ className = "" }) => {
           {t.scoreboard.title}
         </h3>
 
-        {/* 현재 게임 점수 */}
-        <div className="space-y-3">
-          <div className="flex min-w-0 items-center justify-between gap-2 rounded-2xl bg-[#faf9fe] px-4 py-3">
+        <div className="space-y-3 rounded-[1.5rem] border border-[#ede9fe] bg-[#faf9fe] p-3">
+          <div className="flex min-w-0 items-center justify-between gap-2 rounded-2xl border border-[#ede9fe] bg-white px-4 py-3">
             <span className="min-w-0 break-words text-xs font-bold uppercase tracking-[0.12em] text-slate-500 lg:text-sm lg:tracking-[0.14em]">
               {t.scoreboard.correct}
             </span>
@@ -41,7 +40,7 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({ className = "" }) => {
             </span>
           </div>
 
-          <div className="flex min-w-0 items-center justify-between gap-2 rounded-2xl bg-[#faf9fe] px-4 py-3">
+          <div className="flex min-w-0 items-center justify-between gap-2 rounded-2xl border border-[#ede9fe] bg-white px-4 py-3">
             <span className="min-w-0 break-words text-xs font-bold uppercase tracking-[0.12em] text-slate-500 lg:text-sm lg:tracking-[0.14em]">
               {t.scoreboard.total}
             </span>
@@ -50,7 +49,7 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({ className = "" }) => {
             </span>
           </div>
 
-          <div className="flex min-w-0 items-center justify-between gap-2 rounded-2xl bg-[#faf9fe] px-4 py-3">
+          <div className="flex min-w-0 items-center justify-between gap-2 rounded-2xl border border-[#ede9fe] bg-white px-4 py-3">
             <span className="min-w-0 break-words text-xs font-bold uppercase tracking-[0.12em] text-slate-500 lg:text-sm lg:tracking-[0.14em]">
               {t.scoreboard.accuracy}
             </span>
@@ -70,7 +69,7 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({ className = "" }) => {
 
         {/* 게임 완료 시 결과 */}
         {gameState === "finished" && gameResult && (
-          <div className="mt-6 border-t border-[#ede9fe] pt-4">
+          <div className="mt-6 rounded-[1.5rem] border border-[#ede9fe] bg-[#faf9fe] p-4">
             <h4 className="mb-3 break-words text-xs font-black uppercase tracking-[0.12em] text-slate-500 lg:text-sm lg:tracking-[0.15em]">
               {t.scoreboard.gameResult}
             </h4>
@@ -114,7 +113,7 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({ className = "" }) => {
         )}
 
         {/* 전체 통계 */}
-        <div className="mt-6 border-t border-[#ede9fe] pt-4">
+        <div className="mt-6 rounded-[1.5rem] border border-[#ede9fe] bg-[#faf9fe] p-4">
           <h4 className="mb-3 break-words text-xs font-black uppercase tracking-[0.12em] text-slate-500 lg:text-sm lg:tracking-[0.15em]">
             {t.scoreboard.overallStats}
           </h4>
@@ -152,7 +151,7 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({ className = "" }) => {
 
         {/* 최근 답안 히스토리 */}
         {answers.length > 0 && (
-          <div className="mt-6 border-t border-[#ede9fe] pt-4">
+          <div className="mt-6 rounded-[1.5rem] border border-[#ede9fe] bg-[#faf9fe] p-4">
             <h4 className="mb-3 break-words text-xs font-black uppercase tracking-[0.12em] text-slate-500 lg:text-sm lg:tracking-[0.15em]">
               {t.scoreboard.recentAnswers}
             </h4>
@@ -163,10 +162,10 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({ className = "" }) => {
                 .map((answer, index) => (
                   <div
                     key={`answer-${answers.length - index}`}
-                    className={`rounded-2xl p-3 text-sm ${
+                    className={`rounded-2xl border p-3 text-sm ${
                       answer.isCorrect
-                        ? "bg-[#ecfdf5] text-[#166534]"
-                        : "bg-[#fef2f2] text-[#991b1b]"
+                        ? "border-[#bbf7d0] bg-[#ecfdf5] text-[#166534]"
+                        : "border-[#fecaca] bg-[#fef2f2] text-[#991b1b]"
                     }`}
                   >
                     <div className="flex min-w-0 items-center justify-between gap-2">
@@ -199,7 +198,7 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({ className = "" }) => {
 
         {/* 성취 배지 */}
         {gameState === "finished" && gameResult && (
-          <div className="mt-6 border-t border-[#ede9fe] pt-4">
+          <div className="mt-6 rounded-[1.5rem] border border-[#ede9fe] bg-[#faf9fe] p-4">
             <h4 className="mb-3 break-words text-xs font-black uppercase tracking-[0.12em] text-slate-500 lg:text-sm lg:tracking-[0.15em]">
               {t.scoreboard.achievements}
             </h4>

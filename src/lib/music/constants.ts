@@ -34,6 +34,24 @@ export const SOLFEGE_TO_NOTE_MAPPING: Record<SolfegeNote, NoteName> = {
   시: "B",
 };
 
+export const CHROMATIC_NOTE_PATTERN = [
+  { name: "C", accidental: "natural" },
+  { name: "C", accidental: "sharp" },
+  { name: "D", accidental: "natural" },
+  { name: "D", accidental: "sharp" },
+  { name: "E", accidental: "natural" },
+  { name: "F", accidental: "natural" },
+  { name: "F", accidental: "sharp" },
+  { name: "G", accidental: "natural" },
+  { name: "G", accidental: "sharp" },
+  { name: "A", accidental: "natural" },
+  { name: "A", accidental: "sharp" },
+  { name: "B", accidental: "natural" },
+] as const satisfies ReadonlyArray<{
+  name: NoteName;
+  accidental: Accidental;
+}>;
+
 // 음자리표 정보
 export const CLEFS: ClefType[] = ["treble", "bass", "alto", "tenor"];
 
@@ -290,4 +308,16 @@ export const DEFAULT_GAME_SETTINGS = {
   timeLimit: undefined,
   enableAccidentals: false, // 기본적으로 임시표 비활성화
   accidentalProbability: 0.3, // 30% 확률로 임시표 생성
+};
+
+export const DEFAULT_EAR_TRAINING_SETTINGS: EarTrainingSettings = {
+  inputMode: "piano",
+  noteSet: "natural",
+  timeLimit: undefined,
+  enableSound: true,
+  octaveRange: {
+    min: 4,
+    max: 5,
+  },
+  sessionType: "practice",
 };
