@@ -14,6 +14,7 @@ import { playPianoNote, initializeAudio } from "@/lib/music/audio";
 import Staff from "@/components/game/Staff";
 import PianoKeyboard from "@/components/game/PianoKeyboard";
 import SolfegeKeyboard from "@/components/game/SolfegeKeyboard";
+import MicrophoneInput from "@/components/game/MicrophoneInput";
 import Timer from "@/components/game/Timer";
 import ScoreBoard from "@/components/game/ScoreBoard";
 import GameSettingsTrigger from "@/components/game/GameSettingsTrigger";
@@ -39,6 +40,13 @@ const GameMain: React.FC = () => {
 
   const [isAudioInitialized, setIsAudioInitialized] = useState(false);
   const [showScoreBoardModal, setShowScoreBoardModal] = useState(false);
+
+  const answerModeLabel =
+    settings.answerMode === "piano"
+      ? t.answerModes.piano
+      : settings.answerMode === "solfege"
+        ? t.answerModes.solfege
+        : t.answerModes.microphone;
 
   // 오디오 초기화
   useEffect(() => {
@@ -223,9 +231,7 @@ const GameMain: React.FC = () => {
                         {t.clefs[currentQuestion.clef]}
                       </p>
                       <span className="rounded-full bg-[#ede9fe] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#5b21b6]">
-                        {settings.answerMode === "piano"
-                          ? t.answerModes.piano
-                          : t.answerModes.solfege}
+                        {answerModeLabel}
                       </span>
                     </div>
 
@@ -258,12 +264,18 @@ const GameMain: React.FC = () => {
                           disabled={!isGameActive()}
                           className="flex flex-col items-center justify-center"
                         />
-                      ) : (
+                      ) : settings.answerMode === "solfege" ? (
                         <SolfegeKeyboard
                           onNoteClick={handleAnswerSubmit}
                           selectedNote={currentAnswer}
                           disabled={!isGameActive()}
                           className="flex justify-center"
+                        />
+                      ) : (
+                        <MicrophoneInput
+                          onSubmit={handleAnswerSubmit}
+                          selectedNote={currentAnswer}
+                          disabled={!isGameActive()}
                         />
                       )}
                     </div>

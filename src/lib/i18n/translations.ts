@@ -36,6 +36,22 @@ export interface Translations {
   answerModes: {
     piano: string;
     solfege: string;
+    microphone: string;
+  };
+
+  microphone: {
+    title: string;
+    description: string;
+    startListening: string;
+    stopListening: string;
+    listening: string;
+    ready: string;
+    detectedNote: string;
+    submitDetectedNote: string;
+    noNoteDetected: string;
+    permissionDenied: string;
+    unsupported: string;
+    quietRoomHint: string;
   };
 
   // 난이도
@@ -329,6 +345,22 @@ export const translations: Record<Language, Translations> = {
     answerModes: {
       piano: "Piano Keys",
       solfege: "Solfege",
+      microphone: "Microphone",
+    },
+
+    microphone: {
+      title: "Microphone Input",
+      description: "Sing or play a steady note, then submit the detected note.",
+      startListening: "Start Listening",
+      stopListening: "Stop Listening",
+      listening: "Listening",
+      ready: "Ready",
+      detectedNote: "Detected Note",
+      submitDetectedNote: "Submit Detected Note",
+      noNoteDetected: "No stable note detected yet",
+      permissionDenied: "Microphone access was denied.",
+      unsupported: "Microphone input is not supported in this browser.",
+      quietRoomHint: "Best in a quiet room with one sustained note.",
     },
 
     difficulties: {
@@ -628,6 +660,22 @@ export const translations: Record<Language, Translations> = {
     answerModes: {
       piano: "피아노 건반",
       solfege: "도레미",
+      microphone: "마이크",
+    },
+
+    microphone: {
+      title: "마이크 입력",
+      description: "한 음을 안정적으로 소리낸 뒤, 감지된 음을 제출하세요.",
+      startListening: "듣기 시작",
+      stopListening: "듣기 중지",
+      listening: "듣는 중",
+      ready: "준비됨",
+      detectedNote: "감지된 음",
+      submitDetectedNote: "감지된 음 제출",
+      noNoteDetected: "아직 안정적인 음이 감지되지 않았습니다",
+      permissionDenied: "마이크 접근이 거부되었습니다.",
+      unsupported: "이 브라우저는 마이크 입력을 지원하지 않습니다.",
+      quietRoomHint: "조용한 환경에서 한 음을 길게 내면 가장 잘 동작합니다.",
     },
 
     difficulties: {
@@ -921,6 +969,22 @@ export const translations: Record<Language, Translations> = {
     answerModes: {
       piano: "ピアノ鍵盤",
       solfege: "ドレミ",
+      microphone: "マイク",
+    },
+
+    microphone: {
+      title: "マイク入力",
+      description: "安定した単音を出して、検出された音を送信してください。",
+      startListening: "聴き取り開始",
+      stopListening: "聴き取り停止",
+      listening: "聴き取り中",
+      ready: "準備完了",
+      detectedNote: "検出された音",
+      submitDetectedNote: "検出音を送信",
+      noNoteDetected: "まだ安定した音が検出されていません",
+      permissionDenied: "マイクへのアクセスが拒否されました。",
+      unsupported: "このブラウザではマイク入力はサポートされていません。",
+      quietRoomHint: "静かな環境で単音を伸ばすと最も安定します。",
     },
 
     difficulties: {
@@ -1217,6 +1281,24 @@ export const translations: Record<Language, Translations> = {
     answerModes: {
       piano: "Teclas de Piano",
       solfege: "Solfeo",
+      microphone: "Micrófono",
+    },
+
+    microphone: {
+      title: "Entrada por micrófono",
+      description:
+        "Canta o toca una nota sostenida y luego envía la nota detectada.",
+      startListening: "Comenzar a escuchar",
+      stopListening: "Detener escucha",
+      listening: "Escuchando",
+      ready: "Listo",
+      detectedNote: "Nota detectada",
+      submitDetectedNote: "Enviar nota detectada",
+      noNoteDetected: "Aún no se detectó una nota estable",
+      permissionDenied: "Se denegó el acceso al micrófono.",
+      unsupported: "La entrada por micrófono no es compatible con este navegador.",
+      quietRoomHint:
+        "Funciona mejor en un lugar silencioso con una sola nota sostenida.",
     },
 
     difficulties: {
@@ -1518,6 +1600,24 @@ export const translations: Record<Language, Translations> = {
     answerModes: {
       piano: "Klaviertasten",
       solfege: "Solmisation",
+      microphone: "Mikrofon",
+    },
+
+    microphone: {
+      title: "Mikrofoneingabe",
+      description:
+        "Singen oder spielen Sie einen stabilen Ton und senden Sie dann den erkannten Ton.",
+      startListening: "Aufnahme starten",
+      stopListening: "Aufnahme stoppen",
+      listening: "Hört zu",
+      ready: "Bereit",
+      detectedNote: "Erkannter Ton",
+      submitDetectedNote: "Erkannten Ton senden",
+      noNoteDetected: "Noch kein stabiler Ton erkannt",
+      permissionDenied: "Der Mikrofonzugriff wurde verweigert.",
+      unsupported: "Mikrofoneingabe wird in diesem Browser nicht unterstützt.",
+      quietRoomHint:
+        "Am besten in einer ruhigen Umgebung mit einem gehaltenen Einzeltoneingang.",
     },
 
     difficulties: {
@@ -1821,6 +1921,24 @@ export const translations: Record<Language, Translations> = {
     answerModes: {
       piano: "Touches de Piano",
       solfege: "Solfège",
+      microphone: "Microphone",
+    },
+
+    microphone: {
+      title: "Entrée microphone",
+      description:
+        "Chantez ou jouez une note stable, puis envoyez la note détectée.",
+      startListening: "Commencer l'écoute",
+      stopListening: "Arrêter l'écoute",
+      listening: "Écoute en cours",
+      ready: "Prêt",
+      detectedNote: "Note détectée",
+      submitDetectedNote: "Envoyer la note détectée",
+      noNoteDetected: "Aucune note stable détectée pour le moment",
+      permissionDenied: "L'accès au microphone a été refusé.",
+      unsupported: "L'entrée microphone n'est pas prise en charge par ce navigateur.",
+      quietRoomHint:
+        "Le meilleur résultat vient d'un environnement calme avec une seule note tenue.",
     },
 
     difficulties: {

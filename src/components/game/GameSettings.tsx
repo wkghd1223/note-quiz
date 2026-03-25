@@ -219,8 +219,9 @@ const GameSettings: React.FC<GameSettingsProps> = ({
             <label className="mb-3 block text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
               {t.settingsLabels.answerMode}
             </label>
-            <div className="grid grid-cols-2 gap-2">
-              {(["piano", "solfege"] as AnswerMode[]).map((mode) => (
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              {(["piano", "solfege", "microphone"] as AnswerMode[]).map(
+                (mode) => (
                 <button
                   key={mode}
                   onClick={() => handleAnswerModeChange(mode)}
@@ -232,6 +233,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
                 >
                   {mode === "piano" && t.answerModes.piano}
                   {mode === "solfege" && t.answerModes.solfege}
+                  {mode === "microphone" && t.answerModes.microphone}
                 </button>
               ))}
             </div>
