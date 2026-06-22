@@ -10,6 +10,10 @@ export async function submitLeaderboardScore(payload: LeaderboardScorePayload) {
   });
 
   if (!response.ok) {
-    throw new Error("Failed to submit leaderboard score.");
+    const payload = (await response.json().catch(() => null)) as {
+      message?: string;
+    } | null;
+
+    throw new Error(payload?.message ?? "Failed to submit leaderboard score.");
   }
 }

@@ -620,7 +620,7 @@ export const translations: Record<Language, Translations> = {
     leaderboard: {
       navTitle: "Leaderboard",
       eyebrow: "Global Rankings",
-      title: "Today&apos;s Nationality Leaderboard",
+      title: "Today's Nationality Leaderboard",
       description:
         "Scores from the main Note Quiz game are grouped by country and ranked by total score for the current UTC day.",
       accumulationPeriod: "Accumulation Period",

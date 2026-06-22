@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   try {
     const periodDate = getCurrentUtcPeriodDate();
     const response: LeaderboardResponse = {
-      viewerCountry: detectCountryFromHeaders(request.headers),
+      viewerCountry: await detectCountryFromHeaders(request.headers),
       periodDate,
       entries: await fetchLeaderboardEntries(periodDate),
     };
