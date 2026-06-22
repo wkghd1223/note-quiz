@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useGameStore } from "@/store/gameStore";
 import { useTranslation } from "@/hooks/useTranslation";
 import {
@@ -19,6 +19,7 @@ import Timer from "@/components/game/Timer";
 import ScoreBoard from "@/components/game/ScoreBoard";
 import GameSettingsTrigger from "@/components/game/GameSettingsTrigger";
 import { useLanguageStore } from "@/store/languageStore";
+import { submitLeaderboardScore } from "@/services/leaderboard";
 
 const GameMain: React.FC = () => {
   const { t } = useTranslation();
@@ -29,6 +30,7 @@ const GameMain: React.FC = () => {
     currentQuestion,
     currentAnswer,
     feedback,
+    gameResult,
     setCurrentQuestion,
     setCurrentAnswer,
     addAnswer,
@@ -40,6 +42,7 @@ const GameMain: React.FC = () => {
 
   const [isAudioInitialized, setIsAudioInitialized] = useState(false);
   const [showScoreBoardModal, setShowScoreBoardModal] = useState(false);
+  const submittedScoreKeyRef = useRef<string | null>(null);
 
   const answerModeLabel =
     settings.answerMode === "piano"
@@ -99,6 +102,40 @@ const GameMain: React.FC = () => {
       generateNewQuestion();
     }
   }, [gameState, currentQuestion, generateNewQuestion]);
+
+  useEffect(() => {
+    if (gameState === "playing") {
+      submittedScoreKeyRef.current = null;
+      return;
+    }
+
+    if (gameState !== "finished" || !gameResult) return;
+
+    const lastAnswer = gameResult.answers[gameResult.answers.length - 1];
+    const scoreKey = [
+      gameResult.totalQuestions,
+      gameResult.correctAnswers,
+      gameResult.totalTime,
+      lastAnswer?.timestamp ?? 0,
+    ].join(":");
+
+    if (submittedScoreKeyRef.current === scoreKey) return;
+    if (localStorage.getItem(`note-quiz-leaderboard:${scoreKey}`)) return;
+
+    submittedScoreKeyRef.current = scoreKey;
+
+    submitLeaderboardScore({
+      totalQuestions: gameResult.totalQuestions,
+      correctAnswers: gameResult.correctAnswers,
+      totalTime: gameResult.totalTime,
+    })
+      .then(() => {
+        localStorage.setItem(`note-quiz-leaderboard:${scoreKey}`, "1");
+      })
+      .catch((error) => {
+        console.error("Failed to submit leaderboard score:", error);
+      });
+  }, [gameState, gameResult]);
 
   // 답안 제출 처리
   const handleAnswerSubmit = useCallback(

@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://note-quiz.com";
+export const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://note-quiz.com";
 
 export const siteConfig = {
   name: "Note Quiz",
