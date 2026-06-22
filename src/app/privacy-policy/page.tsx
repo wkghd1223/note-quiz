@@ -50,12 +50,12 @@ export default function PrivacyPolicyPage() {
         <section>
           <h2 className="text-2xl font-bold text-slate-950">Country Leaderboard</h2>
           <p className="mt-3">
-            For the nationality leaderboard, we detect your country server-side from
-            request or hosting headers and group completed game scores by country. We
-            store daily country-level aggregate data such as country code, total score,
-            submission count, and accuracy totals. Daily aggregate leaderboard rows are
-            retained for 90 days. We do not store raw IP addresses for leaderboard
-            scoring.
+            For the nationality leaderboard, we detect your country server-side from the
+            request IP address, hosting headers, or Free IP API as an IP geolocation provider, then
+            group completed game scores by country. We store daily country-level
+            aggregate data such as country code, total score, submission count, and
+            accuracy totals. Daily aggregate leaderboard rows are retained for 90 days.
+            We do not store raw IP addresses for leaderboard scoring.
           </p>
         </section>
 

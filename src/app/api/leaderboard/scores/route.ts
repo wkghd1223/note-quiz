@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest) {
   try {
     const payload = parseScorePayload(await request.json());
-    const country = detectCountryFromHeaders(request.headers);
+    const country = await detectCountryFromHeaders(request.headers);
 
     await submitCountryScore(country, payload);
 

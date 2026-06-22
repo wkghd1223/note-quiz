@@ -24,6 +24,14 @@ export function getCurrentUtcPeriodDate() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function normalizeSupabaseUrl(value: string) {
+  return value
+    .trim()
+    .replace(/\/rest\/v1.*$/i, "")
+    .replace(/\/rest\/.*$/i, "")
+    .replace(/\/$/, "");
+}
+
 function getSupabaseConfig() {
   const supabaseUrl = process.env.SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -33,7 +41,7 @@ function getSupabaseConfig() {
   }
 
   return {
-    supabaseUrl: supabaseUrl.replace(/\/$/, ""),
+    supabaseUrl: normalizeSupabaseUrl(supabaseUrl),
     serviceRoleKey,
   };
 }
@@ -82,7 +90,8 @@ export async function fetchLeaderboardEntries(
   );
 
   if (!response.ok) {
-    throw new Error("Failed to load leaderboard.");
+    const responseBody = await response.text();
+    throw new Error(`Failed to load leaderboard: ${response.status} ${responseBody}`);
   }
 
   const rows = (await response.json()) as SupabaseLeaderboardRow[];
@@ -114,6 +123,9 @@ export async function submitCountryScore(
   });
 
   if (!response.ok) {
-    throw new Error("Failed to submit leaderboard score.");
+    const responseBody = await response.text();
+    throw new Error(
+      `Failed to submit leaderboard score: ${response.status} ${responseBody}`,
+    );
   }
 }
