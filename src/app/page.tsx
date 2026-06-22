@@ -55,6 +55,12 @@ export default function HomePage() {
               >
                 {t.earTraining.title}
               </Link>
+              <Link
+                href="/rhythm-training"
+                className="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 transition-colors hover:bg-white hover:text-slate-900"
+              >
+                {t.rhythmTraining.title}
+              </Link>
             </nav>
             <LanguageSelector className="w-[5.5rem]" />
           </div>
@@ -90,6 +96,13 @@ export default function HomePage() {
               >
                 <FaHeadphones className="mr-2 text-[#6d28d9]" />
                 {t.earTraining.title}
+              </Link>
+              <Link
+                href="/rhythm-training"
+                className="inline-flex items-center justify-center rounded-2xl border border-[#ded6f7] bg-white px-8 py-4 text-sm font-bold text-slate-700 transition-colors hover:bg-[#faf9fe]"
+              >
+                <FaWaveSquare className="mr-2 text-[#6d28d9]" />
+                {t.rhythmTraining.title}
               </Link>
             </div>
 
@@ -179,7 +192,7 @@ export default function HomePage() {
       </section>
 
       <section className="px-4 pb-8 sm:px-8 sm:pb-12">
-        <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-2">
+        <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-3">
           <Link
             href="/game"
             className="group rounded-[1.8rem] border border-[#ded6f7] bg-white p-6 shadow-[0_14px_40px_rgba(76,29,149,0.08)] transition-transform hover:-translate-y-1"
@@ -225,6 +238,30 @@ export default function HomePage() {
             <div className="mt-6 inline-flex items-center rounded-2xl border border-[#ded6f7] bg-[#faf9fe] px-5 py-3 text-sm font-bold text-slate-800">
               <FaHeadphones className="mr-2 text-[#6d28d9]" />
               {t.earTraining.start}
+            </div>
+          </Link>
+
+          <Link
+            href="/rhythm-training"
+            className="group rounded-[1.8rem] border border-[#ded6f7] bg-white p-6 shadow-[0_14px_40px_rgba(76,29,149,0.08)] transition-transform hover:-translate-y-1"
+          >
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#fff5e9] text-[#b45309]">
+                <FaWaveSquare className="text-2xl" />
+              </div>
+              <span className="rounded-full bg-[#faf9fe] px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
+                Rhythm Mode
+              </span>
+            </div>
+            <h2 className="mt-6 text-3xl font-black tracking-[-0.05em] text-slate-950">
+              {t.rhythmTraining.title}
+            </h2>
+            <p className="mt-3 text-base leading-8 text-slate-600">
+              {t.rhythmTraining.description}
+            </p>
+            <div className="mt-6 inline-flex items-center rounded-2xl border border-[#ded6f7] bg-[#faf9fe] px-5 py-3 text-sm font-bold text-slate-800">
+              <FaWaveSquare className="mr-2 text-[#6d28d9]" />
+              {t.rhythmTraining.start}
             </div>
           </Link>
         </div>

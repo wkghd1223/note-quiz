@@ -309,6 +309,22 @@ export interface Translations {
       sessionsPlayed: string;
     };
   };
+  rhythmTraining: {
+    title: string;
+    subtitle: string;
+    description: string;
+    start: string;
+    restart: string;
+    intro: string;
+    hitPrompt: string;
+    beat: string;
+    bpm: string;
+    score: string;
+    activeBeat: string;
+    resultTitle: string;
+    resultDescription: string;
+    noteInput: string;
+  };
 }
 
 export const translations: Record<Language, Translations> = {
@@ -625,6 +641,23 @@ export const translations: Record<Language, Translations> = {
         sessionsPlayed: "Sessions Played",
       },
     },
+    rhythmTraining: {
+      title: "Rhythm Practice",
+      subtitle: "Read notes in time",
+      description:
+        "Watch a short 3-note phrase, follow the beat, and enter each note name at the right moment.",
+      start: "Start Round",
+      restart: "Try Again",
+      intro: "Three-note phrases now include quarter, eighth, sixteenth, and triplet values.",
+      hitPrompt: "Enter the current note while its beat is active.",
+      beat: "Beat",
+      bpm: "BPM",
+      score: "Score",
+      activeBeat: "Active Beat",
+      resultTitle: "Round Complete",
+      resultDescription: "Clean timing and correct note names both matter here.",
+      noteInput: "Note Input",
+    },
   },
 
   ko: {
@@ -938,6 +971,23 @@ export const translations: Record<Language, Translations> = {
         sessionsPlayed: "플레이 횟수",
       },
     },
+    rhythmTraining: {
+      title: "리듬 연습",
+      subtitle: "박자에 맞춰 음 읽기",
+      description:
+        "3개의 짧은 음형을 보고 비트를 따라가며 각 음 이름을 맞는 타이밍에 입력하세요.",
+      start: "라운드 시작",
+      restart: "다시 하기",
+      intro: "3개의 음형에서 4분음표, 8분음표, 16분음표, 셋잇단음표를 연습할 수 있습니다.",
+      hitPrompt: "현재 활성화된 박자 안에서 음 이름을 입력하세요.",
+      beat: "박자",
+      bpm: "BPM",
+      score: "점수",
+      activeBeat: "현재 박자",
+      resultTitle: "라운드 완료",
+      resultDescription: "정확한 음 이름과 타이밍이 모두 중요합니다.",
+      noteInput: "음 입력",
+    },
   },
 
   ja: {
@@ -1249,6 +1299,23 @@ export const translations: Record<Language, Translations> = {
         bestAccuracy: "最高正解率",
         sessionsPlayed: "プレイ回数",
       },
+    },
+    rhythmTraining: {
+      title: "リズム練習",
+      subtitle: "拍に合わせて音を読む",
+      description:
+        "3つの短い音形を見て、ビートに合わせて各音名を正しいタイミングで入力します。",
+      start: "ラウンド開始",
+      restart: "もう一度",
+      intro: "3音の短いフレーズで4分音符、8分音符、16分音符、3連符を練習できます。",
+      hitPrompt: "現在アクティブな拍の間に音名を入力してください。",
+      beat: "拍",
+      bpm: "BPM",
+      score: "スコア",
+      activeBeat: "現在の拍",
+      resultTitle: "ラウンド完了",
+      resultDescription: "正しい音名とタイミングの両方が重要です。",
+      noteInput: "音入力",
     },
   },
 
@@ -1568,6 +1635,24 @@ export const translations: Record<Language, Translations> = {
         bestAccuracy: "Mejor precision",
         sessionsPlayed: "Sesiones jugadas",
       },
+    },
+    rhythmTraining: {
+      title: "Práctica de Ritmo",
+      subtitle: "Lee notas a tiempo",
+      description:
+        "Observa una frase corta de 3 notas, sigue el pulso e introduce cada nombre de nota en el momento correcto.",
+      start: "Comenzar ronda",
+      restart: "Intentar de nuevo",
+      intro: "Las frases de 3 notas ahora incluyen negras, corcheas, semicorcheas y tresillos.",
+      hitPrompt: "Introduce la nota actual mientras su pulso esté activo.",
+      beat: "Pulso",
+      bpm: "BPM",
+      score: "Puntuación",
+      activeBeat: "Pulso activo",
+      resultTitle: "Ronda completada",
+      resultDescription:
+        "Aquí importan tanto el tiempo como los nombres correctos de las notas.",
+      noteInput: "Entrada de nota",
     },
   },
 
@@ -1890,6 +1975,24 @@ export const translations: Record<Language, Translations> = {
         sessionsPlayed: "Sitzungen",
       },
     },
+    rhythmTraining: {
+      title: "Rhythmus-Training",
+      subtitle: "Noten im Takt lesen",
+      description:
+        "Beobachten Sie eine kurze 3-Noten-Phrase, folgen Sie dem Beat und geben Sie jeden Notennamen im richtigen Moment ein.",
+      start: "Runde starten",
+      restart: "Erneut versuchen",
+      intro: "Die 3-Noten-Phrasen enthalten jetzt Viertel, Achtel, Sechzehntel und Triole-Gruppen.",
+      hitPrompt: "Geben Sie die aktuelle Note ein, solange ihr Schlag aktiv ist.",
+      beat: "Schlag",
+      bpm: "BPM",
+      score: "Punktzahl",
+      activeBeat: "Aktiver Schlag",
+      resultTitle: "Runde beendet",
+      resultDescription:
+        "Sowohl sauberes Timing als auch richtige Notennamen zählen hier.",
+      noteInput: "Noteneingabe",
+    },
   },
 
   fr: {
@@ -2210,6 +2313,24 @@ export const translations: Record<Language, Translations> = {
         bestAccuracy: "Meilleure precision",
         sessionsPlayed: "Sessions jouees",
       },
+    },
+    rhythmTraining: {
+      title: "Entrainement Rythmique",
+      subtitle: "Lisez les notes dans le tempo",
+      description:
+        "Regardez une courte phrase de 3 notes, suivez le battement et saisissez chaque nom de note au bon moment.",
+      start: "Commencer",
+      restart: "Recommencer",
+      intro: "Les phrases de 3 notes incluent maintenant noires, croches, doubles croches et triolets.",
+      hitPrompt: "Saisissez la note actuelle pendant que son temps est actif.",
+      beat: "Temps",
+      bpm: "BPM",
+      score: "Score",
+      activeBeat: "Temps actif",
+      resultTitle: "Manche terminee",
+      resultDescription:
+        "Le bon timing et les bons noms de notes comptent tous les deux ici.",
+      noteInput: "Saisie de note",
     },
   },
 };
