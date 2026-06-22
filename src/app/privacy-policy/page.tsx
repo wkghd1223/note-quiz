@@ -50,9 +50,10 @@ export default function PrivacyPolicyPage() {
           <p className="mt-3">
             For the nationality leaderboard, we detect your country server-side from
             request or hosting headers and group completed game scores by country. We
-            store country-level aggregate data such as country code, total score,
-            submission count, and accuracy totals. We do not store raw IP addresses for
-            leaderboard scoring.
+            store daily country-level aggregate data such as country code, total score,
+            submission count, and accuracy totals. Daily aggregate leaderboard rows are
+            retained for 90 days. We do not store raw IP addresses for leaderboard
+            scoring.
           </p>
         </section>
 

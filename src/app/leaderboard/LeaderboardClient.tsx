@@ -16,6 +16,19 @@ function formatDate(value: string) {
   });
 }
 
+function formatPeriodDate(value: string | undefined) {
+  if (!value) return "Today";
+  const date = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleDateString("en", {
+    timeZone: "UTC",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 export default function LeaderboardClient() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,6 +59,7 @@ export default function LeaderboardClient() {
   }, []);
 
   const viewerCountry = leaderboard?.viewerCountry;
+  const periodDate = leaderboard?.periodDate;
   const entries = leaderboard?.entries ?? [];
 
   return (
@@ -58,12 +72,21 @@ export default function LeaderboardClient() {
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
               <h1 className="text-4xl font-black tracking-[-0.03em] text-slate-950 sm:text-5xl">
-                Nationality Leaderboard
+                Today&apos;s Nationality Leaderboard
               </h1>
               <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
                 Scores from the main Note Quiz game are grouped by country and ranked by
-                total score.
+                total score for the current UTC day.
               </p>
+            </div>
+            <div className="rounded-2xl border border-[#ded6f7] bg-white px-5 py-4 text-left shadow-[0_12px_35px_rgba(76,29,149,0.06)] md:text-right">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
+                Accumulation Period
+              </p>
+              <p className="mt-1 text-lg font-black text-slate-950">
+                {formatPeriodDate(periodDate)} UTC
+              </p>
+              <p className="mt-1 text-sm text-slate-600">Scores reset daily.</p>
             </div>
           </div>
         </section>
@@ -88,7 +111,7 @@ export default function LeaderboardClient() {
             </div>
             <p className="max-w-md text-sm leading-6 text-slate-600">
               Country is detected server-side for leaderboard grouping. Raw IP addresses
-              are not stored for scoring.
+              are not stored for scoring. Daily aggregate rows are retained for 90 days.
             </p>
           </div>
         </section>

@@ -6,6 +6,7 @@ export interface LeaderboardCountry {
 
 export interface LeaderboardEntry extends LeaderboardCountry {
   rank: number;
+  periodDate: string;
   totalScore: number;
   totalCorrect: number;
   totalQuestions: number;
@@ -23,5 +24,6 @@ export interface LeaderboardScorePayload {
 
 export interface LeaderboardResponse {
   viewerCountry: LeaderboardCountry;
+  periodDate: string;
   entries: LeaderboardEntry[];
 }

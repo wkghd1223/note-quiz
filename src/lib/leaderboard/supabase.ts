@@ -7,6 +7,7 @@ import { getCountryFromCode } from "@/lib/leaderboard/country";
 import { calculateAccuracy, calculateScore } from "@/lib/leaderboard/validation";
 
 interface SupabaseLeaderboardRow {
+  period_date: string;
   country_code: string;
   country_name: string;
   total_score: number;
@@ -17,7 +18,11 @@ interface SupabaseLeaderboardRow {
   updated_at: string;
 }
 
-const TABLE_NAME = "leaderboard_countries";
+const TABLE_NAME = "leaderboard_country_daily";
+
+export function getCurrentUtcPeriodDate() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 function getSupabaseConfig() {
   const supabaseUrl = process.env.SUPABASE_URL;
@@ -50,6 +55,7 @@ function mapRowToEntry(row: SupabaseLeaderboardRow, index: number): LeaderboardE
     ...country,
     countryName: row.country_name || country.countryName,
     rank: index + 1,
+    periodDate: row.period_date,
     totalScore: Number(row.total_score) || 0,
     totalCorrect,
     totalQuestions,
@@ -61,12 +67,14 @@ function mapRowToEntry(row: SupabaseLeaderboardRow, index: number): LeaderboardE
   };
 }
 
-export async function fetchLeaderboardEntries(): Promise<LeaderboardEntry[]> {
+export async function fetchLeaderboardEntries(
+  periodDate = getCurrentUtcPeriodDate(),
+): Promise<LeaderboardEntry[]> {
   const config = getSupabaseConfig();
   if (!config) return [];
 
   const response = await fetch(
-    `${config.supabaseUrl}/rest/v1/${TABLE_NAME}?select=*&order=total_score.desc,submission_count.desc&limit=100`,
+    `${config.supabaseUrl}/rest/v1/${TABLE_NAME}?period_date=eq.${periodDate}&select=*&order=total_score.desc,submission_count.desc&limit=100`,
     {
       headers: createHeaders(config.serviceRoleKey),
       cache: "no-store",
@@ -90,10 +98,11 @@ export async function submitCountryScore(
     throw new Error("Supabase environment variables are not configured.");
   }
 
-  const response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/increment_country_score`, {
+  const response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/increment_country_daily_score`, {
     method: "POST",
     headers: createHeaders(config.serviceRoleKey),
     body: JSON.stringify({
+      p_period_date: getCurrentUtcPeriodDate(),
       p_country_code: country.countryCode,
       p_country_name: country.countryName,
       p_score: calculateScore(payload),

@@ -1,15 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { detectCountryFromHeaders } from "@/lib/leaderboard/country";
-import { fetchLeaderboardEntries } from "@/lib/leaderboard/supabase";
+import {
+  fetchLeaderboardEntries,
+  getCurrentUtcPeriodDate,
+} from "@/lib/leaderboard/supabase";
 import type { LeaderboardResponse } from "@/types/leaderboard";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
+    const periodDate = getCurrentUtcPeriodDate();
     const response: LeaderboardResponse = {
       viewerCountry: detectCountryFromHeaders(request.headers),
-      entries: await fetchLeaderboardEntries(),
+      periodDate,
+      entries: await fetchLeaderboardEntries(periodDate),
     };
 
     return NextResponse.json(response);
