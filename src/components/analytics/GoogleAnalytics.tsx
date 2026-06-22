@@ -1,8 +1,13 @@
 import Script from "next/script";
 
-const GA_TRACKING_ID = "G-RHJP137HQZ";
+const GA_TRACKING_ID =
+  process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "G-RHJP137HQZ";
 
 export default function GoogleAnalytics() {
+  if (process.env.NODE_ENV !== "production" || !GA_TRACKING_ID) {
+    return null;
+  }
+
   return (
     <>
       <Script
@@ -14,7 +19,9 @@ export default function GoogleAnalytics() {
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-          gtag('config', '${GA_TRACKING_ID}');
+          gtag('config', '${GA_TRACKING_ID}', {
+            send_page_view: false
+          });
         `}
       </Script>
     </>

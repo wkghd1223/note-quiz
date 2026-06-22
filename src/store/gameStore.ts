@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { DEFAULT_GAME_SETTINGS } from "@/lib/music/constants";
-import { trackGameStart, trackAnswer } from "@/lib/analytics";
+import { trackGameStart, trackAnswer, trackGameComplete } from "@/lib/analytics";
 
 interface GameStore {
   // 게임 설정
@@ -93,8 +93,14 @@ export const useGameStore = create<GameStore>()(
       setCurrentAnswer: (currentAnswer) => set({ currentAnswer }),
       answers: [],
       addAnswer: (answer) => {
-        // Google Analytics 이벤트 추적
-        trackAnswer(answer.isCorrect, answer.timeSpent);
+        const { settings, answers } = get();
+
+        trackAnswer({
+          isCorrect: answer.isCorrect,
+          timeSpent: answer.timeSpent,
+          answerMode: settings.answerMode,
+          questionNumber: answers.length + 1,
+        });
 
         set((state) => ({
           answers: [...state.answers, answer],
@@ -224,6 +230,13 @@ export const useGameStore = create<GameStore>()(
         set({
           gameState: "finished",
           gameResult: result,
+        });
+
+        trackGameComplete({
+          score: correctAnswers,
+          accuracy,
+          totalQuestions,
+          timeSpent: elapsedTime,
         });
 
         // 통계 업데이트

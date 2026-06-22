@@ -29,7 +29,7 @@ interface KeySignature {
 }
 
 // 답안 입력 방식
-type AnswerMode = "piano" | "solfege";
+type AnswerMode = "piano" | "solfege" | "microphone";
 type EarTrainingInputMode = "piano" | "solfege";
 type EarTrainingNoteSet = "natural" | "chromatic";
 type EarTrainingSessionType = "practice" | "timed";

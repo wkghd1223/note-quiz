@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useGameStore } from "@/store/gameStore";
 import { useTranslation } from "@/hooks/useTranslation";
 import {
@@ -14,10 +14,12 @@ import { playPianoNote, initializeAudio } from "@/lib/music/audio";
 import Staff from "@/components/game/Staff";
 import PianoKeyboard from "@/components/game/PianoKeyboard";
 import SolfegeKeyboard from "@/components/game/SolfegeKeyboard";
+import MicrophoneInput from "@/components/game/MicrophoneInput";
 import Timer from "@/components/game/Timer";
 import ScoreBoard from "@/components/game/ScoreBoard";
 import GameSettingsTrigger from "@/components/game/GameSettingsTrigger";
 import { useLanguageStore } from "@/store/languageStore";
+import { submitLeaderboardScore } from "@/services/leaderboard";
 
 const GameMain: React.FC = () => {
   const { t } = useTranslation();
@@ -28,6 +30,7 @@ const GameMain: React.FC = () => {
     currentQuestion,
     currentAnswer,
     feedback,
+    gameResult,
     setCurrentQuestion,
     setCurrentAnswer,
     addAnswer,
@@ -39,6 +42,14 @@ const GameMain: React.FC = () => {
 
   const [isAudioInitialized, setIsAudioInitialized] = useState(false);
   const [showScoreBoardModal, setShowScoreBoardModal] = useState(false);
+  const submittedScoreKeyRef = useRef<string | null>(null);
+
+  const answerModeLabel =
+    settings.answerMode === "piano"
+      ? t.answerModes.piano
+      : settings.answerMode === "solfege"
+        ? t.answerModes.solfege
+        : t.answerModes.microphone;
 
   // 오디오 초기화
   useEffect(() => {
@@ -91,6 +102,40 @@ const GameMain: React.FC = () => {
       generateNewQuestion();
     }
   }, [gameState, currentQuestion, generateNewQuestion]);
+
+  useEffect(() => {
+    if (gameState === "playing") {
+      submittedScoreKeyRef.current = null;
+      return;
+    }
+
+    if (gameState !== "finished" || !gameResult) return;
+
+    const lastAnswer = gameResult.answers[gameResult.answers.length - 1];
+    const scoreKey = [
+      gameResult.totalQuestions,
+      gameResult.correctAnswers,
+      gameResult.totalTime,
+      lastAnswer?.timestamp ?? 0,
+    ].join(":");
+
+    if (submittedScoreKeyRef.current === scoreKey) return;
+    if (localStorage.getItem(`note-quiz-leaderboard:${scoreKey}`)) return;
+
+    submittedScoreKeyRef.current = scoreKey;
+
+    submitLeaderboardScore({
+      totalQuestions: gameResult.totalQuestions,
+      correctAnswers: gameResult.correctAnswers,
+      totalTime: gameResult.totalTime,
+    })
+      .then(() => {
+        localStorage.setItem(`note-quiz-leaderboard:${scoreKey}`, "1");
+      })
+      .catch((error) => {
+        console.error("Failed to submit leaderboard score:", error);
+      });
+  }, [gameState, gameResult]);
 
   // 답안 제출 처리
   const handleAnswerSubmit = useCallback(
@@ -223,9 +268,7 @@ const GameMain: React.FC = () => {
                         {t.clefs[currentQuestion.clef]}
                       </p>
                       <span className="rounded-full bg-[#ede9fe] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#5b21b6]">
-                        {settings.answerMode === "piano"
-                          ? t.answerModes.piano
-                          : t.answerModes.solfege}
+                        {answerModeLabel}
                       </span>
                     </div>
 
@@ -258,12 +301,18 @@ const GameMain: React.FC = () => {
                           disabled={!isGameActive()}
                           className="flex flex-col items-center justify-center"
                         />
-                      ) : (
+                      ) : settings.answerMode === "solfege" ? (
                         <SolfegeKeyboard
                           onNoteClick={handleAnswerSubmit}
                           selectedNote={currentAnswer}
                           disabled={!isGameActive()}
                           className="flex justify-center"
+                        />
+                      ) : (
+                        <MicrophoneInput
+                          onSubmit={handleAnswerSubmit}
+                          selectedNote={currentAnswer}
+                          disabled={!isGameActive()}
                         />
                       )}
                     </div>

@@ -36,6 +36,22 @@ export interface Translations {
   answerModes: {
     piano: string;
     solfege: string;
+    microphone: string;
+  };
+
+  microphone: {
+    title: string;
+    description: string;
+    startListening: string;
+    stopListening: string;
+    listening: string;
+    ready: string;
+    detectedNote: string;
+    submitDetectedNote: string;
+    noNoteDetected: string;
+    permissionDenied: string;
+    unsupported: string;
+    quietRoomHint: string;
   };
 
   // 난이도
@@ -260,6 +276,31 @@ export interface Translations {
       tagline: string;
     };
   };
+  leaderboard: {
+    navTitle: string;
+    eyebrow: string;
+    title: string;
+    description: string;
+    accumulationPeriod: string;
+    scoresResetDaily: string;
+    yourCountry: string;
+    detectingCountry: string;
+    countryCode: string;
+    privacyNote: string;
+    countryRankings: string;
+    loading: string;
+    empty: string;
+    error: string;
+    columns: {
+      rank: string;
+      country: string;
+      code: string;
+      totalScore: string;
+      submissions: string;
+      averageAccuracy: string;
+      updated: string;
+    };
+  };
   earTraining: {
     title: string;
     subtitle: string;
@@ -329,6 +370,22 @@ export const translations: Record<Language, Translations> = {
     answerModes: {
       piano: "Piano Keys",
       solfege: "Solfege",
+      microphone: "Microphone",
+    },
+
+    microphone: {
+      title: "Microphone Input",
+      description: "Sing or play a steady note, then submit the detected note.",
+      startListening: "Start Listening",
+      stopListening: "Stop Listening",
+      listening: "Listening",
+      ready: "Ready",
+      detectedNote: "Detected Note",
+      submitDetectedNote: "Submit Detected Note",
+      noNoteDetected: "No stable note detected yet",
+      permissionDenied: "Microphone access was denied.",
+      unsupported: "Microphone input is not supported in this browser.",
+      quietRoomHint: "Best in a quiet room with one sustained note.",
     },
 
     difficulties: {
@@ -560,6 +617,33 @@ export const translations: Record<Language, Translations> = {
         tagline: "Interactive note recognition game for music learning",
       },
     },
+    leaderboard: {
+      navTitle: "Leaderboard",
+      eyebrow: "Global Rankings",
+      title: "Today&apos;s Nationality Leaderboard",
+      description:
+        "Scores from the main Note Quiz game are grouped by country and ranked by total score for the current UTC day.",
+      accumulationPeriod: "Accumulation Period",
+      scoresResetDaily: "Scores reset daily.",
+      yourCountry: "Your Country",
+      detectingCountry: "Detecting country",
+      countryCode: "Country code",
+      privacyNote:
+        "Country is detected server-side for leaderboard grouping. Raw IP addresses are not stored for scoring. Daily aggregate rows are retained for 90 days.",
+      countryRankings: "Country Rankings",
+      loading: "Loading leaderboard...",
+      empty: "No leaderboard scores yet. Complete a game to start the rankings.",
+      error: "Unable to load leaderboard.",
+      columns: {
+        rank: "Rank",
+        country: "Country",
+        code: "Code",
+        totalScore: "Total Score",
+        submissions: "Submissions",
+        averageAccuracy: "Avg Accuracy",
+        updated: "Updated",
+      },
+    },
     earTraining: {
       title: "Ear Training",
       subtitle: "Absolute Pitch Practice",
@@ -628,6 +712,22 @@ export const translations: Record<Language, Translations> = {
     answerModes: {
       piano: "피아노 건반",
       solfege: "도레미",
+      microphone: "마이크",
+    },
+
+    microphone: {
+      title: "마이크 입력",
+      description: "한 음을 안정적으로 소리낸 뒤, 감지된 음을 제출하세요.",
+      startListening: "듣기 시작",
+      stopListening: "듣기 중지",
+      listening: "듣는 중",
+      ready: "준비됨",
+      detectedNote: "감지된 음",
+      submitDetectedNote: "감지된 음 제출",
+      noNoteDetected: "아직 안정적인 음이 감지되지 않았습니다",
+      permissionDenied: "마이크 접근이 거부되었습니다.",
+      unsupported: "이 브라우저는 마이크 입력을 지원하지 않습니다.",
+      quietRoomHint: "조용한 환경에서 한 음을 길게 내면 가장 잘 동작합니다.",
     },
 
     difficulties: {
@@ -857,6 +957,33 @@ export const translations: Record<Language, Translations> = {
         tagline: "음악 학습을 위한 대화형 음표 인식 게임",
       },
     },
+    leaderboard: {
+      navTitle: "리더보드",
+      eyebrow: "전 세계 순위",
+      title: "오늘의 국가별 리더보드",
+      description:
+        "메인 음표 퀴즈 점수를 국가별로 모아 현재 UTC 날짜의 총점 기준으로 순위를 매깁니다.",
+      accumulationPeriod: "집계 기간",
+      scoresResetDaily: "점수는 매일 초기화됩니다.",
+      yourCountry: "내 국가",
+      detectingCountry: "국가 감지 중",
+      countryCode: "국가 코드",
+      privacyNote:
+        "국가별 리더보드 집계를 위해 서버에서 국가를 감지합니다. 점수 집계를 위해 원본 IP 주소는 저장하지 않으며, 일별 집계 데이터는 90일 동안 보관됩니다.",
+      countryRankings: "국가별 순위",
+      loading: "리더보드를 불러오는 중...",
+      empty: "아직 리더보드 점수가 없습니다. 게임을 완료하면 순위가 시작됩니다.",
+      error: "리더보드를 불러올 수 없습니다.",
+      columns: {
+        rank: "순위",
+        country: "국가",
+        code: "코드",
+        totalScore: "총점",
+        submissions: "제출 수",
+        averageAccuracy: "평균 정확도",
+        updated: "업데이트",
+      },
+    },
     earTraining: {
       title: "청음 훈련",
       subtitle: "절대음감 연습",
@@ -921,6 +1048,22 @@ export const translations: Record<Language, Translations> = {
     answerModes: {
       piano: "ピアノ鍵盤",
       solfege: "ドレミ",
+      microphone: "マイク",
+    },
+
+    microphone: {
+      title: "マイク入力",
+      description: "安定した単音を出して、検出された音を送信してください。",
+      startListening: "聴き取り開始",
+      stopListening: "聴き取り停止",
+      listening: "聴き取り中",
+      ready: "準備完了",
+      detectedNote: "検出された音",
+      submitDetectedNote: "検出音を送信",
+      noNoteDetected: "まだ安定した音が検出されていません",
+      permissionDenied: "マイクへのアクセスが拒否されました。",
+      unsupported: "このブラウザではマイク入力はサポートされていません。",
+      quietRoomHint: "静かな環境で単音を伸ばすと最も安定します。",
     },
 
     difficulties: {
@@ -1153,6 +1296,33 @@ export const translations: Record<Language, Translations> = {
         tagline: "音楽学習のための対話型音符認識ゲーム",
       },
     },
+    leaderboard: {
+      navTitle: "ランキング",
+      eyebrow: "世界ランキング",
+      title: "今日の国別ランキング",
+      description:
+        "メインの音符クイズのスコアを国別に集計し、現在のUTC日の合計スコアで順位付けします。",
+      accumulationPeriod: "集計期間",
+      scoresResetDaily: "スコアは毎日リセットされます。",
+      yourCountry: "あなたの国",
+      detectingCountry: "国を検出中",
+      countryCode: "国コード",
+      privacyNote:
+        "国別ランキングの集計のため、国はサーバー側で検出されます。スコア集計のために元のIPアドレスは保存せず、日別集計データは90日間保持されます。",
+      countryRankings: "国別ランキング",
+      loading: "ランキングを読み込み中...",
+      empty: "まだランキングスコアがありません。ゲームを完了するとランキングが始まります。",
+      error: "ランキングを読み込めません。",
+      columns: {
+        rank: "順位",
+        country: "国",
+        code: "コード",
+        totalScore: "合計スコア",
+        submissions: "送信数",
+        averageAccuracy: "平均正解率",
+        updated: "更新日",
+      },
+    },
     earTraining: {
       title: "聴音トレーニング",
       subtitle: "絶対音感の練習",
@@ -1217,6 +1387,24 @@ export const translations: Record<Language, Translations> = {
     answerModes: {
       piano: "Teclas de Piano",
       solfege: "Solfeo",
+      microphone: "Micrófono",
+    },
+
+    microphone: {
+      title: "Entrada por micrófono",
+      description:
+        "Canta o toca una nota sostenida y luego envía la nota detectada.",
+      startListening: "Comenzar a escuchar",
+      stopListening: "Detener escucha",
+      listening: "Escuchando",
+      ready: "Listo",
+      detectedNote: "Nota detectada",
+      submitDetectedNote: "Enviar nota detectada",
+      noNoteDetected: "Aún no se detectó una nota estable",
+      permissionDenied: "Se denegó el acceso al micrófono.",
+      unsupported: "La entrada por micrófono no es compatible con este navegador.",
+      quietRoomHint:
+        "Funciona mejor en un lugar silencioso con una sola nota sostenida.",
     },
 
     difficulties: {
@@ -1454,6 +1642,33 @@ export const translations: Record<Language, Translations> = {
           "Juego interactivo de reconocimiento de notas para aprendizaje musical",
       },
     },
+    leaderboard: {
+      navTitle: "Clasificacion",
+      eyebrow: "Ranking global",
+      title: "Clasificacion diaria por pais",
+      description:
+        "Las puntuaciones del juego principal de Note Quiz se agrupan por pais y se ordenan por puntuacion total del dia UTC actual.",
+      accumulationPeriod: "Periodo de acumulacion",
+      scoresResetDaily: "Las puntuaciones se reinician cada dia.",
+      yourCountry: "Tu pais",
+      detectingCountry: "Detectando pais",
+      countryCode: "Codigo de pais",
+      privacyNote:
+        "El pais se detecta en el servidor para agrupar la clasificacion. No se almacenan direcciones IP sin procesar para las puntuaciones. Los agregados diarios se conservan durante 90 dias.",
+      countryRankings: "Clasificacion por pais",
+      loading: "Cargando clasificacion...",
+      empty: "Aun no hay puntuaciones. Completa una partida para iniciar la clasificacion.",
+      error: "No se pudo cargar la clasificacion.",
+      columns: {
+        rank: "Puesto",
+        country: "Pais",
+        code: "Codigo",
+        totalScore: "Puntuacion total",
+        submissions: "Envios",
+        averageAccuracy: "Precision media",
+        updated: "Actualizado",
+      },
+    },
     earTraining: {
       title: "Entrenamiento Auditivo",
       subtitle: "Practica de Oido Absoluto",
@@ -1518,6 +1733,24 @@ export const translations: Record<Language, Translations> = {
     answerModes: {
       piano: "Klaviertasten",
       solfege: "Solmisation",
+      microphone: "Mikrofon",
+    },
+
+    microphone: {
+      title: "Mikrofoneingabe",
+      description:
+        "Singen oder spielen Sie einen stabilen Ton und senden Sie dann den erkannten Ton.",
+      startListening: "Aufnahme starten",
+      stopListening: "Aufnahme stoppen",
+      listening: "Hört zu",
+      ready: "Bereit",
+      detectedNote: "Erkannter Ton",
+      submitDetectedNote: "Erkannten Ton senden",
+      noNoteDetected: "Noch kein stabiler Ton erkannt",
+      permissionDenied: "Der Mikrofonzugriff wurde verweigert.",
+      unsupported: "Mikrofoneingabe wird in diesem Browser nicht unterstützt.",
+      quietRoomHint:
+        "Am besten in einer ruhigen Umgebung mit einem gehaltenen Einzeltoneingang.",
     },
 
     difficulties: {
@@ -1756,6 +1989,33 @@ export const translations: Record<Language, Translations> = {
         tagline: "Interaktives Notenerkennung-Spiel zum Musiklernen",
       },
     },
+    leaderboard: {
+      navTitle: "Bestenliste",
+      eyebrow: "Globale Rangliste",
+      title: "Heutige Lander-Bestenliste",
+      description:
+        "Punkte aus dem Hauptspiel Note Quiz werden nach Land gruppiert und fuer den aktuellen UTC-Tag nach Gesamtpunktzahl sortiert.",
+      accumulationPeriod: "Sammelzeitraum",
+      scoresResetDaily: "Punkte werden taeglich zurueckgesetzt.",
+      yourCountry: "Dein Land",
+      detectingCountry: "Land wird erkannt",
+      countryCode: "Landercode",
+      privacyNote:
+        "Das Land wird serverseitig fuer die Bestenliste erkannt. Rohe IP-Adressen werden fuer die Punktewertung nicht gespeichert. Taegliche Aggregatdaten werden 90 Tage aufbewahrt.",
+      countryRankings: "Landerrangliste",
+      loading: "Bestenliste wird geladen...",
+      empty: "Noch keine Bestenlistenpunkte. Beende ein Spiel, um die Rangliste zu starten.",
+      error: "Bestenliste konnte nicht geladen werden.",
+      columns: {
+        rank: "Rang",
+        country: "Land",
+        code: "Code",
+        totalScore: "Gesamtpunkte",
+        submissions: "Einreichungen",
+        averageAccuracy: "Durchschn. Genauigkeit",
+        updated: "Aktualisiert",
+      },
+    },
     earTraining: {
       title: "Gehoertraining",
       subtitle: "Absolutes Gehoer ueben",
@@ -1821,6 +2081,24 @@ export const translations: Record<Language, Translations> = {
     answerModes: {
       piano: "Touches de Piano",
       solfege: "Solfège",
+      microphone: "Microphone",
+    },
+
+    microphone: {
+      title: "Entrée microphone",
+      description:
+        "Chantez ou jouez une note stable, puis envoyez la note détectée.",
+      startListening: "Commencer l'écoute",
+      stopListening: "Arrêter l'écoute",
+      listening: "Écoute en cours",
+      ready: "Prêt",
+      detectedNote: "Note détectée",
+      submitDetectedNote: "Envoyer la note détectée",
+      noNoteDetected: "Aucune note stable détectée pour le moment",
+      permissionDenied: "L'accès au microphone a été refusé.",
+      unsupported: "L'entrée microphone n'est pas prise en charge par ce navigateur.",
+      quietRoomHint:
+        "Le meilleur résultat vient d'un environnement calme avec une seule note tenue.",
     },
 
     difficulties: {
@@ -2058,6 +2336,33 @@ export const translations: Record<Language, Translations> = {
         copyright: "© 2024 Note Quiz. All rights reserved.",
         tagline:
           "Jeu interactif de reconnaissance des notes pour l'apprentissage musical",
+      },
+    },
+    leaderboard: {
+      navTitle: "Classement",
+      eyebrow: "Classement mondial",
+      title: "Classement quotidien par pays",
+      description:
+        "Les scores du jeu principal Note Quiz sont regroupes par pays et classes par score total pour la journee UTC en cours.",
+      accumulationPeriod: "Periode d'accumulation",
+      scoresResetDaily: "Les scores sont remis a zero chaque jour.",
+      yourCountry: "Votre pays",
+      detectingCountry: "Detection du pays",
+      countryCode: "Code pays",
+      privacyNote:
+        "Le pays est detecte cote serveur pour regrouper le classement. Les adresses IP brutes ne sont pas stockees pour le score. Les agregats quotidiens sont conserves 90 jours.",
+      countryRankings: "Classement par pays",
+      loading: "Chargement du classement...",
+      empty: "Aucun score pour le moment. Terminez une partie pour lancer le classement.",
+      error: "Impossible de charger le classement.",
+      columns: {
+        rank: "Rang",
+        country: "Pays",
+        code: "Code",
+        totalScore: "Score total",
+        submissions: "Soumissions",
+        averageAccuracy: "Precision moyenne",
+        updated: "Mis a jour",
       },
     },
     earTraining: {

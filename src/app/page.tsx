@@ -55,6 +55,12 @@ export default function HomePage() {
               >
                 {t.earTraining.title}
               </Link>
+              <Link
+                href="/leaderboard"
+                className="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 transition-colors hover:bg-white hover:text-slate-900"
+              >
+                {t.leaderboard.navTitle}
+              </Link>
             </nav>
             <LanguageSelector className="w-[5.5rem]" />
           </div>
@@ -90,6 +96,12 @@ export default function HomePage() {
               >
                 <FaHeadphones className="mr-2 text-[#6d28d9]" />
                 {t.earTraining.title}
+              </Link>
+              <Link
+                href="/leaderboard"
+                className="inline-flex items-center justify-center rounded-2xl border border-[#ded6f7] bg-white px-8 py-4 text-sm font-bold text-slate-700 transition-colors hover:bg-[#faf9fe]"
+              >
+                {t.leaderboard.navTitle}
               </Link>
             </div>
 

@@ -18,9 +18,16 @@ const GameSettingsTrigger: React.FC<GameSettingsTriggerProps> = ({
   const { settings } = useGameStore();
   const [showSettings, setShowSettings] = useState(false);
 
+  const answerModeLabel =
+    settings.answerMode === "piano"
+      ? t.answerModes.piano
+      : settings.answerMode === "solfege"
+        ? t.answerModes.solfege
+        : t.answerModes.microphone;
+
   const summary = [
     settings.timeLimit ? `Timed · ${settings.timeLimit}s` : "Practice",
-    settings.answerMode === "piano" ? t.answerModes.piano : t.answerModes.solfege,
+    answerModeLabel,
   ].join(" · ");
 
   return (
