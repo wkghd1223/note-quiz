@@ -6,6 +6,7 @@ frontend:
         - npm ci
     build:
       commands:
+        - env | grep -e SUPABASE_URL -e SUPABASE_SERVICE_ROLE_KEY >> .env.production
         - npm run build
   artifacts:
     baseDirectory: .next
