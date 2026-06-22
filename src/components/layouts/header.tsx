@@ -51,6 +51,16 @@ const Header = () => {
             >
               {t.earTraining.title}
             </Link>
+            <Link
+              href="/leaderboard"
+              className={`rounded-xl px-3 py-2 text-sm font-bold transition-colors sm:px-4 sm:text-sm ${
+                pathname === "/leaderboard"
+                  ? "bg-white text-slate-900 shadow-[0_8px_18px_rgba(76,29,149,0.08)]"
+                  : "text-slate-600 hover:bg-white hover:text-slate-900"
+              }`}
+            >
+              Leaderboard
+            </Link>
           </nav>
           <LanguageSelector className="w-[4.75rem]" />
         </div>

@@ -36,11 +36,25 @@ const Footer = () => {
             </Link>
           </div>
         </div>
-        <div className="footer-section">
+        <div className="footer-section space-y-3">
           <p>&copy; {new Date().getFullYear()} Note Quiz. All rights reserved.</p>
-          <Link href="mailto:wkghd951223@gmail.com" className="footer-email">
-            Contact Us
-          </Link>
+          <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2">
+            <Link href="/about" className="footer-email">
+              About
+            </Link>
+            <Link href="/leaderboard" className="footer-email">
+              Leaderboard
+            </Link>
+            <Link href="/contact" className="footer-email">
+              Contact
+            </Link>
+            <Link href="/privacy-policy" className="footer-email">
+              Privacy Policy
+            </Link>
+            <Link href="/terms-of-service" className="footer-email">
+              Terms of Service
+            </Link>
+          </nav>
         </div>
       </div>
     </footer>
