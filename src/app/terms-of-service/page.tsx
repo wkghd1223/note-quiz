@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { siteUrl } from "@/lib/metadata";
+import PageShell from "@/components/layouts/PageShell";
 
 export const metadata: Metadata = {
   title: "Terms of Service | Note Quiz",
@@ -11,7 +12,8 @@ export const metadata: Metadata = {
 
 export default function TermsOfServicePage() {
   return (
-    <main className="mx-auto max-w-4xl px-4 py-12 text-slate-800 sm:px-6 lg:px-8">
+    <PageShell>
+      <main className="mx-auto max-w-4xl px-4 py-12 text-slate-800 sm:px-6 lg:px-8">
       <h1 className="text-4xl font-black text-slate-950">Terms of Service</h1>
       <p className="mt-3 text-sm text-slate-500">Last updated: June 22, 2026</p>
 
@@ -53,6 +55,7 @@ export default function TermsOfServicePage() {
           </p>
         </section>
       </div>
-    </main>
+      </main>
+    </PageShell>
   );
 }

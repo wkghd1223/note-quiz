@@ -42,9 +42,6 @@ const Footer = () => {
             <Link href="/about" className="footer-email">
               About
             </Link>
-            <Link href="/leaderboard" className="footer-email">
-              Leaderboard
-            </Link>
             <Link href="/contact" className="footer-email">
               Contact
             </Link>

@@ -276,6 +276,31 @@ export interface Translations {
       tagline: string;
     };
   };
+  leaderboard: {
+    navTitle: string;
+    eyebrow: string;
+    title: string;
+    description: string;
+    accumulationPeriod: string;
+    scoresResetDaily: string;
+    yourCountry: string;
+    detectingCountry: string;
+    countryCode: string;
+    privacyNote: string;
+    countryRankings: string;
+    loading: string;
+    empty: string;
+    error: string;
+    columns: {
+      rank: string;
+      country: string;
+      code: string;
+      totalScore: string;
+      submissions: string;
+      averageAccuracy: string;
+      updated: string;
+    };
+  };
   earTraining: {
     title: string;
     subtitle: string;
@@ -592,6 +617,33 @@ export const translations: Record<Language, Translations> = {
         tagline: "Interactive note recognition game for music learning",
       },
     },
+    leaderboard: {
+      navTitle: "Leaderboard",
+      eyebrow: "Global Rankings",
+      title: "Today&apos;s Nationality Leaderboard",
+      description:
+        "Scores from the main Note Quiz game are grouped by country and ranked by total score for the current UTC day.",
+      accumulationPeriod: "Accumulation Period",
+      scoresResetDaily: "Scores reset daily.",
+      yourCountry: "Your Country",
+      detectingCountry: "Detecting country",
+      countryCode: "Country code",
+      privacyNote:
+        "Country is detected server-side for leaderboard grouping. Raw IP addresses are not stored for scoring. Daily aggregate rows are retained for 90 days.",
+      countryRankings: "Country Rankings",
+      loading: "Loading leaderboard...",
+      empty: "No leaderboard scores yet. Complete a game to start the rankings.",
+      error: "Unable to load leaderboard.",
+      columns: {
+        rank: "Rank",
+        country: "Country",
+        code: "Code",
+        totalScore: "Total Score",
+        submissions: "Submissions",
+        averageAccuracy: "Avg Accuracy",
+        updated: "Updated",
+      },
+    },
     earTraining: {
       title: "Ear Training",
       subtitle: "Absolute Pitch Practice",
@@ -905,6 +957,33 @@ export const translations: Record<Language, Translations> = {
         tagline: "음악 학습을 위한 대화형 음표 인식 게임",
       },
     },
+    leaderboard: {
+      navTitle: "리더보드",
+      eyebrow: "전 세계 순위",
+      title: "오늘의 국가별 리더보드",
+      description:
+        "메인 음표 퀴즈 점수를 국가별로 모아 현재 UTC 날짜의 총점 기준으로 순위를 매깁니다.",
+      accumulationPeriod: "집계 기간",
+      scoresResetDaily: "점수는 매일 초기화됩니다.",
+      yourCountry: "내 국가",
+      detectingCountry: "국가 감지 중",
+      countryCode: "국가 코드",
+      privacyNote:
+        "국가별 리더보드 집계를 위해 서버에서 국가를 감지합니다. 점수 집계를 위해 원본 IP 주소는 저장하지 않으며, 일별 집계 데이터는 90일 동안 보관됩니다.",
+      countryRankings: "국가별 순위",
+      loading: "리더보드를 불러오는 중...",
+      empty: "아직 리더보드 점수가 없습니다. 게임을 완료하면 순위가 시작됩니다.",
+      error: "리더보드를 불러올 수 없습니다.",
+      columns: {
+        rank: "순위",
+        country: "국가",
+        code: "코드",
+        totalScore: "총점",
+        submissions: "제출 수",
+        averageAccuracy: "평균 정확도",
+        updated: "업데이트",
+      },
+    },
     earTraining: {
       title: "청음 훈련",
       subtitle: "절대음감 연습",
@@ -1215,6 +1294,33 @@ export const translations: Record<Language, Translations> = {
       footer: {
         copyright: "© 2024 Note Quiz. All rights reserved.",
         tagline: "音楽学習のための対話型音符認識ゲーム",
+      },
+    },
+    leaderboard: {
+      navTitle: "ランキング",
+      eyebrow: "世界ランキング",
+      title: "今日の国別ランキング",
+      description:
+        "メインの音符クイズのスコアを国別に集計し、現在のUTC日の合計スコアで順位付けします。",
+      accumulationPeriod: "集計期間",
+      scoresResetDaily: "スコアは毎日リセットされます。",
+      yourCountry: "あなたの国",
+      detectingCountry: "国を検出中",
+      countryCode: "国コード",
+      privacyNote:
+        "国別ランキングの集計のため、国はサーバー側で検出されます。スコア集計のために元のIPアドレスは保存せず、日別集計データは90日間保持されます。",
+      countryRankings: "国別ランキング",
+      loading: "ランキングを読み込み中...",
+      empty: "まだランキングスコアがありません。ゲームを完了するとランキングが始まります。",
+      error: "ランキングを読み込めません。",
+      columns: {
+        rank: "順位",
+        country: "国",
+        code: "コード",
+        totalScore: "合計スコア",
+        submissions: "送信数",
+        averageAccuracy: "平均正解率",
+        updated: "更新日",
       },
     },
     earTraining: {
@@ -1534,6 +1640,33 @@ export const translations: Record<Language, Translations> = {
         copyright: "© 2024 Note Quiz. All rights reserved.",
         tagline:
           "Juego interactivo de reconocimiento de notas para aprendizaje musical",
+      },
+    },
+    leaderboard: {
+      navTitle: "Clasificacion",
+      eyebrow: "Ranking global",
+      title: "Clasificacion diaria por pais",
+      description:
+        "Las puntuaciones del juego principal de Note Quiz se agrupan por pais y se ordenan por puntuacion total del dia UTC actual.",
+      accumulationPeriod: "Periodo de acumulacion",
+      scoresResetDaily: "Las puntuaciones se reinician cada dia.",
+      yourCountry: "Tu pais",
+      detectingCountry: "Detectando pais",
+      countryCode: "Codigo de pais",
+      privacyNote:
+        "El pais se detecta en el servidor para agrupar la clasificacion. No se almacenan direcciones IP sin procesar para las puntuaciones. Los agregados diarios se conservan durante 90 dias.",
+      countryRankings: "Clasificacion por pais",
+      loading: "Cargando clasificacion...",
+      empty: "Aun no hay puntuaciones. Completa una partida para iniciar la clasificacion.",
+      error: "No se pudo cargar la clasificacion.",
+      columns: {
+        rank: "Puesto",
+        country: "Pais",
+        code: "Codigo",
+        totalScore: "Puntuacion total",
+        submissions: "Envios",
+        averageAccuracy: "Precision media",
+        updated: "Actualizado",
       },
     },
     earTraining: {
@@ -1856,6 +1989,33 @@ export const translations: Record<Language, Translations> = {
         tagline: "Interaktives Notenerkennung-Spiel zum Musiklernen",
       },
     },
+    leaderboard: {
+      navTitle: "Bestenliste",
+      eyebrow: "Globale Rangliste",
+      title: "Heutige Lander-Bestenliste",
+      description:
+        "Punkte aus dem Hauptspiel Note Quiz werden nach Land gruppiert und fuer den aktuellen UTC-Tag nach Gesamtpunktzahl sortiert.",
+      accumulationPeriod: "Sammelzeitraum",
+      scoresResetDaily: "Punkte werden taeglich zurueckgesetzt.",
+      yourCountry: "Dein Land",
+      detectingCountry: "Land wird erkannt",
+      countryCode: "Landercode",
+      privacyNote:
+        "Das Land wird serverseitig fuer die Bestenliste erkannt. Rohe IP-Adressen werden fuer die Punktewertung nicht gespeichert. Taegliche Aggregatdaten werden 90 Tage aufbewahrt.",
+      countryRankings: "Landerrangliste",
+      loading: "Bestenliste wird geladen...",
+      empty: "Noch keine Bestenlistenpunkte. Beende ein Spiel, um die Rangliste zu starten.",
+      error: "Bestenliste konnte nicht geladen werden.",
+      columns: {
+        rank: "Rang",
+        country: "Land",
+        code: "Code",
+        totalScore: "Gesamtpunkte",
+        submissions: "Einreichungen",
+        averageAccuracy: "Durchschn. Genauigkeit",
+        updated: "Aktualisiert",
+      },
+    },
     earTraining: {
       title: "Gehoertraining",
       subtitle: "Absolutes Gehoer ueben",
@@ -2176,6 +2336,33 @@ export const translations: Record<Language, Translations> = {
         copyright: "© 2024 Note Quiz. All rights reserved.",
         tagline:
           "Jeu interactif de reconnaissance des notes pour l'apprentissage musical",
+      },
+    },
+    leaderboard: {
+      navTitle: "Classement",
+      eyebrow: "Classement mondial",
+      title: "Classement quotidien par pays",
+      description:
+        "Les scores du jeu principal Note Quiz sont regroupes par pays et classes par score total pour la journee UTC en cours.",
+      accumulationPeriod: "Periode d'accumulation",
+      scoresResetDaily: "Les scores sont remis a zero chaque jour.",
+      yourCountry: "Votre pays",
+      detectingCountry: "Detection du pays",
+      countryCode: "Code pays",
+      privacyNote:
+        "Le pays est detecte cote serveur pour regrouper le classement. Les adresses IP brutes ne sont pas stockees pour le score. Les agregats quotidiens sont conserves 90 jours.",
+      countryRankings: "Classement par pays",
+      loading: "Chargement du classement...",
+      empty: "Aucun score pour le moment. Terminez une partie pour lancer le classement.",
+      error: "Impossible de charger le classement.",
+      columns: {
+        rank: "Rang",
+        country: "Pays",
+        code: "Code",
+        totalScore: "Score total",
+        submissions: "Soumissions",
+        averageAccuracy: "Precision moyenne",
+        updated: "Mis a jour",
       },
     },
     earTraining: {

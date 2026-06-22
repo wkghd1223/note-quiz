@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { siteUrl } from "@/lib/metadata";
+import PageShell from "@/components/layouts/PageShell";
 
 export const metadata: Metadata = {
   title: "About | Note Quiz",
@@ -12,7 +13,8 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <main className="mx-auto max-w-4xl px-4 py-12 text-slate-800 sm:px-6 lg:px-8">
+    <PageShell>
+      <main className="mx-auto max-w-4xl px-4 py-12 text-slate-800 sm:px-6 lg:px-8">
       <h1 className="text-4xl font-black text-slate-950">About Note Quiz</h1>
 
       <div className="mt-8 space-y-6 leading-7">
@@ -31,6 +33,7 @@ export default function AboutPage() {
           requests can be sent through the contact page.
         </p>
       </div>
-    </main>
+      </main>
+    </PageShell>
   );
 }

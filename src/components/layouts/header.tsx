@@ -8,59 +8,52 @@ import LanguageSelector from "../ui/LanguageSelector";
 const Header = () => {
   const { t } = useTranslation();
   const pathname = usePathname();
+  const navItems = [
+    { href: "/game", label: t.gameNavTitle },
+    { href: "/ear-training", label: t.earTraining.title },
+    { href: "/leaderboard", label: t.leaderboard.navTitle },
+  ];
+
   return (
     <>
-      <header className="relative z-[70] flex items-center justify-between rounded-[1.75rem] border border-[#ded6f7] bg-white px-4 py-4 shadow-[0_14px_40px_rgba(76,29,149,0.08)] lg:px-6">
-        <Link className="flex cursor-pointer items-center space-x-3" href="/">
+      <header className="relative z-[70] flex flex-col gap-4 rounded-2xl border border-[#ded6f7] bg-white/95 px-4 py-3 shadow-[0_10px_28px_rgba(76,29,149,0.07)] backdrop-blur-sm md:flex-row md:items-center md:justify-between lg:px-5">
+        <Link className="flex min-w-0 cursor-pointer items-center gap-3" href="/">
           <Image
             src="/logo.svg"
             alt="Logo"
-            className="h-12 w-12 rounded-2xl"
-            width={48}
-            height={48}
+            className="h-10 w-10 shrink-0 rounded-xl"
+            width={40}
+            height={40}
           />
-          <div>
-            <h1 className="text-xl font-black tracking-[-0.04em] text-slate-950 lg:text-3xl">
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-black text-slate-950 md:text-xl">
               {t.gameTitle}
             </h1>
-            <p className="text-sm font-medium text-[#6d28d9] sm:text-base">
+            <p className="truncate text-xs font-medium text-[#6d28d9] sm:text-sm">
               {t.brandDescription}
             </p>
           </div>
         </Link>
 
-        <div className="flex flex-wrap items-center justify-end gap-3">
-          <nav className="flex items-center gap-1 rounded-2xl border border-[#ded6f7] bg-[#faf9fe] p-1 sm:gap-2">
-            <Link
-              href="/game"
-              className={`rounded-xl px-3 py-2 text-sm font-bold transition-colors sm:px-4 sm:text-sm ${
-                pathname === "/game"
-                  ? "bg-white text-slate-900 shadow-[0_8px_18px_rgba(76,29,149,0.08)]"
-                  : "text-slate-600 hover:bg-white hover:text-slate-900"
-              }`}
-            >
-              {t.gameNavTitle}
-            </Link>
-            <Link
-              href="/ear-training"
-              className={`rounded-xl px-3 py-2 text-sm font-bold transition-colors sm:px-4 sm:text-sm ${
-                pathname === "/ear-training"
-                  ? "bg-white text-slate-900 shadow-[0_8px_18px_rgba(76,29,149,0.08)]"
-                  : "text-slate-600 hover:bg-white hover:text-slate-900"
-              }`}
-            >
-              {t.earTraining.title}
-            </Link>
-            <Link
-              href="/leaderboard"
-              className={`rounded-xl px-3 py-2 text-sm font-bold transition-colors sm:px-4 sm:text-sm ${
-                pathname === "/leaderboard"
-                  ? "bg-white text-slate-900 shadow-[0_8px_18px_rgba(76,29,149,0.08)]"
-                  : "text-slate-600 hover:bg-white hover:text-slate-900"
-              }`}
-            >
-              Leaderboard
-            </Link>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between md:justify-end">
+          <nav className="flex w-full items-center gap-1 rounded-xl border border-[#ded6f7] bg-[#faf9fe] p-1 sm:w-auto">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href;
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex-1 rounded-lg px-3 py-2 text-center text-sm font-bold transition-colors sm:flex-none ${
+                    isActive
+                      ? "bg-white text-slate-950 shadow-[0_6px_14px_rgba(76,29,149,0.08)]"
+                      : "text-slate-600 hover:bg-white hover:text-slate-950"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
           <LanguageSelector className="w-[4.75rem]" />
         </div>
