@@ -35,7 +35,9 @@ function formatPeriodDate(value: string | undefined, locale: string) {
 export default function LeaderboardClient() {
   const { t } = useTranslation();
   const { language } = useLanguageStore();
-  const [leaderboard, setLeaderboard] = useState<LeaderboardResponse | null>(null);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardResponse | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -68,7 +70,7 @@ export default function LeaderboardClient() {
   const entries = leaderboard?.entries ?? [];
 
   return (
-    <PageShell>
+    <PageShell headerVariant="app">
       <main className="mx-auto max-w-6xl space-y-8 px-4 py-10 text-slate-900 sm:px-6 lg:px-8">
         <section className="space-y-4">
           <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#6d28d9]">
@@ -111,7 +113,8 @@ export default function LeaderboardClient() {
                   {viewerCountry?.countryName ?? t.leaderboard.detectingCountry}
                 </p>
                 <p className="mt-1 font-mono text-lg font-bold text-[#6d28d9]">
-                  {t.leaderboard.countryCode}: {viewerCountry?.countryCode ?? "--"}
+                  {t.leaderboard.countryCode}:{" "}
+                  {viewerCountry?.countryCode ?? "--"}
                 </p>
               </div>
             </div>
@@ -135,7 +138,9 @@ export default function LeaderboardClient() {
           )}
 
           {!isLoading && errorMessage && (
-            <div className="px-6 py-12 text-center text-red-600">{errorMessage}</div>
+            <div className="px-6 py-12 text-center text-red-600">
+              {errorMessage}
+            </div>
           )}
 
           {!isLoading && !errorMessage && entries.length === 0 && (
@@ -150,14 +155,22 @@ export default function LeaderboardClient() {
                 <thead className="bg-[#faf9fe] text-xs uppercase tracking-[0.14em] text-slate-500">
                   <tr>
                     <th className="px-6 py-4">{t.leaderboard.columns.rank}</th>
-                    <th className="px-6 py-4">{t.leaderboard.columns.country}</th>
+                    <th className="px-6 py-4">
+                      {t.leaderboard.columns.country}
+                    </th>
                     <th className="px-6 py-4">{t.leaderboard.columns.code}</th>
-                    <th className="px-6 py-4">{t.leaderboard.columns.totalScore}</th>
-                    <th className="px-6 py-4">{t.leaderboard.columns.submissions}</th>
+                    <th className="px-6 py-4">
+                      {t.leaderboard.columns.totalScore}
+                    </th>
+                    <th className="px-6 py-4">
+                      {t.leaderboard.columns.submissions}
+                    </th>
                     <th className="px-6 py-4">
                       {t.leaderboard.columns.averageAccuracy}
                     </th>
-                    <th className="px-6 py-4">{t.leaderboard.columns.updated}</th>
+                    <th className="px-6 py-4">
+                      {t.leaderboard.columns.updated}
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#ede7fb]">
@@ -185,7 +198,9 @@ export default function LeaderboardClient() {
                       <td className="px-6 py-4">
                         {numberFormatter.format(entry.submissionCount)}
                       </td>
-                      <td className="px-6 py-4">{entry.averageAccuracy.toFixed(1)}%</td>
+                      <td className="px-6 py-4">
+                        {entry.averageAccuracy.toFixed(1)}%
+                      </td>
                       <td className="px-6 py-4">
                         {formatDate(entry.updatedAt, language)}
                       </td>

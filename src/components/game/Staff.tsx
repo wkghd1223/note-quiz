@@ -151,26 +151,47 @@ const Staff: React.FC<StaffProps> = ({
         {/* 음표 */}
         {note && notePosition !== null && (
           <g transform={`translate(${noteX}, ${noteY})`}>
-            <QuarterNote position={notePosition} />
-            {/* 임시표 표시 */}
+            {/* Accidentals are drawn before the note head so they never appear late. */}
             {originalNote && originalNote.accidental === "sharp" && (
-              <g transform="translate(-25, -20)">
-                <SharpSymbol />
-              </g>
+              <text
+                x="-34"
+                y="9"
+                fontSize="34"
+                fontFamily="serif"
+                fontWeight="700"
+                fill="#000"
+              >
+                ♯
+              </text>
             )}
             {originalNote && originalNote.accidental === "flat" && (
-              <g transform="translate(-25, -20)">
-                <FlatSymbol />
-              </g>
+              <text
+                x="-32"
+                y="9"
+                fontSize="34"
+                fontFamily="serif"
+                fontWeight="700"
+                fill="#000"
+              >
+                ♭
+              </text>
             )}
             {originalNote &&
               originalNote.accidental === "natural" &&
               (keySignature.sharps.includes(originalNote.name) ||
                 keySignature.flats.includes(originalNote.name)) && (
-                <g transform="translate(-25, -20)">
-                  <NaturalSymbol />
-                </g>
+                <text
+                  x="-34"
+                  y="9"
+                  fontSize="32"
+                  fontFamily="serif"
+                  fontWeight="700"
+                  fill="#000"
+                >
+                  ♮
+                </text>
               )}
+            <QuarterNote position={notePosition} />
           </g>
         )}
       </svg>
@@ -252,10 +273,6 @@ const FlatSymbol: React.FC = () => (
 );
 
 // natural 기호 SVG
-const NaturalSymbol: React.FC = () => (
-  <image href="/natural-sign.svg" height={35} />
-);
-
 // 조표 위치 계산 함수
 function getAccidentalY(
   noteName: string,

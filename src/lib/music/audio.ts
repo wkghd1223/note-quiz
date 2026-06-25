@@ -226,9 +226,9 @@ export async function playPianoNote(
 
     // 게인 설정
     fundamentalGain.gain.value = 1.0;
-    harmonicGain1.gain.value = 0.5;
-    harmonicGain2.gain.value = 0.25;
-    harmonicGain3.gain.value = 0.125;
+    harmonicGain1.gain.value = 0.28;
+    harmonicGain2.gain.value = 0.1;
+    harmonicGain3.gain.value = 0.04;
 
     // 연결
     fundamental.connect(fundamentalGain);
@@ -246,10 +246,12 @@ export async function playPianoNote(
 
     // 피아노 특유의 엔벨로프
     const now = audioContext.currentTime || 0;
-    const attackTime = 0.005; // 5ms - 빠른 어택
-    const decayTime = 0.2; // 200ms
-    const sustainLevel = 0.3; // 낮은 서스테인
-    const releaseTime = 0.8; // 긴 릴리즈
+    const attackTime = 0.01;
+    const decayTime = 0.16;
+    const sustainLevel = 0.24;
+    const releaseTime = Math.min(0.28, duration / 1000 / 2);
+    const noteEndTime = now + duration / 1000;
+    const releaseStartTime = Math.max(now + attackTime + decayTime, noteEndTime - releaseTime);
 
     noteGain.gain.setValueAtTime(0, now);
     noteGain.gain.linearRampToValueAtTime(1, now + attackTime);
@@ -257,19 +259,14 @@ export async function playPianoNote(
       sustainLevel,
       now + attackTime + decayTime
     );
-    noteGain.gain.setValueAtTime(
-      sustainLevel,
-      now + duration / 1000 - releaseTime < 0
-        ? 0
-        : now + duration / 1000 - releaseTime
-    );
-    noteGain.gain.exponentialRampToValueAtTime(0.001, now + duration / 1000);
+    noteGain.gain.setValueAtTime(sustainLevel, releaseStartTime);
+    noteGain.gain.linearRampToValueAtTime(0.0001, noteEndTime);
 
     // 모든 오실레이터 시작
     const oscillators = [fundamental, harmonic2, harmonic3, harmonic4];
     oscillators.forEach((osc) => {
       osc.start(now);
-      osc.stop(now + duration / 1000);
+      osc.stop(noteEndTime + 0.02);
     });
 
     return new Promise((resolve) => {
