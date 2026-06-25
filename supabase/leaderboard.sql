@@ -20,6 +20,17 @@ create table if not exists public.leaderboard_country_daily (
   )
 );
 
+alter table public.leaderboard_country_daily enable row level security;
+
+drop policy if exists "Allow public leaderboard reads"
+  on public.leaderboard_country_daily;
+
+create policy "Allow public leaderboard reads"
+  on public.leaderboard_country_daily
+  for select
+  to anon
+  using (true);
+
 create index if not exists leaderboard_country_daily_rank_idx
   on public.leaderboard_country_daily (period_date, total_score desc, submission_count desc);
 
@@ -74,6 +85,26 @@ begin
 end;
 $$;
 
+revoke all on function public.increment_country_daily_score(
+  date,
+  text,
+  text,
+  integer,
+  integer,
+  integer,
+  numeric
+) from public;
+
+grant execute on function public.increment_country_daily_score(
+  date,
+  text,
+  text,
+  integer,
+  integer,
+  integer,
+  numeric
+) to anon;
+
 create or replace function public.delete_old_leaderboard_country_daily()
 returns void
 language sql
@@ -83,3 +114,5 @@ as $$
   delete from public.leaderboard_country_daily
   where period_date < current_date - interval '90 days';
 $$;
+
+revoke all on function public.delete_old_leaderboard_country_daily() from public;

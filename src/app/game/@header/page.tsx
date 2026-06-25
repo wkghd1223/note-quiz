@@ -13,7 +13,7 @@ export default function GameHeader() {
   return (
     <>
       {/* 헤더 */}
-      <Header />
+      <Header variant="compact" />
     </>
   );
 }

@@ -18,6 +18,7 @@ interface EarTrainingStore {
   settings: EarTrainingSettings;
   sessionState: GameState;
   currentQuestion: EarTrainingQuestion | null;
+  isAdvancingQuestion: boolean;
   answers: EarTrainingAnswer[];
   result: EarTrainingResult | null;
   stats: EarTrainingStats;
@@ -54,6 +55,7 @@ export const useEarTrainingStore = create<EarTrainingStore>()(
       settings: { ...DEFAULT_EAR_TRAINING_SETTINGS },
       sessionState: "idle",
       currentQuestion: null,
+      isAdvancingQuestion: false,
       answers: [],
       result: null,
       stats: initialStats,
@@ -85,6 +87,7 @@ export const useEarTrainingStore = create<EarTrainingStore>()(
         set({
           sessionState: "playing",
           currentQuestion: null,
+          isAdvancingQuestion: false,
           answers: [],
           result: null,
           startTime: now,
@@ -142,6 +145,7 @@ export const useEarTrainingStore = create<EarTrainingStore>()(
           result,
           stats: updatedStats,
           currentQuestion: null,
+          isAdvancingQuestion: false,
           questionStartTime: null,
         });
       },
@@ -150,6 +154,7 @@ export const useEarTrainingStore = create<EarTrainingStore>()(
         set({
           sessionState: "idle",
           currentQuestion: null,
+          isAdvancingQuestion: false,
           answers: [],
           result: null,
           startTime: null,
@@ -164,13 +169,14 @@ export const useEarTrainingStore = create<EarTrainingStore>()(
 
         set({
           currentQuestion: generateEarTrainingQuestion(settings),
+          isAdvancingQuestion: false,
           questionStartTime: Date.now(),
         });
       },
 
       submitAnswer: (answer) => {
-        const { currentQuestion, settings, answers } = get();
-        if (!currentQuestion) return false;
+        const { currentQuestion, settings, answers, isAdvancingQuestion } = get();
+        if (!currentQuestion || isAdvancingQuestion) return false;
 
         const timeSpent = get().getQuestionElapsedTime();
         const isCorrect = validateEarTrainingAnswer(currentQuestion, answer);
@@ -194,9 +200,16 @@ export const useEarTrainingStore = create<EarTrainingStore>()(
 
         set({
           answers: nextAnswers,
+          isAdvancingQuestion: true,
         });
 
-        get().generateNextQuestion();
+        window.setTimeout(() => {
+          const { sessionState } = get();
+          if (sessionState === "playing") {
+            get().generateNextQuestion();
+          }
+        }, 900);
+
         return isCorrect;
       },
 

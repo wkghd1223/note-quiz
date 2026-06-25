@@ -17,7 +17,6 @@ import SolfegeKeyboard from "@/components/game/SolfegeKeyboard";
 import MicrophoneInput from "@/components/game/MicrophoneInput";
 import Timer from "@/components/game/Timer";
 import ScoreBoard from "@/components/game/ScoreBoard";
-import GameSettingsTrigger from "@/components/game/GameSettingsTrigger";
 import { useLanguageStore } from "@/store/languageStore";
 import { submitLeaderboardScore } from "@/services/leaderboard";
 
@@ -197,9 +196,9 @@ const GameMain: React.FC = () => {
 
   return (
     <>
-      <div className="relative grid grid-cols-1 gap-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
+      <div className="relative grid grid-cols-1 gap-3 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-5 xl:grid-cols-[300px_minmax(0,1fr)]">
         <div className="min-w-0">
-          <div className="hidden space-y-6 lg:block">
+          <div className="hidden space-y-4 lg:block">
             <Timer />
             <ScoreBoard />
           </div>
@@ -219,14 +218,14 @@ const GameMain: React.FC = () => {
               📊 {t.scoreboard.title}
             </button>
           </div>
-          <div className="overflow-hidden rounded-[2rem] border border-[#ded6f7] bg-white shadow-[0_18px_50px_rgba(76,29,149,0.08)]">
+          <div className="overflow-hidden rounded-[1.5rem] border border-[#ded6f7] bg-white shadow-[0_14px_36px_rgba(76,29,149,0.08)]">
             <div className="h-1.5 w-full bg-gradient-to-r from-[#5b21b6] via-[#6d28d9] to-[#ede9fe]" />
-            <div className="bg-[radial-gradient(circle_at_top,_rgba(124,58,237,0.08),transparent_42%),linear-gradient(180deg,_#ffffff_0%,_#faf9fe_100%)] p-4 sm:p-6 lg:p-8">
+            <div className="bg-[radial-gradient(circle_at_top,_rgba(124,58,237,0.08),transparent_42%),linear-gradient(180deg,_#ffffff_0%,_#faf9fe_100%)] p-3 sm:p-5 lg:p-7">
               {/* 피드백 메시지 */}
               <div
-                className={`mb-4 rounded-2xl border text-center font-bold fixed bottom-[50%] right-[50%] z-10
-                  transition-opacity duration-300 ease-in-out transform translate-x-1/2
-                  ${!!feedback ? "opacity-100 px-5 py-3 shadow-[0_14px_40px_rgba(76,29,149,0.12)]" : "opacity-0"}
+                className={`fixed bottom-28 left-1/2 z-10 mb-4 -translate-x-1/2 rounded-2xl border text-center text-sm font-bold
+                  transition-opacity duration-300 ease-in-out sm:bottom-auto sm:top-1/2 sm:text-base
+                  ${!!feedback ? "opacity-100 px-5 py-3 shadow-[0_14px_40px_rgba(76,29,149,0.12)]" : "pointer-events-none opacity-0"}
                   ${
                     feedback?.type === "success"
                       ? "border-[#bbf7d0] bg-[#ecfdf5] text-[#166534]"
@@ -236,17 +235,15 @@ const GameMain: React.FC = () => {
                 {feedback?.message}
               </div>
 
-              <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+              <div className="mb-3 flex flex-wrap items-start justify-between gap-3 sm:mb-5 sm:gap-4">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#6d28d9] sm:text-sm sm:tracking-[0.2em]">
                     {currentQuestion
                       ? t.clefs[currentQuestion.clef]
                       : t.gameTitle}
                   </p>
-                  <h2 className="mt-2 text-2xl font-black tracking-[-0.05em] text-slate-950 sm:text-3xl">
-                    {currentQuestion
-                      ? t.messages.whichNoteShown
-                      : t.ui.welcome}
+                  <h2 className="mt-1 text-xl font-black tracking-[-0.04em] text-slate-950 sm:mt-2 sm:text-3xl">
+                    {currentQuestion ? t.messages.whichNoteShown : t.ui.welcome}
                   </h2>
                   {!currentQuestion && (
                     <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
@@ -261,8 +258,8 @@ const GameMain: React.FC = () => {
               </div>
 
               {currentQuestion ? (
-                <div className="rounded-[1.75rem] border border-[#ece7fb] bg-[#faf9fe] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] sm:p-4 lg:p-5">
-                  <div className="rounded-[1.5rem] border border-[#e2e8f0] bg-white p-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)] sm:p-5 lg:p-6">
+                <div className="rounded-[1.25rem] border border-[#ece7fb] bg-[#faf9fe] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] sm:rounded-[1.75rem] sm:p-4 lg:p-5">
+                  <div className="rounded-[1.25rem] border border-[#e2e8f0] bg-white p-2.5 shadow-[0_10px_24px_rgba(15,23,42,0.04)] sm:rounded-[1.5rem] sm:p-5 lg:p-6">
                     <div className="mb-4 flex items-center justify-between gap-3">
                       <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
                         {t.clefs[currentQuestion.clef]}
@@ -282,7 +279,7 @@ const GameMain: React.FC = () => {
                   </div>
 
                   {isGameActive() && (
-                    <div className="mt-5 rounded-[1.4rem] border border-[#ede9fe] bg-white p-3 sm:p-4">
+                    <div className="mt-3 rounded-[1.25rem] border border-[#ede9fe] bg-white p-2.5 sm:mt-5 sm:rounded-[1.4rem] sm:p-4">
                       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                         <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
                           {t.messages.whichNoteShown}
@@ -352,10 +349,6 @@ const GameMain: React.FC = () => {
                 </div>
               )}
             </div>
-          </div>
-
-          <div className="mt-4 lg:hidden">
-            <GameSettingsTrigger variant="mobile-card" />
           </div>
         </div>
       </div>

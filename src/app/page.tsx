@@ -41,8 +41,8 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-end gap-3">
-            <nav className="flex items-center gap-2 rounded-2xl border border-[#ded6f7] bg-[#faf9fe] p-1">
+          <div className="flex w-full flex-wrap items-center justify-center gap-3 lg:w-auto lg:justify-end">
+            <nav className="flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-[#ded6f7] bg-[#faf9fe] p-1">
               <Link
                 href="/game"
                 className="rounded-xl bg-white px-4 py-2 text-sm font-bold text-slate-900 shadow-[0_8px_18px_rgba(76,29,149,0.08)]"

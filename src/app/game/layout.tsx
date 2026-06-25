@@ -50,10 +50,12 @@ export default function Layout({
     <div className="min-h-screen bg-[#f4f2f8]">
       {/* 헤더 */}
       <div className="relative z-50 border-b border-[#ded6f7] bg-white/70">
-        <div className="mx-auto max-w-7xl px-4 py-4 lg:py-5">{header}</div>
+        <div className="mx-auto max-w-7xl px-3 py-2.5 sm:px-4 sm:py-3 lg:py-4">
+          {header}
+        </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 pb-8 pt-6">
+      <div className="mx-auto max-w-7xl px-3 pb-6 pt-3 sm:px-4 sm:pt-5">
         {/* 메인 게임 영역 */}
         {main}
       </div>

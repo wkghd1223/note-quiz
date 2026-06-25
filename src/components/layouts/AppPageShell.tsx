@@ -1,22 +1,28 @@
 import Header, { type HeaderVariant } from "@/components/layouts/header";
 
-interface PageShellProps {
+interface AppPageShellProps {
   children: React.ReactNode;
   headerVariant?: HeaderVariant;
+  className?: string;
   contentClassName?: string;
 }
 
-export default function PageShell({
+export default function AppPageShell({
   children,
-  headerVariant = "default",
+  headerVariant = "app",
+  className = "",
   contentClassName = "",
-}: PageShellProps) {
+}: AppPageShellProps) {
   return (
-    <div className="min-h-screen bg-[#f7f3ff]">
+    <div className={`min-h-screen bg-[#f7f3ff] ${className}`}>
       <div className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 lg:py-5">
         <Header variant={headerVariant} />
       </div>
-      <div className={contentClassName}>{children}</div>
+      <main
+        className={`mx-auto max-w-7xl px-3 pb-6 sm:px-4 ${contentClassName}`}
+      >
+        {children}
+      </main>
     </div>
   );
 }
