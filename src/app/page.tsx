@@ -28,9 +28,14 @@ export default function HomePage() {
       <header className="border-b border-[#ded6f7] bg-white/80 backdrop-blur-sm">
         <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-8">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#6d28d9] to-[#4c1d95] text-white shadow-[0_10px_24px_rgba(91,33,182,0.28)]">
-              <FaMusic className="text-xl" />
-            </div>
+            <Image
+              src="/logo.svg"
+              alt="Note Quiz"
+              className="h-12 w-12 shrink-0 object-contain"
+              width={64}
+              height={64}
+              priority
+            />
             <div>
               <p className="text-2xl font-black tracking-[-0.04em] text-slate-950">
                 {t.gameTitle}
@@ -39,29 +44,6 @@ export default function HomePage() {
                 {t.brandDescription}
               </p>
             </div>
-          </div>
-
-          <div className="flex w-full flex-wrap items-center justify-center gap-3 lg:w-auto lg:justify-end">
-            <nav className="flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-[#ded6f7] bg-[#faf9fe] p-1">
-              <Link
-                href="/game"
-                className="rounded-xl bg-white px-4 py-2 text-sm font-bold text-slate-900 shadow-[0_8px_18px_rgba(76,29,149,0.08)]"
-              >
-                {t.gameNavTitle}
-              </Link>
-              <Link
-                href="/ear-training"
-                className="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 transition-colors hover:bg-white hover:text-slate-900"
-              >
-                {t.earTraining.title}
-              </Link>
-              <Link
-                href="/leaderboard"
-                className="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 transition-colors hover:bg-white hover:text-slate-900"
-              >
-                {t.leaderboard.navTitle}
-              </Link>
-            </nav>
             <LanguageSelector className="w-[5.5rem]" />
           </div>
         </div>
@@ -84,21 +66,21 @@ export default function HomePage() {
 
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               <Link
-                href="/game"
+                href="/practice?mode=note"
                 className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-[#5b21b6] to-[#6d28d9] px-8 py-4 text-lg font-bold text-white shadow-[0_12px_28px_rgba(91,33,182,0.3)] hover:-translate-y-0.5"
               >
                 <FaPlay className="mr-2" />
                 {t.gameNavTitle}
               </Link>
               <Link
-                href="/ear-training"
+                href="/practice?mode=ear"
                 className="inline-flex items-center justify-center rounded-2xl border border-[#ded6f7] bg-[#faf9fe] px-8 py-4 text-sm font-bold text-slate-700 transition-colors hover:bg-white"
               >
                 <FaHeadphones className="mr-2 text-[#6d28d9]" />
                 {t.earTraining.title}
               </Link>
               <Link
-                href="/leaderboard"
+                href="/practice?leaderboard=open"
                 className="inline-flex items-center justify-center rounded-2xl border border-[#ded6f7] bg-white px-8 py-4 text-sm font-bold text-slate-700 transition-colors hover:bg-[#faf9fe]"
               >
                 {t.leaderboard.navTitle}
@@ -126,7 +108,9 @@ export default function HomePage() {
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
                   Devices
                 </p>
-                <p className="mt-2 text-lg font-black text-slate-950">Mobile + Web</p>
+                <p className="mt-2 text-lg font-black text-slate-950">
+                  Mobile + Web
+                </p>
               </div>
             </div>
           </div>
@@ -193,7 +177,7 @@ export default function HomePage() {
       <section className="px-4 pb-8 sm:px-8 sm:pb-12">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-2">
           <Link
-            href="/game"
+            href="/practice?mode=note"
             className="group rounded-[1.8rem] border border-[#ded6f7] bg-white p-6 shadow-[0_14px_40px_rgba(76,29,149,0.08)] transition-transform hover:-translate-y-1"
           >
             <div className="flex items-center justify-between gap-4">
@@ -217,7 +201,7 @@ export default function HomePage() {
           </Link>
 
           <Link
-            href="/ear-training"
+            href="/practice?mode=ear"
             className="group rounded-[1.8rem] border border-[#ded6f7] bg-white p-6 shadow-[0_14px_40px_rgba(76,29,149,0.08)] transition-transform hover:-translate-y-1"
           >
             <div className="flex items-center justify-between gap-4">
@@ -341,20 +325,27 @@ export default function HomePage() {
             {t.home.faq.title}
           </h2>
           <div className="space-y-6">
-            {[t.home.faq.q1, t.home.faq.q2, t.home.faq.q3, t.home.faq.q4, t.home.faq.q5, t.home.faq.q6].map(
-              (item, index) => (
-                <details
-                  key={index}
-                  className="rounded-[1.5rem] border border-[#ded6f7] bg-white p-6 shadow-[0_14px_40px_rgba(76,29,149,0.08)]"
-                >
-                  <summary className="flex items-center gap-3 text-lg font-bold text-slate-900">
-                    <FaQuestionCircle className="text-[#6d28d9]" />
-                    {item.question}
-                  </summary>
-                  <p className="ml-8 mt-4 leading-7 text-slate-600">{item.answer}</p>
-                </details>
-              ),
-            )}
+            {[
+              t.home.faq.q1,
+              t.home.faq.q2,
+              t.home.faq.q3,
+              t.home.faq.q4,
+              t.home.faq.q5,
+              t.home.faq.q6,
+            ].map((item, index) => (
+              <details
+                key={index}
+                className="rounded-[1.5rem] border border-[#ded6f7] bg-white p-6 shadow-[0_14px_40px_rgba(76,29,149,0.08)]"
+              >
+                <summary className="flex items-center gap-3 text-lg font-bold text-slate-900">
+                  <FaQuestionCircle className="text-[#6d28d9]" />
+                  {item.question}
+                </summary>
+                <p className="ml-8 mt-4 leading-7 text-slate-600">
+                  {item.answer}
+                </p>
+              </details>
+            ))}
           </div>
         </div>
       </section>
@@ -375,14 +366,8 @@ export default function HomePage() {
 
       <section className="px-4 py-12 sm:px-8 sm:py-16">
         <div className="mx-auto max-w-5xl rounded-[2rem] border border-[#5b21b6] bg-gradient-to-r from-[#5b21b6] via-[#6d28d9] to-[#7c3aed] px-8 py-12 text-center text-white shadow-[0_20px_40px_rgba(91,33,182,0.26)]">
-          <h2 className="mb-6 text-3xl font-black tracking-[-0.04em] sm:text-5xl">
-            {t.home.cta.title}
-          </h2>
-          <p className="mb-8 text-lg opacity-90 sm:text-xl">
-            {t.home.cta.description}
-          </p>
           <Link
-            href="/game"
+            href="/practice?mode=note"
             className="inline-flex items-center rounded-2xl bg-white px-8 py-4 text-lg font-bold text-[#5b21b6] shadow-[0_12px_28px_rgba(15,23,42,0.16)] hover:-translate-y-0.5"
           >
             <FaPlay className="mr-2" />
