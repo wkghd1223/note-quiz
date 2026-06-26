@@ -157,3 +157,27 @@ export const trackEarTrainingSettingsChange = (
     setting_value: value,
   });
 };
+
+export const trackPracticeModeChanged = (mode: string) => {
+  emitAnalyticsEvent("practice_mode_changed", {
+    mode,
+  });
+};
+
+export const trackPracticeSettingsOpened = (mode: string) => {
+  emitAnalyticsEvent("practice_settings_opened", {
+    mode,
+  });
+};
+
+export const trackPracticeSettingsClosed = (mode: string) => {
+  emitAnalyticsEvent("practice_settings_closed", {
+    mode,
+  });
+};
+
+export const trackLeaderboardTickerOpened = (surface: string) => {
+  emitAnalyticsEvent("leaderboard_ticker_opened", {
+    surface,
+  });
+};
