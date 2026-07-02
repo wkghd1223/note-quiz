@@ -35,7 +35,7 @@ This project started as a focused practice tool for learning to recognize notes 
 - Responsive layout for desktop and mobile
 - 6 languages: English, Korean, Japanese, Spanish, German, French
 - Google Analytics event tracking
-- Google AdSense component support
+- Advertising partner support
 
 ## Tech Stack
 
@@ -77,9 +77,11 @@ npm run lint
 ## Routes
 
 - `/` landing page
-- `/game` sight-reading game
-- `/ear-training` ear-training mode
-- `/suggest` suggestion page
+- `/practice` unified sight-reading and ear-training practice page
+- `/game` redirects to `/practice?mode=note`
+- `/ear-training` redirects to `/practice?mode=ear`
+- `/leaderboard` redirects to `/practice?leaderboard=open`
+- `/about`, `/contact`, `/privacy-policy`, and `/terms-of-service` support pages
 
 ## Project Structure
 
@@ -125,6 +127,7 @@ Current analytics coverage includes:
 ## Notes
 
 - Google Analytics tracking ID is currently configured in code.
+- Advertising partner scripts should be added only after approval from the selected network.
 - Some UI text and branding are translation-driven.
 - There are existing lint warnings in a couple of legacy hooks/components, but lint passes.
 

@@ -32,7 +32,6 @@ app/
 
 ```text
 components/
-├── adsense/          # Google AdSense integration
 ├── analytics/        # Google Analytics components
 ├── ear-training/     # Ear-training UI
 ├── game/             # Main game UI

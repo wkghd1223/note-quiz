@@ -16,7 +16,7 @@ export default function PrivacyPolicyPage() {
     <PageShell>
       <main className="mx-auto max-w-4xl px-4 py-12 text-slate-800 sm:px-6 lg:px-8">
       <h1 className="text-4xl font-black text-slate-950">Privacy Policy</h1>
-      <p className="mt-3 text-sm text-slate-500">Last updated: June 22, 2026</p>
+      <p className="mt-3 text-sm text-slate-500">Last updated: July 2, 2026</p>
 
       <div className="mt-8 space-y-8 leading-7">
         <section>
@@ -41,9 +41,12 @@ export default function PrivacyPolicyPage() {
           <h2 className="text-2xl font-bold text-slate-950">Analytics and Advertising</h2>
           <p className="mt-3">
             We use Google Analytics to understand site usage and improve the product. We
-            may use Google AdSense to display ads. Google and its partners may use
-            cookies or similar technologies to serve and measure ads. You can manage ad
-            personalization through your Google account and browser settings.
+            may work with advertising partners, including Mediavine or similar ad
+            management services, to display ads and measure ad performance. These
+            partners may use cookies or similar technologies for ad delivery,
+            measurement, fraud prevention, frequency capping, and personalization where
+            permitted by law. You can manage cookies and ad personalization through your
+            browser, device, and applicable consent settings.
           </p>
         </section>
 
