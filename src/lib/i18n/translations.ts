@@ -105,6 +105,14 @@ export interface Translations {
     bestTime: string;
     recentAnswers: string;
     achievements: string;
+    sessionPoints: string;
+    submission: {
+      submitting: string;
+      accepted: string;
+      duplicate: string;
+      ineligible: string;
+      failed: string;
+    };
   };
 
   // 타이머
@@ -437,6 +445,15 @@ export const translations: Record<Language, Translations> = {
       bestTime: "Best Time",
       recentAnswers: "Recent Answers",
       achievements: "Achievements",
+      sessionPoints: "Session Points",
+      submission: {
+        submitting: "Adding points to your country's daily total...",
+        accepted: "Points added to your country's daily total.",
+        duplicate: "This session was already counted.",
+        ineligible: "Answer at least 10 questions to contribute points.",
+        failed:
+          "Your result is saved locally, but points could not be submitted.",
+      },
     },
 
     timer: {
@@ -629,16 +646,17 @@ export const translations: Record<Language, Translations> = {
       detectingCountry: "Detecting country",
       countryCode: "Country code",
       privacyNote:
-        "Country is detected server-side for leaderboard grouping. Raw IP addresses are not stored for scoring. Daily aggregate rows are retained for 90 days.",
+        "Country is detected server-side for leaderboard grouping. Raw IP addresses are not stored. Anonymous session receipts are retained for 7 days and daily aggregates for 90 days.",
       countryRankings: "Country Rankings",
       loading: "Loading leaderboard...",
-      empty: "No leaderboard scores yet. Complete a game to start the rankings.",
+      empty:
+        "No leaderboard scores yet. Complete a game to start the rankings.",
       error: "Unable to load leaderboard.",
       columns: {
         rank: "Rank",
         country: "Country",
         code: "Code",
-        totalScore: "Total Score",
+        totalScore: "Country Points",
         submissions: "Submissions",
         averageAccuracy: "Avg Accuracy",
         updated: "Updated",
@@ -779,6 +797,14 @@ export const translations: Record<Language, Translations> = {
       bestTime: "최고 기록",
       recentAnswers: "최근 답안",
       achievements: "성취",
+      sessionPoints: "세션 포인트",
+      submission: {
+        submitting: "국가별 일일 포인트에 추가하는 중...",
+        accepted: "포인트가 국가별 일일 합계에 추가되었습니다.",
+        duplicate: "이미 집계된 세션입니다.",
+        ineligible: "포인트를 기여하려면 최소 10문제에 답하세요.",
+        failed: "결과는 기기에 저장되었지만 포인트를 전송하지 못했습니다.",
+      },
     },
 
     timer: {
@@ -969,16 +995,17 @@ export const translations: Record<Language, Translations> = {
       detectingCountry: "국가 감지 중",
       countryCode: "국가 코드",
       privacyNote:
-        "국가별 리더보드 집계를 위해 서버에서 국가를 감지합니다. 점수 집계를 위해 원본 IP 주소는 저장하지 않으며, 일별 집계 데이터는 90일 동안 보관됩니다.",
+        "국가별 리더보드 집계를 위해 서버에서 국가를 감지합니다. 원본 IP 주소는 저장하지 않습니다. 익명 세션 영수증은 7일, 일별 집계 데이터는 90일 동안 보관됩니다.",
       countryRankings: "국가별 순위",
       loading: "리더보드를 불러오는 중...",
-      empty: "아직 리더보드 점수가 없습니다. 게임을 완료하면 순위가 시작됩니다.",
+      empty:
+        "아직 리더보드 점수가 없습니다. 게임을 완료하면 순위가 시작됩니다.",
       error: "리더보드를 불러올 수 없습니다.",
       columns: {
         rank: "순위",
         country: "국가",
         code: "코드",
-        totalScore: "총점",
+        totalScore: "국가 포인트",
         submissions: "제출 수",
         averageAccuracy: "평균 정확도",
         updated: "업데이트",
@@ -1159,6 +1186,15 @@ export const translations: Record<Language, Translations> = {
       overallAccuracy: "全体正解率",
       recentAnswers: "最近の回答",
       achievements: "実績",
+      sessionPoints: "セッションポイント",
+      submission: {
+        submitting: "国別のデイリーポイントに追加しています...",
+        accepted: "ポイントが国別のデイリー合計に追加されました。",
+        duplicate: "このセッションはすでに集計されています。",
+        ineligible: "ポイントを加算するには10問以上回答してください。",
+        failed:
+          "結果は端末に保存されましたが、ポイントを送信できませんでした。",
+      },
     },
 
     timer: {
@@ -1308,16 +1344,17 @@ export const translations: Record<Language, Translations> = {
       detectingCountry: "国を検出中",
       countryCode: "国コード",
       privacyNote:
-        "国別ランキングの集計のため、国はサーバー側で検出されます。スコア集計のために元のIPアドレスは保存せず、日別集計データは90日間保持されます。",
+        "国別ランキングの集計のため、国はサーバー側で検出されます。元のIPアドレスは保存しません。匿名セッション記録は7日間、日別集計は90日間保持されます。",
       countryRankings: "国別ランキング",
       loading: "ランキングを読み込み中...",
-      empty: "まだランキングスコアがありません。ゲームを完了するとランキングが始まります。",
+      empty:
+        "まだランキングスコアがありません。ゲームを完了するとランキングが始まります。",
       error: "ランキングを読み込めません。",
       columns: {
         rank: "順位",
         country: "国",
         code: "コード",
-        totalScore: "合計スコア",
+        totalScore: "国別ポイント",
         submissions: "送信数",
         averageAccuracy: "平均正解率",
         updated: "更新日",
@@ -1402,7 +1439,8 @@ export const translations: Record<Language, Translations> = {
       submitDetectedNote: "Enviar nota detectada",
       noNoteDetected: "Aún no se detectó una nota estable",
       permissionDenied: "Se denegó el acceso al micrófono.",
-      unsupported: "La entrada por micrófono no es compatible con este navegador.",
+      unsupported:
+        "La entrada por micrófono no es compatible con este navegador.",
       quietRoomHint:
         "Funciona mejor en un lugar silencioso con una sola nota sostenida.",
     },
@@ -1500,6 +1538,15 @@ export const translations: Record<Language, Translations> = {
       overallAccuracy: "Precisión General",
       recentAnswers: "Respuestas Recientes",
       achievements: "Logros",
+      sessionPoints: "Puntos de la sesión",
+      submission: {
+        submitting: "Añadiendo puntos al total diario de tu país...",
+        accepted: "Los puntos se añadieron al total diario de tu país.",
+        duplicate: "Esta sesión ya se había contabilizado.",
+        ineligible: "Responde al menos 10 preguntas para aportar puntos.",
+        failed:
+          "El resultado se guardó localmente, pero no se pudieron enviar los puntos.",
+      },
     },
 
     timer: {
@@ -1654,16 +1701,17 @@ export const translations: Record<Language, Translations> = {
       detectingCountry: "Detectando pais",
       countryCode: "Codigo de pais",
       privacyNote:
-        "El pais se detecta en el servidor para agrupar la clasificacion. No se almacenan direcciones IP sin procesar para las puntuaciones. Los agregados diarios se conservan durante 90 dias.",
+        "El pais se detecta en el servidor para agrupar la clasificacion. No se almacenan direcciones IP sin procesar. Los recibos anonimos de sesion se conservan 7 dias y los agregados diarios 90 dias.",
       countryRankings: "Clasificacion por pais",
       loading: "Cargando clasificacion...",
-      empty: "Aun no hay puntuaciones. Completa una partida para iniciar la clasificacion.",
+      empty:
+        "Aun no hay puntuaciones. Completa una partida para iniciar la clasificacion.",
       error: "No se pudo cargar la clasificacion.",
       columns: {
         rank: "Puesto",
         country: "Pais",
         code: "Codigo",
-        totalScore: "Puntuacion total",
+        totalScore: "Puntos del pais",
         submissions: "Envios",
         averageAccuracy: "Precision media",
         updated: "Actualizado",
@@ -1847,6 +1895,16 @@ export const translations: Record<Language, Translations> = {
       overallAccuracy: "Gesamtgenauigkeit",
       recentAnswers: "Letzte Antworten",
       achievements: "Erfolge",
+      sessionPoints: "Sitzungspunkte",
+      submission: {
+        submitting:
+          "Punkte werden zur Tageswertung deines Landes hinzugefügt...",
+        accepted: "Punkte wurden zur Tageswertung deines Landes hinzugefügt.",
+        duplicate: "Diese Sitzung wurde bereits gewertet.",
+        ineligible: "Beantworte mindestens 10 Fragen, um Punkte beizutragen.",
+        failed:
+          "Das Ergebnis wurde lokal gespeichert, aber die Punkte konnten nicht gesendet werden.",
+      },
     },
 
     timer: {
@@ -2001,16 +2059,17 @@ export const translations: Record<Language, Translations> = {
       detectingCountry: "Land wird erkannt",
       countryCode: "Landercode",
       privacyNote:
-        "Das Land wird serverseitig fuer die Bestenliste erkannt. Rohe IP-Adressen werden fuer die Punktewertung nicht gespeichert. Taegliche Aggregatdaten werden 90 Tage aufbewahrt.",
+        "Das Land wird serverseitig fuer die Bestenliste erkannt. Rohe IP-Adressen werden nicht gespeichert. Anonyme Sitzungsbelege bleiben 7 Tage und Tagesaggregate 90 Tage gespeichert.",
       countryRankings: "Landerrangliste",
       loading: "Bestenliste wird geladen...",
-      empty: "Noch keine Bestenlistenpunkte. Beende ein Spiel, um die Rangliste zu starten.",
+      empty:
+        "Noch keine Bestenlistenpunkte. Beende ein Spiel, um die Rangliste zu starten.",
       error: "Bestenliste konnte nicht geladen werden.",
       columns: {
         rank: "Rang",
         country: "Land",
         code: "Code",
-        totalScore: "Gesamtpunkte",
+        totalScore: "Laenderpunkte",
         submissions: "Einreichungen",
         averageAccuracy: "Durchschn. Genauigkeit",
         updated: "Aktualisiert",
@@ -2096,7 +2155,8 @@ export const translations: Record<Language, Translations> = {
       submitDetectedNote: "Envoyer la note détectée",
       noNoteDetected: "Aucune note stable détectée pour le moment",
       permissionDenied: "L'accès au microphone a été refusé.",
-      unsupported: "L'entrée microphone n'est pas prise en charge par ce navigateur.",
+      unsupported:
+        "L'entrée microphone n'est pas prise en charge par ce navigateur.",
       quietRoomHint:
         "Le meilleur résultat vient d'un environnement calme avec une seule note tenue.",
     },
@@ -2194,6 +2254,16 @@ export const translations: Record<Language, Translations> = {
       overallAccuracy: "Précision Générale",
       recentAnswers: "Réponses Récentes",
       achievements: "Réussites",
+      sessionPoints: "Points de la session",
+      submission: {
+        submitting: "Ajout des points au total quotidien de votre pays...",
+        accepted:
+          "Les points ont été ajoutés au total quotidien de votre pays.",
+        duplicate: "Cette session a déjà été comptabilisée.",
+        ineligible: "Répondez à au moins 10 questions pour ajouter des points.",
+        failed:
+          "Le résultat est enregistré localement, mais les points n'ont pas pu être envoyés.",
+      },
     },
 
     timer: {
@@ -2350,16 +2420,17 @@ export const translations: Record<Language, Translations> = {
       detectingCountry: "Detection du pays",
       countryCode: "Code pays",
       privacyNote:
-        "Le pays est detecte cote serveur pour regrouper le classement. Les adresses IP brutes ne sont pas stockees pour le score. Les agregats quotidiens sont conserves 90 jours.",
+        "Le pays est detecte cote serveur pour regrouper le classement. Les adresses IP brutes ne sont pas stockees. Les recus de session anonymes sont conserves 7 jours et les agregats quotidiens 90 jours.",
       countryRankings: "Classement par pays",
       loading: "Chargement du classement...",
-      empty: "Aucun score pour le moment. Terminez une partie pour lancer le classement.",
+      empty:
+        "Aucun score pour le moment. Terminez une partie pour lancer le classement.",
       error: "Impossible de charger le classement.",
       columns: {
         rank: "Rang",
         country: "Pays",
         code: "Code",
-        totalScore: "Score total",
+        totalScore: "Points du pays",
         submissions: "Soumissions",
         averageAccuracy: "Precision moyenne",
         updated: "Mis a jour",

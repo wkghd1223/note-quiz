@@ -1,10 +1,9 @@
 import type {
   LeaderboardCountry,
   LeaderboardEntry,
-  LeaderboardScorePayload,
+  SessionScoreSubmissionStatus,
 } from "@/types/leaderboard";
 import { getCountryFromCode } from "@/lib/leaderboard/country";
-import { calculateAccuracy, calculateScore } from "@/lib/leaderboard/validation";
 
 interface SupabaseLeaderboardRow {
   period_date: string;
@@ -18,7 +17,7 @@ interface SupabaseLeaderboardRow {
   updated_at: string;
 }
 
-const TABLE_NAME = "leaderboard_country_daily";
+const TABLE_NAME = "leaderboard_country_daily_v2";
 
 export function getCurrentUtcPeriodDate() {
   return new Date().toISOString().slice(0, 10);
@@ -54,7 +53,10 @@ function createHeaders(serviceRoleKey: string) {
   };
 }
 
-function mapRowToEntry(row: SupabaseLeaderboardRow, index: number): LeaderboardEntry {
+function mapRowToEntry(
+  row: SupabaseLeaderboardRow,
+  index: number,
+): LeaderboardEntry {
   const country = getCountryFromCode(row.country_code);
   const totalQuestions = Number(row.total_questions) || 0;
   const totalCorrect = Number(row.total_correct) || 0;
@@ -69,7 +71,9 @@ function mapRowToEntry(row: SupabaseLeaderboardRow, index: number): LeaderboardE
     totalQuestions,
     submissionCount: Number(row.submission_count) || 0,
     averageAccuracy:
-      totalQuestions > 0 ? Number(((totalCorrect / totalQuestions) * 100).toFixed(1)) : 0,
+      totalQuestions > 0
+        ? Number(((totalCorrect / totalQuestions) * 100).toFixed(1))
+        : 0,
     bestAccuracy: Number(row.best_accuracy) || 0,
     updatedAt: row.updated_at,
   };
@@ -91,36 +95,46 @@ export async function fetchLeaderboardEntries(
 
   if (!response.ok) {
     const responseBody = await response.text();
-    throw new Error(`Failed to load leaderboard: ${response.status} ${responseBody}`);
+    throw new Error(
+      `Failed to load leaderboard: ${response.status} ${responseBody}`,
+    );
   }
 
   const rows = (await response.json()) as SupabaseLeaderboardRow[];
   return rows.map(mapRowToEntry);
 }
 
-export async function submitCountryScore(
+export async function submitCountrySession(
   country: LeaderboardCountry,
-  payload: LeaderboardScorePayload,
-) {
+  sessionId: string,
+  sessionPoints: number,
+  totalQuestions: number,
+  correctAnswers: number,
+  accuracy: number,
+): Promise<Exclude<SessionScoreSubmissionStatus, "ineligible">> {
   const config = getSupabaseConfig();
   if (!config) {
     throw new Error("Supabase environment variables are not configured.");
   }
 
-  const response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/increment_country_daily_score`, {
-    method: "POST",
-    headers: createHeaders(config.serviceRoleKey),
-    body: JSON.stringify({
-      p_period_date: getCurrentUtcPeriodDate(),
-      p_country_code: country.countryCode,
-      p_country_name: country.countryName,
-      p_score: calculateScore(payload),
-      p_correct_answers: payload.correctAnswers,
-      p_total_questions: payload.totalQuestions,
-      p_accuracy: calculateAccuracy(payload),
-    }),
-    cache: "no-store",
-  });
+  const response = await fetch(
+    `${config.supabaseUrl}/rest/v1/rpc/submit_anonymous_session_v2`,
+    {
+      method: "POST",
+      headers: createHeaders(config.serviceRoleKey),
+      body: JSON.stringify({
+        p_period_date: getCurrentUtcPeriodDate(),
+        p_session_id: sessionId,
+        p_country_code: country.countryCode,
+        p_country_name: country.countryName,
+        p_session_points: sessionPoints,
+        p_correct_answers: correctAnswers,
+        p_total_questions: totalQuestions,
+        p_accuracy: accuracy,
+      }),
+      cache: "no-store",
+    },
+  );
 
   if (!response.ok) {
     const responseBody = await response.text();
@@ -128,4 +142,11 @@ export async function submitCountryScore(
       `Failed to submit leaderboard score: ${response.status} ${responseBody}`,
     );
   }
+
+  const submissionStatus = (await response.json()) as unknown;
+  if (submissionStatus !== "accepted" && submissionStatus !== "duplicate") {
+    throw new Error("Supabase returned an invalid submission status.");
+  }
+
+  return submissionStatus;
 }

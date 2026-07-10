@@ -1,6 +1,11 @@
-import type { LeaderboardScorePayload } from "@/types/leaderboard";
+import type {
+  SessionScorePayload,
+  SessionScoreResponse,
+} from "@/types/leaderboard";
 
-export async function submitLeaderboardScore(payload: LeaderboardScorePayload) {
+export async function submitLeaderboardScore(
+  payload: SessionScorePayload,
+): Promise<SessionScoreResponse> {
   const response = await fetch("/api/leaderboard/scores", {
     method: "POST",
     headers: {
@@ -16,4 +21,6 @@ export async function submitLeaderboardScore(payload: LeaderboardScorePayload) {
 
     throw new Error(payload?.message ?? "Failed to submit leaderboard score.");
   }
+
+  return (await response.json()) as SessionScoreResponse;
 }

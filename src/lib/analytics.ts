@@ -5,7 +5,7 @@ declare global {
     gtag: (
       command: "config" | "event" | "js",
       targetId: string | Date,
-      config?: Record<string, any>
+      config?: Record<string, any>,
     ) => void;
   }
 }
@@ -20,7 +20,7 @@ function canTrackAnalytics() {
 
 function emitAnalyticsEvent(
   eventName: string,
-  payload: Record<string, string | number | boolean | null | undefined>
+  payload: Record<string, string | number | boolean | null | undefined>,
 ) {
   if (!canTrackAnalytics()) {
     return;
@@ -47,6 +47,8 @@ export const trackGameComplete = (result: {
   accuracy: number;
   totalQuestions: number;
   timeSpent: number;
+  sessionPoints: number;
+  eligibleForLeaderboard: boolean;
 }) => {
   emitAnalyticsEvent("note_quiz_session_completed", {
     training_mode: "note_quiz",
@@ -54,6 +56,21 @@ export const trackGameComplete = (result: {
     accuracy: result.accuracy,
     total_questions: result.totalQuestions,
     time_spent_ms: result.timeSpent,
+    session_points: result.sessionPoints,
+    eligible_for_leaderboard: result.eligibleForLeaderboard,
+  });
+};
+
+export const trackLeaderboardSubmission = (payload: {
+  status: "accepted" | "duplicate" | "ineligible" | "failed";
+  sessionPoints: number;
+  totalQuestions: number;
+}) => {
+  emitAnalyticsEvent("leaderboard_session_submitted", {
+    training_mode: "note_quiz",
+    submission_status: payload.status,
+    session_points: payload.sessionPoints,
+    total_questions: payload.totalQuestions,
   });
 };
 
@@ -149,7 +166,7 @@ export const trackEarTrainingReplay = () => {
 
 export const trackEarTrainingSettingsChange = (
   setting: string,
-  value: string
+  value: string,
 ) => {
   emitAnalyticsEvent("ear_training_settings_changed", {
     training_mode: "ear_training",

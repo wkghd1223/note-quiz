@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Staff from "@/components/game/Staff";
 import PianoKeyboard from "@/components/game/PianoKeyboard";
 import SolfegeKeyboard from "@/components/game/SolfegeKeyboard";
@@ -14,10 +20,20 @@ import {
   validateAnswer,
 } from "@/lib/music/utils";
 import { initializeAudio, playPianoNote } from "@/lib/music/audio";
+import { trackLeaderboardSubmission } from "@/lib/analytics";
+import {
+  isScoreEligible,
+  MAX_QUESTIONS_PER_SUBMISSION,
+  SCORE_VERSION,
+} from "@/lib/leaderboard/validation";
+import { hasReachedTimeLimit } from "@/lib/sessionTimer";
 import { submitLeaderboardScore } from "@/services/leaderboard";
 import PracticeShell from "./PracticeShell";
 import ModeSwitcher, { PracticeMode } from "./ModeSwitcher";
 import NoteSettingsPanel from "./NoteSettingsPanel";
+import NoteSessionResult, {
+  SessionSubmissionUiStatus,
+} from "./NoteSessionResult";
 
 interface NotePracticeModeProps {
   mode: PracticeMode;
@@ -59,7 +75,11 @@ export default function NotePracticeMode({
     getAccuracy,
   } = useGameStore();
   const [isAudioInitialized, setIsAudioInitialized] = useState(false);
-  const submittedScoreKeyRef = useRef<string | null>(null);
+  const [submissionStatus, setSubmissionStatus] =
+    useState<SessionSubmissionUiStatus>("idle");
+  const [sessionPoints, setSessionPoints] = useState(0);
+  const [isAnswerLocked, setIsAnswerLocked] = useState(false);
+  const submittedSessionIdRef = useRef<string | null>(null);
 
   const answerModeLabel =
     settings.answerMode === "piano"
@@ -86,15 +106,15 @@ export default function NotePracticeMode({
 
     const interval = setInterval(() => {
       const now = Date.now();
-      updateTimer(now);
+      const nextElapsedTime = updateTimer(now);
 
-      if (settings.timeLimit && elapsedTime >= settings.timeLimit * 1000) {
+      if (hasReachedTimeLimit(nextElapsedTime, settings.timeLimit)) {
         endGame();
       }
     }, 100);
 
     return () => clearInterval(interval);
-  }, [gameState, updateTimer, settings.timeLimit, elapsedTime, endGame]);
+  }, [gameState, updateTimer, settings.timeLimit, endGame]);
 
   const generateNewQuestion = useCallback(() => {
     if (!isGameActive()) return;
@@ -113,11 +133,12 @@ export default function NotePracticeMode({
     setCurrentQuestion(questionWithDisplayNote);
     setCurrentAnswer(null);
     setFeedback(null);
+    setIsAnswerLocked(false);
     startQuestionTimer();
 
     if (settings.enableSound && isAudioInitialized) {
       playPianoNote(questionWithDisplayNote.displayNote, 1000).catch(
-        console.error
+        console.error,
       );
     }
   }, [
@@ -138,35 +159,55 @@ export default function NotePracticeMode({
 
   useEffect(() => {
     if (gameState === "playing") {
-      submittedScoreKeyRef.current = null;
+      submittedSessionIdRef.current = null;
+      setSubmissionStatus("idle");
+      setSessionPoints(0);
     }
   }, [gameState]);
 
   useEffect(() => {
     if (gameState !== "finished" || !gameResult) return;
 
-    const lastAnswer = gameResult.answers[gameResult.answers.length - 1];
-    const scoreKey = [
-      gameResult.totalQuestions,
-      gameResult.correctAnswers,
-      gameResult.totalTime,
-      lastAnswer?.timestamp ?? 0,
-    ].join(":");
+    if (submittedSessionIdRef.current === gameResult.sessionId) return;
+    submittedSessionIdRef.current = gameResult.sessionId;
+    setSessionPoints(gameResult.sessionPoints);
 
-    if (submittedScoreKeyRef.current === scoreKey) return;
-    if (localStorage.getItem(`note-quiz-leaderboard:${scoreKey}`)) return;
+    if (!isScoreEligible(gameResult.totalQuestions)) {
+      setSubmissionStatus("ineligible");
+      trackLeaderboardSubmission({
+        status: "ineligible",
+        sessionPoints: gameResult.sessionPoints,
+        totalQuestions: gameResult.totalQuestions,
+      });
+      return;
+    }
 
-    submittedScoreKeyRef.current = scoreKey;
+    setSubmissionStatus("submitting");
 
     submitLeaderboardScore({
+      schemaVersion: SCORE_VERSION,
+      sessionId: gameResult.sessionId,
+      mode: "note",
       totalQuestions: gameResult.totalQuestions,
       correctAnswers: gameResult.correctAnswers,
       totalTime: gameResult.totalTime,
     })
-      .then(() => {
-        localStorage.setItem(`note-quiz-leaderboard:${scoreKey}`, "1");
+      .then((response) => {
+        setSessionPoints(response.sessionPoints);
+        setSubmissionStatus(response.submissionStatus);
+        trackLeaderboardSubmission({
+          status: response.submissionStatus,
+          sessionPoints: response.sessionPoints,
+          totalQuestions: gameResult.totalQuestions,
+        });
       })
       .catch((error) => {
+        setSubmissionStatus("failed");
+        trackLeaderboardSubmission({
+          status: "failed",
+          sessionPoints: gameResult.sessionPoints,
+          totalQuestions: gameResult.totalQuestions,
+        });
         console.error("Failed to submit leaderboard score:", error);
       });
   }, [gameState, gameResult]);
@@ -174,9 +215,11 @@ export default function NotePracticeMode({
   const handleAnswerSubmit = useCallback(
     (answer: Note) => {
       if (!currentQuestion || !isGameActive()) return;
+      if (isAnswerLocked) return;
 
       const isCorrect = validateAnswer(currentQuestion, answer);
       const timeSpent = getQuestionElapsedTime();
+      setIsAnswerLocked(true);
 
       addAnswer({
         note: answer,
@@ -192,31 +235,44 @@ export default function NotePracticeMode({
       });
 
       setTimeout(() => {
-        generateNewQuestion();
+        if (answers.length + 1 >= MAX_QUESTIONS_PER_SUBMISSION) {
+          endGame();
+        } else {
+          generateNewQuestion();
+        }
       }, 850);
     },
     [
       currentQuestion,
+      answers.length,
       isGameActive,
+      isAnswerLocked,
       getQuestionElapsedTime,
       addAnswer,
       setCurrentAnswer,
       setFeedback,
       t.messages.correct,
       t.messages.incorrect,
+      endGame,
       generateNewQuestion,
-    ]
+    ],
   );
 
   const status = (
     <div className="grid min-w-0 grid-cols-3 gap-2">
       <StatusTile label={t.timer.elapsed} value={formatTime(elapsedTime)} />
-      <StatusTile label={t.scoreboard.correct} value={String(getCurrentScore())} />
-      <StatusTile label={t.scoreboard.accuracy} value={`${getAccuracy().toFixed(0)}%`} />
+      <StatusTile
+        label={t.scoreboard.correct}
+        value={String(getCurrentScore())}
+      />
+      <StatusTile
+        label={t.scoreboard.accuracy}
+        value={`${getAccuracy().toFixed(0)}%`}
+      />
     </div>
   );
 
-  const stage = (
+  const practiceStage = (
     <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 sm:p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
@@ -245,9 +301,7 @@ export default function NotePracticeMode({
           />
         ) : (
           <div className="px-4 text-center">
-            <p className="text-2xl font-black text-slate-950">
-              {t.ui.welcome}
-            </p>
+            <p className="text-2xl font-black text-slate-950">{t.ui.welcome}</p>
             <p className="mt-3 text-sm text-slate-500">
               {t.messages.startGameInstruction}
             </p>
@@ -269,6 +323,19 @@ export default function NotePracticeMode({
     </div>
   );
 
+  const stage =
+    gameState === "finished" && gameResult ? (
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <NoteSessionResult
+          result={gameResult}
+          sessionPoints={sessionPoints}
+          submissionStatus={submissionStatus}
+        />
+      </div>
+    ) : (
+      practiceStage
+    );
+
   const input = (
     <div className="rounded-lg border border-slate-200 bg-white p-3">
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -283,21 +350,21 @@ export default function NotePracticeMode({
         <PianoKeyboard
           onNoteClick={handleAnswerSubmit}
           selectedNote={currentAnswer}
-          disabled={!isGameActive()}
+          disabled={!isGameActive() || isAnswerLocked}
           className="flex max-w-full flex-col items-center justify-center overflow-x-auto"
         />
       ) : settings.answerMode === "solfege" ? (
         <SolfegeKeyboard
           onNoteClick={handleAnswerSubmit}
           selectedNote={currentAnswer}
-          disabled={!isGameActive()}
+          disabled={!isGameActive() || isAnswerLocked}
           className="flex max-w-full justify-center overflow-x-auto"
         />
       ) : (
         <MicrophoneInput
           onSubmit={handleAnswerSubmit}
           selectedNote={currentAnswer}
-          disabled={!isGameActive()}
+          disabled={!isGameActive() || isAnswerLocked}
         />
       )}
     </div>
@@ -325,7 +392,7 @@ export default function NotePracticeMode({
       kicker={t.brandDescription}
       status={status}
       stage={stage}
-      input={input}
+      input={gameState === "finished" ? null : input}
       actions={<GameControl />}
       settings={<NoteSettingsPanel />}
       settingsSummary={settingsSummary}
@@ -343,7 +410,9 @@ function StatusTile({ label, value }: { label: string; value: string }) {
       <p className="truncate text-[11px] font-black uppercase text-slate-500">
         {label}
       </p>
-      <p className="mt-1 text-lg font-black text-slate-950 sm:text-xl">{value}</p>
+      <p className="mt-1 text-lg font-black text-slate-950 sm:text-xl">
+        {value}
+      </p>
     </div>
   );
 }

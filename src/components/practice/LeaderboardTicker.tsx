@@ -2,7 +2,10 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { FaChevronRight, FaTrophy } from "react-icons/fa";
-import type { LeaderboardEntry, LeaderboardResponse } from "@/types/leaderboard";
+import type {
+  LeaderboardEntry,
+  LeaderboardResponse,
+} from "@/types/leaderboard";
 import { useTranslation } from "@/hooks/useTranslation";
 import BottomSheet from "./BottomSheet";
 
@@ -19,7 +22,7 @@ export default function LeaderboardTicker({
 }: LeaderboardTickerProps) {
   const { t, language } = useTranslation();
   const [leaderboard, setLeaderboard] = useState<LeaderboardResponse | null>(
-    null
+    null,
   );
   const [isOpen, setIsOpen] = useState(false);
 
@@ -47,15 +50,21 @@ export default function LeaderboardTicker({
   const entries = useMemo(() => leaderboard?.entries ?? [], [leaderboard]);
   const tickerText = useMemo(() => {
     if (entries.length === 0) return t.leaderboard.empty;
+    const formatter = new Intl.NumberFormat(language);
 
     return entries
       .slice(0, 5)
-      .map((entry) => {
-        const accuracy = Math.round(entry.averageAccuracy);
-        return `#${entry.rank} ${entry.flag} ${entry.countryName} ${accuracy}%`;
-      })
+      .map(
+        (entry) =>
+          `#${entry.rank} ${entry.flag} ${entry.countryName} ${formatter.format(entry.totalScore)} ${t.leaderboard.columns.totalScore}`,
+      )
       .join("  /  ");
-  }, [entries, t.leaderboard.empty]);
+  }, [
+    entries,
+    language,
+    t.leaderboard.columns.totalScore,
+    t.leaderboard.empty,
+  ]);
 
   return (
     <div className="relative border-y border-slate-200 bg-white">
@@ -86,10 +95,16 @@ export default function LeaderboardTicker({
         onMouseEnter={() => setIsOpen(true)}
         onMouseLeave={() => setIsOpen(false)}
         className={`absolute left-1/2 top-full z-40 hidden w-[min(720px,calc(100vw-32px))] -translate-x-1/2 pt-2 lg:block ${
-          isOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
+          isOpen
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0"
         } transition-opacity`}
       >
-        <LeaderboardPanel entries={entries} locale={language} />
+        <LeaderboardPanel
+          entries={entries}
+          locale={language}
+          pointsLabel={t.leaderboard.columns.totalScore}
+        />
       </div>
 
       <BottomSheet
@@ -97,7 +112,11 @@ export default function LeaderboardTicker({
         title={t.leaderboard.title}
         onClose={onMobileClose}
       >
-        <LeaderboardList entries={entries} locale={language} />
+        <LeaderboardList
+          entries={entries}
+          locale={language}
+          pointsLabel={t.leaderboard.columns.totalScore}
+        />
       </BottomSheet>
     </div>
   );
@@ -106,13 +125,19 @@ export default function LeaderboardTicker({
 function LeaderboardPanel({
   entries,
   locale,
+  pointsLabel,
 }: {
   entries: LeaderboardEntry[];
   locale: string;
+  pointsLabel: string;
 }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-[0_18px_44px_rgba(15,23,42,0.14)]">
-      <LeaderboardList entries={entries} locale={locale} />
+      <LeaderboardList
+        entries={entries}
+        locale={locale}
+        pointsLabel={pointsLabel}
+      />
     </div>
   );
 }
@@ -120,9 +145,11 @@ function LeaderboardPanel({
 function LeaderboardList({
   entries,
   locale,
+  pointsLabel,
 }: {
   entries: LeaderboardEntry[];
   locale: string;
+  pointsLabel: string;
 }) {
   const formatter = new Intl.NumberFormat(locale);
 
@@ -154,11 +181,11 @@ function LeaderboardList({
             </p>
           </div>
           <div className="text-right">
-            <p className="text-sm font-black text-emerald-600">
-              {Math.round(entry.averageAccuracy)}%
+            <p className="text-sm font-black text-[#5b21b6]">
+              {formatter.format(entry.totalScore)}
             </p>
             <p className="text-xs font-semibold text-slate-500">
-              {formatter.format(entry.submissionCount)}
+              {pointsLabel}
             </p>
           </div>
         </div>

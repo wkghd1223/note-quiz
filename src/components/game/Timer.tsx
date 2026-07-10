@@ -5,6 +5,7 @@ import { useGameStore } from "@/store/gameStore";
 import { useTranslation } from "@/hooks/useTranslation";
 import CompactStatusBar from "@/components/ui/CompactStatusBar";
 import Panel from "@/components/ui/Panel";
+import { hasReachedTimeLimit } from "@/lib/sessionTimer";
 import GameControl from "./GameControl";
 import GameSettingsTrigger from "./GameSettingsTrigger";
 
@@ -32,11 +33,11 @@ const Timer: React.FC<TimerProps> = ({ className = "" }) => {
     if (gameState === "playing") {
       intervalId = setInterval(() => {
         const now = Date.now();
-        updateTimer(now);
-        setDisplayTime(elapsedTime);
+        const nextElapsedTime = updateTimer(now);
+        setDisplayTime(nextElapsedTime);
         setQuestionTime(getQuestionElapsedTime());
 
-        if (settings.timeLimit && elapsedTime >= settings.timeLimit * 1000) {
+        if (hasReachedTimeLimit(nextElapsedTime, settings.timeLimit)) {
           endGame();
         }
       }, 100);

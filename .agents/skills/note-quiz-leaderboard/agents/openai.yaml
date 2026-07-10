@@ -1,0 +1,7 @@
+interface:
+  display_name: "Note Quiz Leaderboard"
+  short_description: "Safely change anonymous scoring and rankings"
+  default_prompt: "Use $note-quiz-leaderboard to update anonymous scoring or country rankings."
+
+policy:
+  allow_implicit_invocation: true

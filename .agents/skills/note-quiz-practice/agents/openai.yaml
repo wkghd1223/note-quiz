@@ -1,0 +1,7 @@
+interface:
+  display_name: "Note Quiz Practice"
+  short_description: "Implement and verify practice experience changes"
+  default_prompt: "Use $note-quiz-practice to update the Note Quiz practice experience."
+
+policy:
+  allow_implicit_invocation: true

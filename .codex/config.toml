@@ -1,0 +1,5 @@
+#:schema https://developers.openai.com/codex/config-schema.json
+
+[agents]
+max_threads = 4
+max_depth = 1

@@ -1,7 +1,15 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { DEFAULT_GAME_SETTINGS } from "@/lib/music/constants";
-import { trackGameStart, trackAnswer, trackGameComplete } from "@/lib/analytics";
+import {
+  calculateSessionPoints,
+  isScoreEligible,
+} from "@/lib/leaderboard/validation";
+import {
+  trackGameStart,
+  trackAnswer,
+  trackGameComplete,
+} from "@/lib/analytics";
 
 interface GameStore {
   // 게임 설정
@@ -12,6 +20,7 @@ interface GameStore {
   // 게임 상태
   gameState: GameState;
   setGameState: (state: GameState) => void;
+  sessionId: string | null;
 
   // 현재 문제
   currentQuestion: Question | null;
@@ -28,9 +37,11 @@ interface GameStore {
   startTime: number | null;
   currentTime: number;
   elapsedTime: number;
+  accumulatedTime: number;
   questionStartTime: number | null; // 현재 문제 시작 시간
   startTimer: () => void;
-  updateTimer: (time: number) => void;
+  resumeTimer: () => void;
+  updateTimer: (time: number) => number;
   stopTimer: () => void;
   resetTimer: () => void;
   startQuestionTimer: () => void;
@@ -83,6 +94,7 @@ export const useGameStore = create<GameStore>()(
       // 게임 상태
       gameState: "idle" as const,
       setGameState: (gameState) => set({ gameState }),
+      sessionId: null,
 
       // 현재 문제
       currentQuestion: null,
@@ -112,25 +124,54 @@ export const useGameStore = create<GameStore>()(
       startTime: null,
       currentTime: 0,
       elapsedTime: 0,
+      accumulatedTime: 0,
       questionStartTime: null,
       startTimer: () => {
         const now = Date.now();
         set({
           startTime: now,
           currentTime: now,
+          elapsedTime: 0,
+          accumulatedTime: 0,
         });
       },
-      updateTimer: (time) =>
-        set((state) => ({
+      resumeTimer: () => {
+        const now = Date.now();
+        set({ startTime: now, currentTime: now });
+      },
+      updateTimer: (time) => {
+        const state = get();
+        const nextElapsedTime = state.startTime
+          ? state.accumulatedTime + Math.max(0, time - state.startTime)
+          : state.accumulatedTime;
+
+        set({
           currentTime: time,
-          elapsedTime: state.startTime ? time - state.startTime : 0,
-        })),
-      stopTimer: () => set({ startTime: null }),
+          elapsedTime: nextElapsedTime,
+        });
+
+        return nextElapsedTime;
+      },
+      stopTimer: () => {
+        const state = get();
+        const now = Date.now();
+        const nextElapsedTime = state.startTime
+          ? state.accumulatedTime + Math.max(0, now - state.startTime)
+          : state.accumulatedTime;
+
+        set({
+          startTime: null,
+          currentTime: now,
+          elapsedTime: nextElapsedTime,
+          accumulatedTime: nextElapsedTime,
+        });
+      },
       resetTimer: () =>
         set({
           startTime: null,
           currentTime: 0,
           elapsedTime: 0,
+          accumulatedTime: 0,
           questionStartTime: null,
         }),
 
@@ -187,6 +228,7 @@ export const useGameStore = create<GameStore>()(
 
         set({
           gameState: "playing",
+          sessionId: crypto.randomUUID(),
           answers: [],
           gameResult: null,
           currentAnswer: null,
@@ -202,14 +244,14 @@ export const useGameStore = create<GameStore>()(
       },
 
       resumeGame: () => {
-        const { startTimer } = get();
+        const { resumeTimer } = get();
         set({ gameState: "playing" });
-        startTimer();
+        resumeTimer();
       },
 
       endGame: () => {
-        const { stopTimer, answers, elapsedTime } = get();
-        stopTimer();
+        get().stopTimer();
+        const { answers, elapsedTime, sessionId } = get();
 
         const totalQuestions = answers.length;
         const correctAnswers = answers.filter((a) => a.isCorrect).length;
@@ -217,8 +259,14 @@ export const useGameStore = create<GameStore>()(
           totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
         const averageTime =
           totalQuestions > 0 ? elapsedTime / totalQuestions : 0;
+        const sessionPoints = calculateSessionPoints(
+          correctAnswers,
+          totalQuestions,
+        );
 
         const result: GameResult = {
+          sessionId: sessionId ?? crypto.randomUUID(),
+          sessionPoints,
           totalQuestions,
           correctAnswers,
           totalTime: elapsedTime,
@@ -233,10 +281,12 @@ export const useGameStore = create<GameStore>()(
         });
 
         trackGameComplete({
-          score: correctAnswers,
+          score: sessionPoints,
           accuracy,
           totalQuestions,
           timeSpent: elapsedTime,
+          sessionPoints,
+          eligibleForLeaderboard: isScoreEligible(totalQuestions),
         });
 
         // 통계 업데이트
@@ -247,6 +297,7 @@ export const useGameStore = create<GameStore>()(
         const { resetTimer } = get();
         set({
           gameState: "idle",
+          sessionId: null,
           currentQuestion: null,
           currentAnswer: null,
           answers: [],
@@ -282,6 +333,6 @@ export const useGameStore = create<GameStore>()(
         settings: state.settings,
         stats: state.stats,
       }),
-    }
-  )
+    },
+  ),
 );

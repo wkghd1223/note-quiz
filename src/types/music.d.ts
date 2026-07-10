@@ -75,6 +75,8 @@ interface Answer {
 
 // 게임 결과
 interface GameResult {
+  sessionId: string;
+  sessionPoints: number;
   totalQuestions: number;
   correctAnswers: number;
   totalTime: number;
