@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "@/styles/globals.css";
 import { defaultMetadata } from "@/lib/metadata";
 import Footer from "@/components/layouts/footer";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import GoogleAnalyticsRouteTracker from "@/components/analytics/GoogleAnalyticsRouteTracker";
 import LanguageInitializer from "@/components/providers/LanguageInitializer";
-import GoogleAdsense from "@/components/adsense/GoogleAdsense";
-// import Head from "next/head";/
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,10 +26,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
+    <html lang="en">
       <head>
         <GoogleAnalytics />
-        <GoogleAdsense />
+        <Script
+          src="https://scripts.scriptwrapper.com/tags/5b2560fd-53fe-4920-872c-67302bb9311c.js"
+          strategy="afterInteractive"
+          async
+          data-noptimize="1"
+          data-cfasync="false"
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

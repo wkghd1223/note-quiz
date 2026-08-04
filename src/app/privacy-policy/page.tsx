@@ -15,10 +15,8 @@ export default function PrivacyPolicyPage() {
   return (
     <PageShell>
       <main className="mx-auto max-w-4xl px-4 py-12 text-slate-800 sm:px-6 lg:px-8">
-        <h1 className="text-4xl font-black text-slate-950">Privacy Policy</h1>
-        <p className="mt-3 text-sm text-slate-500">
-          Last updated: July 10, 2026
-        </p>
+      <h1 className="text-4xl font-black text-slate-950">Privacy Policy</h1>
+      <p className="mt-3 text-sm text-slate-500">Last updated: July 2, 2026</p>
 
         <div className="mt-8 space-y-8 leading-7">
           <section>
