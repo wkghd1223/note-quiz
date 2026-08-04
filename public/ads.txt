@@ -1,4 +1,0 @@
-# ads.txt for note-quiz.com
-# Authorized digital sellers for note-quiz.com will be managed here.
-# Format: domain, publisher_id, account_type, certification_authority
-# Add Mediavine/Journey entries exactly as provided after approval.
