@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "@/styles/globals.css";
 import { defaultMetadata } from "@/lib/metadata";
 import Footer from "@/components/layouts/footer";
@@ -28,6 +29,13 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <GoogleAnalytics />
+        <Script
+          src="https://scripts.scriptwrapper.com/tags/5b2560fd-53fe-4920-872c-67302bb9311c.js"
+          strategy="afterInteractive"
+          async
+          data-noptimize="1"
+          data-cfasync="false"
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
