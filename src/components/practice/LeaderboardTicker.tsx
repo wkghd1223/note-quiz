@@ -1,13 +1,12 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { FaChevronRight, FaTrophy } from "react-icons/fa";
+import { FaChevronRight, FaTimes, FaTrophy } from "react-icons/fa";
 import type {
   LeaderboardEntry,
   LeaderboardResponse,
 } from "@/types/leaderboard";
 import { useTranslation } from "@/hooks/useTranslation";
-import BottomSheet from "./BottomSheet";
 
 interface LeaderboardTickerProps {
   isMobileOpen: boolean;
@@ -107,7 +106,7 @@ export default function LeaderboardTicker({
         />
       </div>
 
-      <BottomSheet
+      <MobileLeaderboardModal
         isOpen={isMobileOpen}
         title={t.leaderboard.title}
         onClose={onMobileClose}
@@ -117,7 +116,64 @@ export default function LeaderboardTicker({
           locale={language}
           pointsLabel={t.leaderboard.columns.totalScore}
         />
-      </BottomSheet>
+      </MobileLeaderboardModal>
+    </div>
+  );
+}
+
+function MobileLeaderboardModal({
+  isOpen,
+  title,
+  onClose,
+  children,
+}: {
+  isOpen: boolean;
+  title: string;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 lg:hidden">
+      <button
+        type="button"
+        aria-label="Close"
+        className="absolute inset-0 bg-slate-950/35"
+        onClick={onClose}
+      />
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="leaderboard-modal-title"
+        className="relative flex max-h-[70dvh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_48px_rgba(15,23,42,0.18)]"
+      >
+        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+          <h2 id="leaderboard-modal-title" className="text-base font-black text-slate-950">
+            {title}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700"
+            aria-label="Close"
+          >
+            <FaTimes />
+          </button>
+        </div>
+        <div className="overflow-y-auto p-4">{children}</div>
+      </section>
     </div>
   );
 }
