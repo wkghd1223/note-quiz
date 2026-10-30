@@ -20,18 +20,15 @@ const headerClasses: Record<HeaderVariant, string> = {
 
 export default function Header({ variant = "default" }: HeaderProps) {
   const { t } = useTranslation();
-  const isCompact = variant === "compact";
 
   return (
     <header className={headerClasses[variant]}>
       <div className="flex min-w-0 items-center justify-between gap-3">
-        <Link href="/practice" className="flex min-w-0 items-center gap-3">
+        <Link href="/" className="flex min-w-0 items-center gap-3">
           <Image
             src="/logo.svg"
             alt="Note Quiz"
-            className={`shrink-0 object-contain ${
-              isCompact ? "h-12 w-12" : "h-14 w-14"
-            }`}
+            className="h-12 w-12 shrink-0 object-contain"
             width={64}
             height={64}
             priority
@@ -40,7 +37,7 @@ export default function Header({ variant = "default" }: HeaderProps) {
             <p className="truncate text-xl font-black leading-tight text-slate-950 sm:text-2xl">
               {t.gameTitle}
             </p>
-            <p className="truncate text-sm font-bold text-[#5b21b6] sm:text-base">
+            <p className="hidden text-sm font-bold text-[#5b21b6] sm:block sm:text-base">
               {t.brandDescription}
             </p>
           </div>

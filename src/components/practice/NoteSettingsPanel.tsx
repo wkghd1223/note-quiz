@@ -7,7 +7,8 @@ import { useGameStore } from "@/store/gameStore";
 
 export default function NoteSettingsPanel() {
   const { t } = useTranslation();
-  const { settings, updateSettings, resetSettings, resetStats } = useGameStore();
+  const { settings, updateSettings, resetSettings, resetStats } =
+    useGameStore();
 
   return (
     <div className="grid gap-4">
@@ -38,6 +39,7 @@ export default function NoteSettingsPanel() {
           {t.settingsLabels.keySignature}
         </label>
         <select
+          aria-label={t.settingsLabels.keySignature}
           value={settings.keySignature}
           onChange={(event) =>
             updateSettings({ keySignature: event.target.value })
@@ -45,9 +47,9 @@ export default function NoteSettingsPanel() {
           className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900"
         >
           <option value="random">{t.keySignatures.random}</option>
-          {Object.entries(KEY_SIGNATURES).map(([key, signature]) => (
+          {Object.keys(KEY_SIGNATURES).map((key) => (
             <option key={key} value={key}>
-              {signature.key}
+              {t.keySignatures.major.replace("{key}", key)}
             </option>
           ))}
         </select>
@@ -107,6 +109,7 @@ export default function NoteSettingsPanel() {
           {t.settingsLabels.timeLimit}
         </label>
         <select
+          aria-label={t.settingsLabels.timeLimit}
           value={settings.timeLimit ?? 0}
           onChange={(event) => {
             const value = Number(event.target.value);
@@ -115,9 +118,9 @@ export default function NoteSettingsPanel() {
           className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900"
         >
           <option value={0}>{t.earTraining.session.practice}</option>
-          <option value={30}>30s</option>
-          <option value={60}>60s</option>
-          <option value={180}>180s</option>
+          <option value={30}>30 {t.units.seconds}</option>
+          <option value={60}>60 {t.units.seconds}</option>
+          <option value={180}>180 {t.units.seconds}</option>
         </select>
       </section>
 

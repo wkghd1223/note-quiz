@@ -38,6 +38,7 @@ export default function ModeSwitcher({ mode, onChange }: ModeSwitcherProps) {
             key={item.id}
             type="button"
             onClick={() => onChange(item.id)}
+            aria-pressed={isActive}
             className={`flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 text-sm font-black transition-colors ${
               isActive
                 ? "bg-white text-slate-950 shadow-[0_8px_20px_rgba(15,23,42,0.08)]"
@@ -45,7 +46,7 @@ export default function ModeSwitcher({ mode, onChange }: ModeSwitcherProps) {
             }`}
           >
             <Icon className={isActive ? "text-[#5b21b6]" : "text-slate-500"} />
-            <span className="truncate">{item.label}</span>
+            <span>{item.label}</span>
           </button>
         );
       })}

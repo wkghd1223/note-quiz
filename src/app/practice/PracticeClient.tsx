@@ -23,14 +23,18 @@ export default function PracticeClient() {
   const searchParams = useSearchParams();
   const mode = normalizeMode(searchParams.get("mode"));
   const [settingsOpen, setSettingsOpen] = useState(
-    searchParams.get("settings") === "open"
+    searchParams.get("settings") === "open" &&
+      searchParams.get("leaderboard") !== "open",
   );
   const [leaderboardOpen, setLeaderboardOpen] = useState(
-    searchParams.get("leaderboard") === "open"
+    searchParams.get("leaderboard") === "open",
   );
 
   useEffect(() => {
-    setSettingsOpen(searchParams.get("settings") === "open");
+    setSettingsOpen(
+      searchParams.get("settings") === "open" &&
+        searchParams.get("leaderboard") !== "open",
+    );
     setLeaderboardOpen(searchParams.get("leaderboard") === "open");
   }, [searchParams]);
 
@@ -61,26 +65,28 @@ export default function PracticeClient() {
   };
 
   const handleSettingsOpen = () => {
+    setLeaderboardOpen(false);
     setSettingsOpen(true);
     trackPracticeSettingsOpened(mode);
-    updateQuery({ settings: "open" });
+    updateQuery({ settings: "open", leaderboard: null });
   };
 
   const handleSettingsClose = () => {
     setSettingsOpen(false);
     trackPracticeSettingsClosed(mode);
-    updateQuery({ settings: null });
+    updateQuery({ settings: null, leaderboard: null });
   };
 
   const handleLeaderboardOpen = () => {
+    setSettingsOpen(false);
     setLeaderboardOpen(true);
     trackLeaderboardTickerOpened("practice");
-    updateQuery({ leaderboard: "open" });
+    updateQuery({ leaderboard: "open", settings: null });
   };
 
   const handleLeaderboardClose = () => {
     setLeaderboardOpen(false);
-    updateQuery({ leaderboard: null });
+    updateQuery({ leaderboard: null, settings: null });
   };
 
   return (

@@ -1,199 +1,145 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { FaChevronRight, FaTimes, FaTrophy } from "react-icons/fa";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { FaChevronRight, FaTrophy } from "react-icons/fa";
 import type {
   LeaderboardEntry,
   LeaderboardResponse,
 } from "@/types/leaderboard";
 import { useTranslation } from "@/hooks/useTranslation";
+import PracticeDialog from "./PracticeDialog";
 
 interface LeaderboardTickerProps {
-  isMobileOpen: boolean;
-  onMobileOpen: () => void;
-  onMobileClose: () => void;
+  isOpen: boolean;
+  onOpen: () => void;
+  onClose: () => void;
 }
 
 export default function LeaderboardTicker({
-  isMobileOpen,
-  onMobileOpen,
-  onMobileClose,
+  isOpen,
+  onOpen,
+  onClose,
 }: LeaderboardTickerProps) {
   const { t, language } = useTranslation();
   const [leaderboard, setLeaderboard] = useState<LeaderboardResponse | null>(
     null,
   );
-  const [isOpen, setIsOpen] = useState(false);
+  const [status, setStatus] = useState<"loading" | "success" | "error">(
+    "loading",
+  );
+  const requestRef = useRef<AbortController | null>(null);
+  const hasRequested = useRef(false);
 
-  useEffect(() => {
-    let ignore = false;
-
-    async function loadLeaderboard() {
-      try {
-        const response = await fetch("/api/leaderboard", { cache: "no-store" });
-        if (!response.ok) return;
-        const data = (await response.json()) as LeaderboardResponse;
-        if (!ignore) setLeaderboard(data);
-      } catch {
-        if (!ignore) setLeaderboard(null);
+  const loadLeaderboard = useCallback(async () => {
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
+    hasRequested.current = true;
+    setStatus("loading");
+    try {
+      const response = await fetch("/api/leaderboard", {
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      if (!response.ok) throw new Error("Leaderboard unavailable");
+      const data = (await response.json()) as LeaderboardResponse;
+      if (!controller.signal.aborted) {
+        setLeaderboard(data);
+        setStatus("success");
       }
+    } catch {
+      if (!controller.signal.aborted) setStatus("error");
     }
-
-    loadLeaderboard();
-
-    return () => {
-      ignore = true;
-    };
   }, []);
 
-  const entries = useMemo(() => leaderboard?.entries ?? [], [leaderboard]);
-  const tickerText = useMemo(() => {
-    if (entries.length === 0) return t.leaderboard.empty;
-    const formatter = new Intl.NumberFormat(language);
+  useEffect(() => {
+    if (isOpen || !hasRequested.current) void loadLeaderboard();
+  }, [isOpen, loadLeaderboard]);
 
-    return entries
+  useEffect(
+    () => () => {
+      requestRef.current?.abort();
+      hasRequested.current = false;
+    },
+    [],
+  );
+
+  const entries = leaderboard?.entries ?? [];
+  const tickerText = useMemo(() => {
+    if (status === "loading") return t.leaderboard.loading;
+    if (status === "error") return t.leaderboard.error;
+    if (!leaderboard?.entries.length) return t.leaderboard.empty;
+    const formatter = new Intl.NumberFormat(language);
+    return leaderboard.entries
       .slice(0, 5)
       .map(
         (entry) =>
           `#${entry.rank} ${entry.flag} ${entry.countryName} ${formatter.format(entry.totalScore)} ${t.leaderboard.columns.totalScore}`,
       )
       .join("  /  ");
-  }, [
-    entries,
-    language,
-    t.leaderboard.columns.totalScore,
-    t.leaderboard.empty,
-  ]);
+  }, [leaderboard, language, status, t.leaderboard]);
 
   return (
     <div className="relative border-y border-slate-200 bg-white">
       <button
         type="button"
-        onClick={onMobileOpen}
-        onMouseEnter={() => setIsOpen(true)}
-        onFocus={() => setIsOpen(true)}
-        onMouseLeave={() => setIsOpen(false)}
-        onBlur={() => setIsOpen(false)}
-        className="mx-auto flex h-10 w-full max-w-7xl items-center gap-3 px-3 text-left text-sm sm:px-4"
+        onClick={onOpen}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        className="mx-auto flex min-h-11 w-full max-w-7xl items-center gap-3 px-3 text-left text-sm sm:px-4"
       >
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
           <FaTrophy />
         </span>
-        <span className="shrink-0 font-black text-slate-950">
+        <span className="min-w-0 shrink font-bold text-slate-950">
           {t.leaderboard.title}
         </span>
         <span className="min-w-0 flex-1 overflow-hidden whitespace-nowrap text-slate-600">
-          <span className="inline-block animate-[ticker_18s_linear_infinite]">
+          <span className="inline-block motion-safe:animate-[ticker_18s_linear_infinite]">
             {tickerText}
           </span>
         </span>
         <FaChevronRight className="shrink-0 text-slate-400" />
       </button>
-
-      <div
-        onMouseEnter={() => setIsOpen(true)}
-        onMouseLeave={() => setIsOpen(false)}
-        className={`absolute left-1/2 top-full z-40 hidden w-[min(720px,calc(100vw-32px))] -translate-x-1/2 pt-2 lg:block ${
-          isOpen
-            ? "pointer-events-auto opacity-100"
-            : "pointer-events-none opacity-0"
-        } transition-opacity`}
-      >
-        <LeaderboardPanel
-          entries={entries}
-          locale={language}
-          pointsLabel={t.leaderboard.columns.totalScore}
-        />
-      </div>
-
-      <MobileLeaderboardModal
-        isOpen={isMobileOpen}
+      <PracticeDialog
+        isOpen={isOpen}
         title={t.leaderboard.title}
-        onClose={onMobileClose}
+        onClose={onClose}
       >
-        <LeaderboardList
-          entries={entries}
-          locale={language}
-          pointsLabel={t.leaderboard.columns.totalScore}
-        />
-      </MobileLeaderboardModal>
-    </div>
-  );
-}
-
-function MobileLeaderboardModal({
-  isOpen,
-  title,
-  onClose,
-  children,
-}: {
-  isOpen: boolean;
-  title: string;
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [isOpen]);
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 lg:hidden">
-      <button
-        type="button"
-        aria-label="Close"
-        className="absolute inset-0 bg-slate-950/35"
-        onClick={onClose}
-      />
-      <section
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="leaderboard-modal-title"
-        className="relative flex max-h-[70dvh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_48px_rgba(15,23,42,0.18)]"
-      >
-        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-          <h2 id="leaderboard-modal-title" className="text-base font-black text-slate-950">
-            {title}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700"
-            aria-label="Close"
+        {status === "loading" ? (
+          <p
+            role="status"
+            className="rounded-lg bg-slate-50 p-4 text-sm text-slate-600"
           >
-            <FaTimes />
-          </button>
-        </div>
-        <div className="overflow-y-auto p-4">{children}</div>
-      </section>
-    </div>
-  );
-}
-
-function LeaderboardPanel({
-  entries,
-  locale,
-  pointsLabel,
-}: {
-  entries: LeaderboardEntry[];
-  locale: string;
-  pointsLabel: string;
-}) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-[0_18px_44px_rgba(15,23,42,0.14)]">
-      <LeaderboardList
-        entries={entries}
-        locale={locale}
-        pointsLabel={pointsLabel}
-      />
+            {t.leaderboard.loading}
+          </p>
+        ) : status === "error" ? (
+          <div className="space-y-3 rounded-lg bg-slate-50 p-4">
+            <p role="alert" className="text-sm text-slate-600">
+              {t.leaderboard.error}
+            </p>
+            <button
+              type="button"
+              onClick={() => void loadLeaderboard()}
+              className="min-h-11 rounded-lg bg-[#5b21b6] px-4 text-sm font-bold text-white"
+            >
+              {t.ui.retry}
+            </button>
+          </div>
+        ) : (
+          <LeaderboardList
+            entries={entries}
+            locale={language}
+            pointsLabel={t.leaderboard.columns.totalScore}
+          />
+        )}
+      </PracticeDialog>
     </div>
   );
 }
@@ -207,12 +153,13 @@ function LeaderboardList({
   locale: string;
   pointsLabel: string;
 }) {
+  const { t } = useTranslation();
   const formatter = new Intl.NumberFormat(locale);
 
   if (entries.length === 0) {
     return (
       <div className="rounded-lg bg-slate-50 p-4 text-sm font-semibold text-slate-500">
-        No leaderboard data yet.
+        {t.leaderboard.empty}
       </div>
     );
   }

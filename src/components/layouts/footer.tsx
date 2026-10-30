@@ -1,15 +1,19 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const Footer = () => {
+  const { t } = useTranslation();
   return (
-    <footer className="mt-12 w-full border-t border-[#ded6f7] bg-white/80 px-4 py-8 text-center text-sm text-slate-500 backdrop-blur-sm">
+    <footer className="mt-6 w-full border-t border-[#ded6f7] bg-white/80 px-4 py-8 text-center text-sm text-slate-500 backdrop-blur-sm">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 md:flex-row">
         <div className="footer-section flex items-center gap-3">
           <Image
-            src="/logo-rm-bg.png"
-            alt="Logo"
-            className="footer-logo rounded-2xl"
+            src="/logo.svg"
+            alt="Note Quiz"
+            className="footer-logo rounded-xl"
             height={56}
             width={56}
           />
@@ -17,7 +21,7 @@ const Footer = () => {
             <p className="text-lg font-black tracking-[-0.03em] text-slate-950">
               Note Quiz
             </p>
-            <p className="text-sm text-[#6d28d9]">Sharpen your music reading.</p>
+            <p className="text-sm text-[#6d28d9]">{t.home.footer.tagline}</p>
           </div>
           <div className="social-icons">
             <Link
@@ -37,19 +41,21 @@ const Footer = () => {
           </div>
         </div>
         <div className="footer-section space-y-3">
-          <p>&copy; {new Date().getFullYear()} Note Quiz. All rights reserved.</p>
+          <p>
+            &copy; {new Date().getFullYear()} Note Quiz. {t.siteFooter.rights}
+          </p>
           <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2">
             <Link href="/about" className="footer-email">
-              About
+              {t.siteFooter.about}
             </Link>
             <Link href="/contact" className="footer-email">
-              Contact
+              {t.siteFooter.contact}
             </Link>
             <Link href="/privacy-policy" className="footer-email">
-              Privacy Policy
+              {t.siteFooter.privacy}
             </Link>
             <Link href="/terms-of-service" className="footer-email">
-              Terms of Service
+              {t.siteFooter.terms}
             </Link>
           </nav>
         </div>

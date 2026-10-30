@@ -15,6 +15,7 @@ interface StaffProps {
   width?: number;
   height?: number;
   className?: string;
+  responsive?: boolean;
 }
 
 interface ClefProps {
@@ -32,6 +33,7 @@ const Staff: React.FC<StaffProps> = ({
   width = 400,
   height = 200,
   className = "",
+  responsive = false,
 }) => {
   // 오선지 기본 설정
   const staffLineSpacing = 20;
@@ -57,16 +59,33 @@ const Staff: React.FC<StaffProps> = ({
       ? getLedgerLinePositions(notePosition)
       : [];
 
+  // Include stems and accidentals when saved settings allow distant ledger notes.
+  const viewBoxTop = note ? Math.min(0, noteY - 50) : 0;
+  const viewBoxBottom = note ? Math.max(height, noteY + 50) : height;
+
   return (
     <div className={`staff-container ${className}`}>
       <svg
         width={width}
-        style={{
-          minHeight: `${height}px`,
-          padding: "28px 0",
-          overflow: "visible",
-        }}
-        className="staff-svg my-5 rounded-[1.75rem] border border-[#d9e0ea] bg-[#fbfcff] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.65)] md:my-8"
+        viewBox={
+          responsive
+            ? `0 ${viewBoxTop} ${width} ${viewBoxBottom - viewBoxTop}`
+            : undefined
+        }
+        style={
+          responsive
+            ? undefined
+            : {
+                minHeight: `${height}px`,
+                padding: "28px 0",
+                overflow: "visible",
+              }
+        }
+        className={
+          responsive
+            ? "staff-svg h-auto w-full rounded-lg bg-white"
+            : "staff-svg my-5 rounded-[1.75rem] border border-[#d9e0ea] bg-[#fbfcff] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.65)] md:my-8"
+        }
       >
         {/* 오선 (5줄) */}
         {[0, 1, 2, 3, 4].map((lineIndex) => (
@@ -279,7 +298,7 @@ function getAccidentalY(
   clef: ClefType,
   staffStartY: number,
   staffLineSpacing: number,
-  accidentalType: "sharp" | "flat"
+  accidentalType: "sharp" | "flat",
 ): number {
   // 각 음자리표별 조표 위치 매핑
   const positions: Record<ClefType, Record<string, number>> = {

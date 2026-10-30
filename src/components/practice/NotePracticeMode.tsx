@@ -50,7 +50,6 @@ export default function NotePracticeMode({
   settingsOpen,
   onSettingsOpen,
   onSettingsClose,
-  onLeaderboardOpen,
 }: NotePracticeModeProps) {
   const { t } = useTranslation();
   const {
@@ -272,56 +271,66 @@ export default function NotePracticeMode({
     </div>
   );
 
-  const practiceStage = (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 sm:p-4">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-black uppercase text-[#5b21b6]">
-            {currentQuestion ? t.clefs[currentQuestion.clef] : t.gameNavTitle}
-          </p>
-          <h2 className="mt-1 text-xl font-black text-slate-950 sm:text-2xl">
-            {currentQuestion ? t.messages.whichNoteShown : t.ui.welcome}
-          </h2>
-        </div>
-        <span className="rounded-full bg-white px-3 py-2 text-sm font-black text-slate-700">
-          {t.scoreboard.total}: {answers.length}
-        </span>
-      </div>
-
-      <div className="flex min-h-[220px] items-center justify-center rounded-lg bg-white sm:min-h-[300px]">
-        {currentQuestion ? (
-          <Staff
-            clef={currentQuestion.clef}
-            keySignature={currentQuestion.keySignature}
-            note={currentQuestion.displayNote}
-            originalNote={currentQuestion.note}
-            width={620}
-            height={260}
-            className="w-full max-w-[720px]"
-          />
-        ) : (
-          <div className="px-4 text-center">
-            <p className="text-2xl font-black text-slate-950">{t.ui.welcome}</p>
-            <p className="mt-3 text-sm text-slate-500">
-              {t.messages.startGameInstruction}
+  const practiceStage =
+    gameState === "idle" ? (
+      <p className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+        {t.messages.startGameInstruction}
+      </p>
+    ) : (
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-2 sm:p-4">
+        <div className="mb-2 flex items-center justify-between gap-3 sm:mb-3">
+          <div>
+            <p className="text-xs font-black uppercase text-[#5b21b6]">
+              {currentQuestion ? t.clefs[currentQuestion.clef] : t.gameNavTitle}
             </p>
+            <h2
+              className={`mt-1 text-base font-black sm:text-2xl ${
+                feedback
+                  ? feedback.type === "success"
+                    ? "text-emerald-700"
+                    : "text-red-700"
+                  : "text-slate-950"
+              }`}
+            >
+              <span role="status" aria-live="polite">
+                {feedback
+                  ? feedback.message
+                  : currentQuestion
+                    ? t.messages.whichNoteShown
+                    : t.ui.welcome}
+              </span>
+            </h2>
           </div>
-        )}
-      </div>
-
-      {feedback && (
-        <div
-          className={`mt-3 rounded-lg px-4 py-3 text-sm font-black ${
-            feedback.type === "success"
-              ? "bg-emerald-50 text-emerald-700"
-              : "bg-red-50 text-red-700"
-          }`}
-        >
-          {feedback.message}
+          <span className="rounded-full bg-white px-3 py-2 text-sm font-black text-slate-700">
+            {t.scoreboard.total}: {answers.length}
+          </span>
         </div>
-      )}
-    </div>
-  );
+
+        <div className="flex min-h-[140px] items-center justify-center rounded-lg bg-white sm:min-h-[260px]">
+          {currentQuestion ? (
+            <Staff
+              responsive
+              clef={currentQuestion.clef}
+              keySignature={currentQuestion.keySignature}
+              note={currentQuestion.displayNote}
+              originalNote={currentQuestion.note}
+              width={620}
+              height={260}
+              className="w-full max-w-[720px]"
+            />
+          ) : (
+            <div className="px-4 text-center">
+              <p className="text-2xl font-black text-slate-950">
+                {t.ui.welcome}
+              </p>
+              <p className="mt-3 text-sm text-slate-500">
+                {t.messages.startGameInstruction}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
 
   const stage =
     gameState === "finished" && gameResult ? (
@@ -372,7 +381,7 @@ export default function NotePracticeMode({
 
   const settingsSummary = useMemo(() => {
     const timeLabel = settings.timeLimit
-      ? `${settings.timeLimit}s`
+      ? `${settings.timeLimit} ${t.units.seconds}`
       : t.earTraining.session.practice;
     const clefLabel =
       settings.clef === "random" ? t.clefs.random : t.clefs[settings.clef];
@@ -383,6 +392,7 @@ export default function NotePracticeMode({
     settings.timeLimit,
     t.clefs,
     t.earTraining.session.practice,
+    t.units.seconds,
   ]);
 
   return (
@@ -392,25 +402,25 @@ export default function NotePracticeMode({
       kicker={t.brandDescription}
       status={status}
       stage={stage}
-      input={gameState === "finished" ? null : input}
+      input={gameState === "playing" || gameState === "paused" ? input : null}
       actions={<GameControl />}
       settings={<NoteSettingsPanel />}
       settingsSummary={settingsSummary}
+      isIdle={gameState === "idle"}
       settingsOpen={settingsOpen}
       onSettingsOpen={onSettingsOpen}
       onSettingsClose={onSettingsClose}
-      onLeaderboardOpen={onLeaderboardOpen}
     />
   );
 }
 
 function StatusTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2">
-      <p className="truncate text-[11px] font-black uppercase text-slate-500">
+    <div className="flex min-w-0 flex-col justify-between rounded-lg border border-slate-200 bg-white px-2 py-2 sm:px-3">
+      <p className="text-xs font-bold leading-4 text-slate-500 [overflow-wrap:anywhere]">
         {label}
       </p>
-      <p className="mt-1 text-lg font-black text-slate-950 sm:text-xl">
+      <p className="mt-1 text-lg font-black tabular-nums text-slate-950 sm:text-xl">
         {value}
       </p>
     </div>

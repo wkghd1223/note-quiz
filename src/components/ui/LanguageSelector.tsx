@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useLanguageStore } from "@/store/languageStore";
-// import { useTranslation } from "@/hooks/useTranslation";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface LanguageSelectorProps {
   className?: string;
@@ -12,7 +12,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
   className = "",
 }) => {
   const { language, setLanguage } = useLanguageStore();
-  //   const { t } = useTranslation();
+  const { t } = useTranslation();
 
   const languages = [
     { code: "en" as Language, name: "English", flag: "🇬🇧" },
@@ -25,18 +25,16 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
 
   return (
     <div className={`language-selector ${className}`}>
-      {/* <label className="block text-sm font-medium text-gray-700 mb-2">
-        {t.settingsLabels.language}
-      </label> */}
       <select
+        aria-label={t.settingsLabels.language}
         value={language}
         onChange={(e) => setLanguage(e.target.value as Language)}
-        className="w-full rounded-2xl border border-[#ded6f7] bg-white px-3 py-2 font-semibold text-slate-700 shadow-[0_8px_18px_rgba(76,29,149,0.08)] focus:border-[#7c3aed] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
+        className="w-full max-w-[8.5rem] rounded-lg border border-[#ded6f7] bg-white px-3 py-2 font-semibold text-slate-700 shadow-[0_8px_18px_rgba(76,29,149,0.08)] focus:border-[#7c3aed] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
       >
         {languages.map((lang) => (
           <option key={lang.code} value={lang.code}>
             {lang.flag}
-            {/* {lang.name} */}
+            {lang.name}
           </option>
         ))}
       </select>

@@ -10,6 +10,14 @@ export interface Translations {
   resetGame: string;
   settings: string;
 
+  siteFooter: {
+    about: string;
+    contact: string;
+    privacy: string;
+    terms: string;
+    rights: string;
+  };
+
   // 게임 상태
   gameStates: {
     idle: string;
@@ -29,6 +37,7 @@ export interface Translations {
 
   // 조표
   keySignatures: {
+    major: string;
     random: string;
   };
 
@@ -182,6 +191,8 @@ export interface Translations {
 
   // 추가 UI 텍스트
   ui: {
+    close: string;
+    retry: string;
     welcome: string;
     description: string;
     features: {
@@ -198,6 +209,7 @@ export interface Translations {
     hero: {
       title: string;
       description: string;
+      sightReadingDescription: string;
       cta: string;
       previewTitle: string;
       previewSubtitle: string;
@@ -347,7 +359,7 @@ export interface Translations {
 export const translations: Record<Language, Translations> = {
   en: {
     gameTitle: "Note Quiz",
-    gameNavTitle: "Note Quiz",
+    gameNavTitle: "Sight reading",
     brandDescription: "Master the Musical Staff",
     startGame: "Start Game",
     pauseGame: "Pause",
@@ -355,6 +367,14 @@ export const translations: Record<Language, Translations> = {
     endGame: "End Game",
     resetGame: "Reset",
     settings: "Settings",
+
+    siteFooter: {
+      about: "About",
+      contact: "Contact",
+      privacy: "Privacy Policy",
+      terms: "Terms of Service",
+      rights: "All rights reserved.",
+    },
 
     gameStates: {
       idle: "Ready",
@@ -372,6 +392,7 @@ export const translations: Record<Language, Translations> = {
     },
 
     keySignatures: {
+      major: "{key} Major",
       random: "Random",
     },
 
@@ -517,6 +538,8 @@ export const translations: Record<Language, Translations> = {
     },
 
     ui: {
+      close: "Close",
+      retry: "Try again",
       welcome: "Welcome to Note Quiz!",
       description: "Learn to read musical notes by sight and sound!",
       features: {
@@ -534,6 +557,8 @@ export const translations: Record<Language, Translations> = {
       hero: {
         title: "Note Quiz",
         description: "Learn to read musical notes by sight and sound!",
+        sightReadingDescription:
+          "Read the note on the staff and choose its name.",
         cta: "Start Game",
         previewTitle: "Real Gameplay Preview",
         previewSubtitle: "Sight-read, answer, repeat",
@@ -699,7 +724,7 @@ export const translations: Record<Language, Translations> = {
 
   ko: {
     gameTitle: "계이름 맞추기 게임",
-    gameNavTitle: "음표 퀴즈",
+    gameNavTitle: "독보 연습",
     brandDescription: "오선 위의 음을 더 빠르게 읽어보세요",
     startGame: "게임 시작",
     pauseGame: "일시정지",
@@ -707,6 +732,14 @@ export const translations: Record<Language, Translations> = {
     endGame: "게임 종료",
     resetGame: "다시 시작",
     settings: "설정",
+
+    siteFooter: {
+      about: "소개",
+      contact: "문의",
+      privacy: "개인정보 처리방침",
+      terms: "이용약관",
+      rights: "모든 권리 보유.",
+    },
 
     gameStates: {
       idle: "대기",
@@ -724,6 +757,7 @@ export const translations: Record<Language, Translations> = {
     },
 
     keySignatures: {
+      major: "{key} 장조",
       random: "랜덤",
     },
 
@@ -868,6 +902,8 @@ export const translations: Record<Language, Translations> = {
     },
 
     ui: {
+      close: "닫기",
+      retry: "다시 시도",
       welcome: "계이름 맞추기 게임에 오신 것을 환영합니다!",
       description: "시각적 학습과 청각적 훈련을 통해 음악 실력을 향상시키세요.",
       features: {
@@ -886,6 +922,8 @@ export const translations: Record<Language, Translations> = {
         title: "계이름 맞추기 게임",
         description:
           "시각적 학습과 청각적 훈련을 통해 음악 실력을 향상시키세요.",
+        sightReadingDescription:
+          "악보에 표시된 음표를 보고 계이름을 맞혀 보세요.",
         cta: "게임 시작",
         previewTitle: "실제 게임 화면",
         previewSubtitle: "악보를 보고, 답하고, 반복해서 익히세요",
@@ -1048,7 +1086,7 @@ export const translations: Record<Language, Translations> = {
 
   ja: {
     gameTitle: "音符クイズ",
-    gameNavTitle: "音符クイズ",
+    gameNavTitle: "譜読み練習",
     brandDescription: "五線譜の音をすばやく読めるように",
     startGame: "ゲーム開始",
     pauseGame: "一時停止",
@@ -1056,6 +1094,14 @@ export const translations: Record<Language, Translations> = {
     endGame: "ゲーム終了",
     resetGame: "リセット",
     settings: "設定",
+
+    siteFooter: {
+      about: "このサイトについて",
+      contact: "お問い合わせ",
+      privacy: "プライバシーポリシー",
+      terms: "利用規約",
+      rights: "無断転載を禁じます。",
+    },
 
     gameStates: {
       idle: "待機中",
@@ -1101,6 +1147,7 @@ export const translations: Record<Language, Translations> = {
     },
 
     keySignatures: {
+      major: "{key} 長調",
       random: "ランダム",
     },
 
@@ -1218,6 +1265,8 @@ export const translations: Record<Language, Translations> = {
     },
 
     ui: {
+      close: "閉じる",
+      retry: "再試行",
       welcome: "音符クイズへようこそ！",
       description: "視覚と聴覚で音符を学ぼう！",
       features: {
@@ -1235,6 +1284,7 @@ export const translations: Record<Language, Translations> = {
       hero: {
         title: "音符クイズ",
         description: "視覚と聴覚で音符を学ぼう！",
+        sightReadingDescription: "楽譜の音符を見て、音名を答えましょう。",
         cta: "ゲーム開始",
         previewTitle: "実際のゲーム画面",
         previewSubtitle: "譜面を見て、答えて、繰り返し練習",
@@ -1397,7 +1447,7 @@ export const translations: Record<Language, Translations> = {
 
   es: {
     gameTitle: "Quiz de Notas",
-    gameNavTitle: "Quiz de Notas",
+    gameNavTitle: "Lectura musical",
     brandDescription: "Domina las notas del pentagrama",
     startGame: "Iniciar Juego",
     pauseGame: "Pausar",
@@ -1405,6 +1455,14 @@ export const translations: Record<Language, Translations> = {
     endGame: "Terminar Juego",
     resetGame: "Reiniciar",
     settings: "Configuración",
+
+    siteFooter: {
+      about: "Acerca de",
+      contact: "Contacto",
+      privacy: "Política de privacidad",
+      terms: "Términos del servicio",
+      rights: "Todos los derechos reservados.",
+    },
 
     gameStates: {
       idle: "En espera",
@@ -1453,6 +1511,7 @@ export const translations: Record<Language, Translations> = {
     },
 
     keySignatures: {
+      major: "{key} mayor",
       random: "Aleatorio",
     },
 
@@ -1570,6 +1629,8 @@ export const translations: Record<Language, Translations> = {
     },
 
     ui: {
+      close: "Cerrar",
+      retry: "Reintentar",
       welcome: "¡Bienvenido al Quiz de Notas!",
       description: "¡Aprende a leer notas musicales por vista y sonido!",
       features: {
@@ -1587,6 +1648,8 @@ export const translations: Record<Language, Translations> = {
       hero: {
         title: "Quiz de Notas",
         description: "¡Aprende a leer notas musicales por vista y sonido!",
+        sightReadingDescription:
+          "Lee la nota en el pentagrama y elige su nombre.",
         cta: "Iniciar Juego",
         previewTitle: "Vista previa del juego real",
         previewSubtitle: "Lee, responde y repite",
@@ -1754,7 +1817,7 @@ export const translations: Record<Language, Translations> = {
 
   de: {
     gameTitle: "Noten-Quiz",
-    gameNavTitle: "Noten-Quiz",
+    gameNavTitle: "Notenlesen",
     brandDescription: "Meistere die Noten auf dem Notensystem",
     startGame: "Spiel starten",
     pauseGame: "Pausieren",
@@ -1762,6 +1825,14 @@ export const translations: Record<Language, Translations> = {
     endGame: "Spiel beenden",
     resetGame: "Zurücksetzen",
     settings: "Einstellungen",
+
+    siteFooter: {
+      about: "Über uns",
+      contact: "Kontakt",
+      privacy: "Datenschutzerklärung",
+      terms: "Nutzungsbedingungen",
+      rights: "Alle Rechte vorbehalten.",
+    },
 
     gameStates: {
       idle: "Bereit",
@@ -1809,6 +1880,7 @@ export const translations: Record<Language, Translations> = {
     },
 
     keySignatures: {
+      major: "{key}-Dur",
       random: "Zufällig",
     },
 
@@ -1928,6 +2000,8 @@ export const translations: Record<Language, Translations> = {
     },
 
     ui: {
+      close: "Schließen",
+      retry: "Erneut versuchen",
       welcome: "Willkommen beim Noten-Quiz!",
       description: "Lernen Sie, Musiknoten durch Sehen und Hören zu lesen!",
       features: {
@@ -1945,6 +2019,8 @@ export const translations: Record<Language, Translations> = {
       hero: {
         title: "Noten-Quiz",
         description: "Lernen Sie, Musiknoten durch Sehen und Hören zu lesen!",
+        sightReadingDescription:
+          "Lies die Note im Notensystem und wähle ihren Namen.",
         cta: "Spiel starten",
         previewTitle: "Echte Spielvorschau",
         previewSubtitle: "Noten lesen, antworten, wiederholen",
@@ -2113,7 +2189,7 @@ export const translations: Record<Language, Translations> = {
 
   fr: {
     gameTitle: "Quiz des Notes",
-    gameNavTitle: "Quiz des Notes",
+    gameNavTitle: "Lecture de notes",
     brandDescription: "Maîtrisez les notes sur la portée",
     startGame: "Commencer le Jeu",
     pauseGame: "Pause",
@@ -2121,6 +2197,14 @@ export const translations: Record<Language, Translations> = {
     endGame: "Terminer le Jeu",
     resetGame: "Réinitialiser",
     settings: "Paramètres",
+
+    siteFooter: {
+      about: "À propos",
+      contact: "Contact",
+      privacy: "Politique de confidentialité",
+      terms: "Conditions d’utilisation",
+      rights: "Tous droits réservés.",
+    },
 
     gameStates: {
       idle: "En attente",
@@ -2169,6 +2253,7 @@ export const translations: Record<Language, Translations> = {
     },
 
     keySignatures: {
+      major: "{key} majeur",
       random: "Aléatoire",
     },
 
@@ -2287,6 +2372,8 @@ export const translations: Record<Language, Translations> = {
     },
 
     ui: {
+      close: "Fermer",
+      retry: "Réessayer",
       welcome: "Bienvenue au Quiz des Notes !",
       description:
         "Apprenez à lire les notes de musique par la vue et l'ouïe !",
@@ -2306,6 +2393,8 @@ export const translations: Record<Language, Translations> = {
         title: "Quiz des Notes",
         description:
           "Apprenez à lire les notes de musique par la vue et l'ouïe !",
+        sightReadingDescription:
+          "Lis la note sur la portée et choisis son nom.",
         cta: "Commencer le Jeu",
         previewTitle: "Apercu reel du jeu",
         previewSubtitle: "Lisez, repondez, recommencez",

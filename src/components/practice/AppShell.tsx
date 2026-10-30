@@ -19,16 +19,16 @@ export default function AppShell({
 }: AppShellProps) {
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#f6f7fb] text-slate-950">
-      <header className="border-b border-slate-200 bg-white">
+      <div className="border-b border-slate-200 bg-white">
         <div className="mx-auto w-full max-w-[480px] px-3 py-3 sm:max-w-7xl sm:px-4">
           <Header variant="compact" />
         </div>
-      </header>
+      </div>
 
       <LeaderboardTicker
-        isMobileOpen={leaderboardOpen}
-        onMobileOpen={onLeaderboardOpen}
-        onMobileClose={onLeaderboardClose}
+        isOpen={leaderboardOpen}
+        onOpen={onLeaderboardOpen}
+        onClose={onLeaderboardClose}
       />
 
       <main className="mx-auto w-full max-w-[480px] px-3 py-3 sm:max-w-7xl sm:px-4 sm:py-4">

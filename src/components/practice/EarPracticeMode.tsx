@@ -40,7 +40,6 @@ export default function EarPracticeMode({
   settingsOpen,
   onSettingsOpen,
   onSettingsClose,
-  onLeaderboardOpen,
 }: EarPracticeModeProps) {
   const { t } = useTranslation();
   const {
@@ -101,7 +100,9 @@ export default function EarPracticeMode({
     const sessionLabel =
       settings.sessionType === "timed"
         ? `${t.earTraining.session.timed}${
-            settings.timeLimit ? ` / ${settings.timeLimit}s` : ""
+            settings.timeLimit
+              ? ` / ${settings.timeLimit} ${t.units.seconds}`
+              : ""
           }`
         : t.earTraining.session.practice;
     const noteSetLabel =
@@ -125,6 +126,7 @@ export default function EarPracticeMode({
     t.earTraining.noteSet.natural,
     t.earTraining.session.practice,
     t.earTraining.session.timed,
+    t.units.seconds,
   ]);
 
   const handleSettingsChange = (nextSettings: Partial<EarTrainingSettings>) => {
@@ -177,7 +179,7 @@ export default function EarPracticeMode({
 
     setTimeout(() => {
       setFeedback((current) =>
-        current ? { ...current, visible: false } : current
+        current ? { ...current, visible: false } : current,
       );
     }, 1400);
 
@@ -200,53 +202,57 @@ export default function EarPracticeMode({
     </div>
   );
 
-  const stage = (
-    <div className="relative rounded-lg border border-slate-200 bg-slate-50 p-4 sm:p-5">
-      {feedback && (
-        <div
-          className={`absolute left-1/2 top-4 z-20 w-[min(340px,calc(100%-32px))] -translate-x-1/2 rounded-lg px-4 py-3 text-center text-sm font-black shadow-[0_14px_34px_rgba(15,23,42,0.16)] transition-all duration-300 ${
-            feedback.visible ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0"
-          } ${
-            feedback.type === "success"
-              ? "bg-emerald-50 text-emerald-700"
-              : "bg-red-50 text-red-700"
-          }`}
-        >
-          <p>{feedback.message}</p>
-          <p className="mt-1 text-xs">
-            {t.messages.yourAnswer}: {feedback.submittedNote} /{" "}
-            {t.messages.correctAnswer}: {feedback.correctNote}
-          </p>
-        </div>
-      )}
-
-      <div className="flex min-h-[220px] flex-col items-center justify-center rounded-lg bg-white p-4 text-center sm:min-h-[300px]">
-        {result ? (
-          <EarTrainingResult result={result} stats={stats} />
-        ) : (
-          <>
-            <p className="text-xs font-black uppercase text-[#5b21b6]">
-              {t.earTraining.subtitle}
+  const stage =
+    sessionState === "idle" ? (
+      <p className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+        {t.earTraining.description}
+      </p>
+    ) : (
+      <div className="relative rounded-lg border border-slate-200 bg-slate-50 p-3 sm:p-5">
+        {feedback && (
+          <div
+            className={`absolute left-1/2 top-4 z-20 w-[min(340px,calc(100%-32px))] -translate-x-1/2 rounded-lg px-4 py-3 text-center text-sm font-black shadow-[0_14px_34px_rgba(15,23,42,0.16)] transition-all duration-300 ${
+              feedback.visible
+                ? "translate-y-0 opacity-100"
+                : "-translate-y-2 opacity-0"
+            } ${
+              feedback.type === "success"
+                ? "bg-emerald-50 text-emerald-700"
+                : "bg-red-50 text-red-700"
+            }`}
+          >
+            <p>{feedback.message}</p>
+            <p className="mt-1 text-xs">
+              {t.messages.yourAnswer}: {feedback.submittedNote} /{" "}
+              {t.messages.correctAnswer}: {feedback.correctNote}
             </p>
-            <h2 className="mt-3 text-2xl font-black text-slate-950 sm:text-3xl">
-              {sessionState === "playing"
-                ? t.earTraining.listenPrompt
-                : t.earTraining.description}
-            </h2>
-            <button
-              type="button"
-              onClick={handleReplay}
-              disabled={!currentQuestion || sessionState !== "playing"}
-              className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-slate-950 px-5 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300"
-            >
-              <FaVolumeUp />
-              {t.earTraining.replay}
-            </button>
-          </>
+          </div>
         )}
+
+        <div className="flex min-h-[140px] flex-col items-center justify-center rounded-lg bg-white p-3 text-center sm:min-h-[260px] sm:p-4">
+          {result ? (
+            <EarTrainingResult result={result} stats={stats} />
+          ) : (
+            <>
+              <h2 className="text-base font-bold leading-6 text-slate-950 sm:text-2xl sm:font-black">
+                {sessionState === "playing"
+                  ? t.earTraining.listenPrompt
+                  : t.earTraining.description}
+              </h2>
+              <button
+                type="button"
+                onClick={handleReplay}
+                disabled={!currentQuestion || sessionState !== "playing"}
+                className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-slate-950 px-5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300 sm:mt-4"
+              >
+                <FaVolumeUp />
+                {t.earTraining.replay}
+              </button>
+            </>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
 
   const input = (
     <div className="rounded-lg border border-slate-200 bg-white p-3">
@@ -279,7 +285,7 @@ export default function EarPracticeMode({
   );
 
   const actions = (
-    <div className="grid gap-2 sm:grid-cols-2">
+    <div className="grid gap-2">
       {sessionState === "playing" ? (
         <button
           type="button"
@@ -309,30 +315,33 @@ export default function EarPracticeMode({
       kicker={t.earTraining.subtitle}
       status={status}
       stage={stage}
-      input={input}
+      input={sessionState === "playing" ? input : null}
       actions={actions}
       settings={
         <EarTrainingSettings
+          embedded
           settings={settings}
           onChange={handleSettingsChange}
         />
       }
       settingsSummary={settingsSummary}
+      isIdle={sessionState === "idle"}
       settingsOpen={settingsOpen}
       onSettingsOpen={onSettingsOpen}
       onSettingsClose={onSettingsClose}
-      onLeaderboardOpen={onLeaderboardOpen}
     />
   );
 }
 
 function StatusTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2">
-      <p className="truncate text-[11px] font-black uppercase text-slate-500">
+    <div className="flex min-w-0 flex-col justify-between rounded-lg border border-slate-200 bg-white px-2 py-2 sm:px-3">
+      <p className="text-xs font-bold leading-4 text-slate-500 [overflow-wrap:anywhere]">
         {label}
       </p>
-      <p className="mt-1 text-lg font-black text-slate-950 sm:text-xl">{value}</p>
+      <p className="mt-1 text-lg font-black tabular-nums text-slate-950 sm:text-xl">
+        {value}
+      </p>
     </div>
   );
 }
