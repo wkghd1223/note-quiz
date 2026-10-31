@@ -1,307 +1,245 @@
 import { getNoteFrequency } from "./utils";
 
-/**
- * 오디오 컨텍스트 관리 클래스
- */
 class AudioManager {
-  private audioContext: AudioContext | null = null;
-  private masterGain: GainNode | null = null;
-  private isInitialized = false;
+  private context: AudioContext | null = null;
+  private master: GainNode | null = null;
+  private resuming: Promise<void> | null = null;
+  private volume = 0.3;
 
-  /**
-   * 오디오 컨텍스트 초기화
-   */
   async initialize(): Promise<void> {
-    if (this.isInitialized) return;
-
-    try {
-      // AudioContext 생성
-      this.audioContext = new (window.AudioContext ||
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).webkitAudioContext)();
-
-      // 마스터 볼륨 컨트롤
-      this.masterGain = this.audioContext.createGain();
-      this.masterGain.connect(this.audioContext.destination);
-      this.masterGain.gain.value = 0.3; // 기본 볼륨 30%
-
-      // 사용자 상호작용 후 오디오 컨텍스트 재개
-      if (this.audioContext.state === "suspended") {
-        await this.audioContext.resume();
-      }
-
-      this.isInitialized = true;
-    } catch (error) {
-      console.error("Failed to initialize audio context:", error);
-      throw new Error("Audio initialization failed");
+    if (!this.context || this.context.state === "closed") {
+      if (typeof window === "undefined")
+        throw new Error("Audio is not available");
+      const AudioContextConstructor =
+        window.AudioContext ||
+        (window as Window & { webkitAudioContext?: typeof AudioContext })
+          .webkitAudioContext;
+      if (!AudioContextConstructor) throw new Error("Audio is not supported");
+      const context = new AudioContextConstructor();
+      const master = context.createGain();
+      master.gain.value = this.volume;
+      master.connect(context.destination);
+      this.context = context;
+      this.master = master;
+    }
+    // Browsers can suspend a previously initialized context after backgrounding.
+    if (this.context.state !== "running") {
+      this.resuming ??= this.context.resume().finally(() => {
+        this.resuming = null;
+      });
+      await this.resuming;
     }
   }
 
-  /**
-   * 오디오 컨텍스트 가져오기
-   */
   getAudioContext(): AudioContext {
-    if (!this.audioContext) {
-      throw new Error("Audio context not initialized");
-    }
-    return this.audioContext;
+    if (!this.context || this.context.state === "closed")
+      throw new Error("Audio context is not initialized");
+    return this.context;
   }
-
-  /**
-   * 마스터 게인 노드 가져오기
-   */
   getMasterGain(): GainNode {
-    if (!this.masterGain) {
-      throw new Error("Master gain not initialized");
-    }
-    return this.masterGain;
+    if (!this.master) throw new Error("Audio context is not initialized");
+    return this.master;
   }
-
-  /**
-   * 볼륨 설정
-   */
-  setVolume(volume: number): void {
-    if (this.masterGain) {
-      this.masterGain.gain.value = Math.max(0, Math.min(1, volume));
-    }
+  setVolume(volume: number) {
+    this.volume = Number.isFinite(volume)
+      ? Math.max(0, Math.min(1, volume))
+      : 0.3;
+    if (this.master) this.master.gain.value = this.volume;
   }
-
-  /**
-   * 오디오 컨텍스트 정리
-   */
-  dispose(): void {
-    if (this.audioContext) {
-      this.audioContext.close();
-      this.audioContext = null;
-      this.masterGain = null;
-      this.isInitialized = false;
-    }
+  dispose() {
+    const context = this.context;
+    this.context = null;
+    this.master = null;
+    this.resuming = null;
+    if (context && context.state !== "closed")
+      void context.close().catch(() => {});
   }
 }
 
-// 싱글톤 인스턴스
 const audioManager = new AudioManager();
+interface ActiveVoice {
+  stop: () => void;
+}
+const activeVoices = new Set<ActiveVoice>();
+let playbackGeneration = 0;
 
-/**
- * 단일 음표 재생
- */
-export async function playNote(
+/** Cancel both sounding and future scheduled notes. Pending playback settles safely. */
+export function stopAllNotes(): void {
+  playbackGeneration++;
+  for (const voice of Array.from(activeVoices)) voice.stop();
+}
+
+function scheduleVoice(
   note: Note,
-  duration: number = 1000,
-  waveType: OscillatorType = "sine"
+  start: number,
+  duration: number,
+  volume: number,
+  waveType: OscillatorType,
+  piano: boolean,
 ): Promise<void> {
-  try {
-    await audioManager.initialize();
-
-    const audioContext = audioManager.getAudioContext();
-    const masterGain = audioManager.getMasterGain();
-
-    // 주파수 계산
-    const frequency = getNoteFrequency(note);
-
-    // 오실레이터 생성
-    const oscillator = audioContext.createOscillator();
+  const context = audioManager.getAudioContext();
+  const gain = context.createGain();
+  gain.connect(audioManager.getMasterGain());
+  const frequency = getNoteFrequency(note);
+  // Harmonic weights sum to one, so a chord's voices retain a bounded peak.
+  const harmonics = piano
+    ? [1 / 1.42, 0.28 / 1.42, 0.1 / 1.42, 0.04 / 1.42]
+    : [1];
+  const nodes = harmonics.flatMap((weight, index) => {
+    if (frequency * (index + 1) >= (context.sampleRate || 44100) / 2) return [];
+    const oscillator = context.createOscillator();
+    const harmonicGain = context.createGain();
     oscillator.type = waveType;
-    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+    oscillator.frequency.setValueAtTime(frequency * (index + 1), start);
+    harmonicGain.gain.value = weight;
+    oscillator.connect(harmonicGain);
+    harmonicGain.connect(gain);
+    return [{ oscillator, harmonicGain }];
+  });
+  const end = start + duration;
+  const attackEnd = start + Math.min(0.01, duration / 4);
+  const decayEnd = start + Math.min(0.17, duration / 2);
+  const releaseStart = Math.max(decayEnd, end - Math.min(0.28, duration / 3));
+  gain.gain.setValueAtTime(0, start);
+  gain.gain.linearRampToValueAtTime(volume, attackEnd);
+  gain.gain.exponentialRampToValueAtTime(
+    Math.max(0.0001, volume * (piano ? 0.24 : 0.7)),
+    decayEnd,
+  );
+  gain.gain.setValueAtTime(
+    Math.max(0.0001, volume * (piano ? 0.24 : 0.7)),
+    releaseStart,
+  );
+  gain.gain.linearRampToValueAtTime(0.0001, end);
 
-    // 게인 노드 생성 (ADSR 엔벨로프용)
-    const gainNode = audioContext.createGain();
-
-    // 오실레이터 -> 게인 -> 마스터 게인 -> 출력
-    oscillator.connect(gainNode);
-    gainNode.connect(masterGain);
-
-    // ADSR 엔벨로프 적용
-    const now = audioContext.currentTime;
-    const attackTime = 0.01; // 10ms
-    const decayTime = 0.1; // 100ms
-    const sustainLevel = 0.7;
-    const releaseTime = 0.3; // 300ms
-
-    gainNode.gain.setValueAtTime(0, now);
-    gainNode.gain.linearRampToValueAtTime(1, now + attackTime);
-    gainNode.gain.linearRampToValueAtTime(
-      sustainLevel,
-      now + attackTime + decayTime
-    );
-    gainNode.gain.setValueAtTime(
-      sustainLevel,
-      now + duration / 1000 - releaseTime
-    );
-    gainNode.gain.linearRampToValueAtTime(0, now + duration / 1000);
-
-    // 재생 시작 및 종료
-    oscillator.start(now);
-    oscillator.stop(now + duration / 1000);
-
-    // Promise로 재생 완료 대기
-    return new Promise((resolve) => {
-      oscillator.onended = () => resolve();
-    });
-  } catch (error) {
-    console.error("Failed to play note:", error);
-    throw error;
-  }
-}
-
-/**
- * 화음 재생 (여러 음표 동시 재생)
- */
-export async function playChord(
-  notes: Note[],
-  duration: number = 1000,
-  waveType: OscillatorType = "sine"
-): Promise<void> {
-  try {
-    await audioManager.initialize();
-
-    const promises = notes.map((note) => playNote(note, duration, waveType));
-    await Promise.all(promises);
-  } catch (error) {
-    console.error("Failed to play chord:", error);
-    throw error;
-  }
-}
-
-/**
- * 아르페지오 재생 (음표들을 순차적으로 재생)
- */
-export async function playArpeggio(
-  notes: Note[],
-  noteDuration: number = 500,
-  gap: number = 100,
-  waveType: OscillatorType = "sine"
-): Promise<void> {
-  try {
-    for (let i = 0; i < notes.length; i++) {
-      await playNote(notes[i], noteDuration, waveType);
-      if (i < notes.length - 1) {
-        await new Promise((resolve) => setTimeout(resolve, gap));
+  return new Promise<void>((resolve) => {
+    let settled = false;
+    const voice: ActiveVoice = { stop: () => finish(true) };
+    function finish(stop: boolean) {
+      if (settled) return;
+      settled = true;
+      activeVoices.delete(voice);
+      for (const { oscillator, harmonicGain } of nodes) {
+        oscillator.onended = null;
+        if (stop) {
+          try {
+            oscillator.stop(context.currentTime);
+          } catch {
+            /* Already ended. */
+          }
+        }
+        oscillator.disconnect();
+        harmonicGain.disconnect();
       }
+      gain.disconnect();
+      resolve();
     }
-  } catch (error) {
-    console.error("Failed to play arpeggio:", error);
-    throw error;
-  }
+    // All harmonics share exactly the same start/end time.
+    nodes[0].oscillator.onended = () => finish(false);
+    activeVoices.add(voice);
+    for (const { oscillator } of nodes) {
+      oscillator.start(start);
+      oscillator.stop(end);
+    }
+  });
 }
 
-/**
- * 피아노 음색으로 음표 재생
- */
-export async function playPianoNote(
-  note: Note,
-  duration: number = 1000
+async function playGroups(
+  groups: readonly (readonly Note[])[],
+  durationMs: number,
+  gapMs: number,
+  waveType: OscillatorType,
+  piano: boolean,
 ): Promise<void> {
+  stopAllNotes();
+  const generation = playbackGeneration;
+  if (!groups.length) return;
+  if (
+    groups.length > 64 ||
+    groups.some((group) => !group.length || group.length > 16)
+  )
+    throw new RangeError("Invalid audio sequence");
+  // Validate before creating audio nodes, including unsupported notes.
+  groups.forEach((group) => group.forEach(getNoteFrequency));
+  const duration =
+    Math.max(
+      40,
+      Math.min(10000, Number.isFinite(durationMs) ? durationMs : 650),
+    ) / 1000;
+  const gap =
+    Math.max(0, Math.min(2000, Number.isFinite(gapMs) ? gapMs : 120)) / 1000;
   try {
     await audioManager.initialize();
-
-    const audioContext = audioManager.getAudioContext();
-    const masterGain = audioManager.getMasterGain();
-
-    const frequency = getNoteFrequency(note);
-
-    // 피아노 음색을 위한 복합 오실레이터
-    const fundamentalGain = audioContext.createGain();
-    const harmonicGain1 = audioContext.createGain();
-    const harmonicGain2 = audioContext.createGain();
-    const harmonicGain3 = audioContext.createGain();
-
-    // 기본 주파수
-    const fundamental = audioContext.createOscillator();
-    fundamental.type = "sine";
-    fundamental.frequency.setValueAtTime(frequency, audioContext.currentTime);
-
-    // 배음들
-    const harmonic2 = audioContext.createOscillator();
-    harmonic2.type = "sine";
-    harmonic2.frequency.setValueAtTime(frequency * 2, audioContext.currentTime);
-
-    const harmonic3 = audioContext.createOscillator();
-    harmonic3.type = "sine";
-    harmonic3.frequency.setValueAtTime(frequency * 3, audioContext.currentTime);
-
-    const harmonic4 = audioContext.createOscillator();
-    harmonic4.type = "sine";
-    harmonic4.frequency.setValueAtTime(frequency * 4, audioContext.currentTime);
-
-    // 게인 설정
-    fundamentalGain.gain.value = 1.0;
-    harmonicGain1.gain.value = 0.28;
-    harmonicGain2.gain.value = 0.1;
-    harmonicGain3.gain.value = 0.04;
-
-    // 연결
-    fundamental.connect(fundamentalGain);
-    harmonic2.connect(harmonicGain1);
-    harmonic3.connect(harmonicGain2);
-    harmonic4.connect(harmonicGain3);
-
-    // 마스터 게인 노드
-    const noteGain = audioContext.createGain();
-    fundamentalGain.connect(noteGain);
-    harmonicGain1.connect(noteGain);
-    harmonicGain2.connect(noteGain);
-    harmonicGain3.connect(noteGain);
-    noteGain.connect(masterGain);
-
-    // 피아노 특유의 엔벨로프
-    const now = audioContext.currentTime || 0;
-    const attackTime = 0.01;
-    const decayTime = 0.16;
-    const sustainLevel = 0.24;
-    const releaseTime = Math.min(0.28, duration / 1000 / 2);
-    const noteEndTime = now + duration / 1000;
-    const releaseStartTime = Math.max(now + attackTime + decayTime, noteEndTime - releaseTime);
-
-    noteGain.gain.setValueAtTime(0, now);
-    noteGain.gain.linearRampToValueAtTime(1, now + attackTime);
-    noteGain.gain.exponentialRampToValueAtTime(
-      sustainLevel,
-      now + attackTime + decayTime
-    );
-    noteGain.gain.setValueAtTime(sustainLevel, releaseStartTime);
-    noteGain.gain.linearRampToValueAtTime(0.0001, noteEndTime);
-
-    // 모든 오실레이터 시작
-    const oscillators = [fundamental, harmonic2, harmonic3, harmonic4];
-    oscillators.forEach((osc) => {
-      osc.start(now);
-      osc.stop(noteEndTime + 0.02);
-    });
-
-    return new Promise((resolve) => {
-      fundamental.onended = () => resolve();
-    });
   } catch (error) {
-    console.error("Failed to play piano note:", error);
+    if (generation !== playbackGeneration) return;
     throw error;
   }
+  if (generation !== playbackGeneration) return;
+  const start = audioManager.getAudioContext().currentTime + 0.01;
+  const promises = groups.flatMap((group, index) =>
+    group.map((note) =>
+      scheduleVoice(
+        note,
+        start + index * (duration + gap),
+        duration,
+        1 / group.length,
+        waveType,
+        piano,
+      ),
+    ),
+  );
+  await Promise.all(promises);
 }
 
-/**
- * 볼륨 설정
- */
+export function playNote(
+  note: Note,
+  duration = 1000,
+  waveType: OscillatorType = "sine",
+): Promise<void> {
+  return playGroups([[note]], duration, 0, waveType, false);
+}
+export function playPianoNote(note: Note, duration = 1000): Promise<void> {
+  return playGroups([[note]], duration, 0, "sine", true);
+}
+export function playChord(
+  notes: Note[],
+  duration = 1000,
+  waveType: OscillatorType = "sine",
+): Promise<void> {
+  return playGroups([notes], duration, 0, waveType, false);
+}
+export function playArpeggio(
+  notes: Note[],
+  noteDuration = 500,
+  gap = 100,
+  waveType: OscillatorType = "sine",
+): Promise<void> {
+  return playGroups(
+    notes.map((note) => [note]),
+    noteDuration,
+    gap,
+    waveType,
+    false,
+  );
+}
+/** One clock for the entire interval, chord or tonal-context progression. */
+export function playSequence(
+  groups: Note[][],
+  duration = 650,
+  gap = 120,
+): Promise<void> {
+  return playGroups(groups, duration, gap, "sine", true);
+}
 export function setVolume(volume: number): void {
   audioManager.setVolume(volume);
 }
-
-/**
- * 오디오 시스템 초기화
- */
-export async function initializeAudio(): Promise<void> {
-  await audioManager.initialize();
+export function initializeAudio(): Promise<void> {
+  return audioManager.initialize();
 }
-
-/**
- * 오디오 시스템 정리
- */
 export function disposeAudio(): void {
+  stopAllNotes();
   audioManager.dispose();
 }
-
-/**
- * 오디오 컨텍스트 상태 확인
- */
 export function getAudioContextState(): AudioContextState | null {
   try {
     return audioManager.getAudioContext().state;

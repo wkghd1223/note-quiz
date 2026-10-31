@@ -23,8 +23,7 @@
   --primary-strong: #4c1d95;
   --primary-soft: #ede9fe;
   --shadow-card:
-    0 14px 40px rgba(76, 29, 149, 0.08),
-    0 2px 6px rgba(15, 23, 42, 0.04);
+    0 14px 40px rgba(76, 29, 149, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
   --shadow-button: 0 10px 24px rgba(91, 33, 182, 0.28);
 }
 
@@ -72,7 +71,43 @@ textarea {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at top left, rgba(124, 58, 237, 0.1), transparent 28%),
-    radial-gradient(circle at bottom right, rgba(91, 33, 182, 0.08), transparent 24%);
+    radial-gradient(
+      circle at top left,
+      rgba(124, 58, 237, 0.1),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      rgba(91, 33, 182, 0.08),
+      transparent 24%
+    );
   z-index: -1;
+}
+
+/* Reserve layout space for observed Journey wrappers; never cover or hide ads. */
+.practice-ad-safe {
+  padding-inline-end: var(--ad-side-inset, 0px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+}
+html {
+  scroll-padding-bottom: calc(var(--ad-bottom-inset, 0px) + 24px);
+}
+.practice-ad-safe button,
+.practice-ad-safe input,
+.practice-ad-safe select {
+  scroll-margin-block: 24px calc(var(--ad-bottom-inset, 0px) + 24px);
+}
+
+body {
+  padding-bottom: var(--ad-bottom-inset, 0px);
+}
+
+/* A visible control can never occupy the fixed adhesion's viewport strip. */
+.practice-ad-safe {
+  height: calc(100dvh - var(--ad-bottom-inset, 0px));
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
 }

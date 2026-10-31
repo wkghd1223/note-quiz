@@ -74,21 +74,6 @@ export const trackLeaderboardSubmission = (payload: {
   });
 };
 
-export const trackAnswer = (payload: {
-  isCorrect: boolean;
-  timeSpent: number;
-  answerMode: string;
-  questionNumber: number;
-}) => {
-  emitAnalyticsEvent("note_quiz_answer_submitted", {
-    training_mode: "note_quiz",
-    is_correct: payload.isCorrect,
-    time_spent_ms: payload.timeSpent,
-    answer_mode: payload.answerMode,
-    question_number: payload.questionNumber,
-  });
-};
-
 export const trackSettingsChange = (payload: {
   setting: string;
   value: string;
@@ -120,23 +105,6 @@ export const trackEarTrainingStart = (settings: {
     note_set: settings.noteSet,
     time_limit: settings.timeLimit,
     session_type: settings.sessionType,
-  });
-};
-
-export const trackEarTrainingAnswer = (payload: {
-  inputMode: string;
-  expectedNote: string;
-  userNote: string;
-  isCorrect: boolean;
-  timeSpent: number;
-}) => {
-  emitAnalyticsEvent("ear_training_answer_submitted", {
-    training_mode: "ear_training",
-    input_mode: payload.inputMode,
-    expected_note: payload.expectedNote,
-    user_note: payload.userNote,
-    is_correct: payload.isCorrect,
-    time_spent_ms: payload.timeSpent,
   });
 };
 
@@ -198,3 +166,38 @@ export const trackLeaderboardTickerOpened = (surface: string) => {
     surface,
   });
 };
+
+export type LearningEvent =
+  | "entered"
+  | "started"
+  | "completed"
+  | "review_started"
+  | "result_restarted";
+export function trackLearningEvent(
+  event: LearningEvent,
+  details: {
+    mode: string;
+    difficulty: string;
+    presentation?: string;
+    sessionType?: string;
+    kind?: string;
+    completed?: boolean;
+    total?: number;
+    correct?: number;
+    entryStart?: boolean;
+    hasMistakes?: boolean;
+  },
+) {
+  emitAnalyticsEvent(`practice_${event}`, {
+    training_mode: details.mode,
+    difficulty: details.difficulty,
+    presentation: details.presentation,
+    session_type: details.sessionType,
+    session_kind: details.kind,
+    completed: details.completed,
+    entry_start: details.entryStart,
+    had_mistakes: details.hasMistakes,
+    total_questions: details.total,
+    correct_answers: details.correct,
+  });
+}

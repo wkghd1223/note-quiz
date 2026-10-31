@@ -30,6 +30,9 @@ export function useMicrophonePitch(): UseMicrophonePitchReturn {
   const [isListening, setIsListening] = useState(false);
   const [detectedNote, setDetectedNote] = useState<Note | null>(null);
 
+  const requestGeneration = useRef(0);
+  const mounted = useRef(true);
+
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
@@ -40,6 +43,7 @@ export function useMicrophonePitch(): UseMicrophonePitchReturn {
   const bufferRef = useRef<Float32Array | null>(null);
 
   const stopListening = useCallback(() => {
+    requestGeneration.current++;
     if (frameRef.current !== null) {
       cancelAnimationFrame(frameRef.current);
       frameRef.current = null;
@@ -64,7 +68,7 @@ export function useMicrophonePitch(): UseMicrophonePitchReturn {
     candidateKeyRef.current = null;
     candidateStartRef.current = 0;
 
-    setIsListening(false);
+    if (mounted.current) setIsListening(false);
   }, []);
 
   const startListening = useCallback(async () => {
@@ -78,6 +82,7 @@ export function useMicrophonePitch(): UseMicrophonePitchReturn {
     }
 
     stopListening();
+    const generation = requestGeneration.current;
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -88,7 +93,13 @@ export function useMicrophonePitch(): UseMicrophonePitchReturn {
         },
       });
 
+      if (!mounted.current || generation !== requestGeneration.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+      streamRef.current = stream;
       const audioContext = new window.AudioContext();
+      audioContextRef.current = audioContext;
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 2048;
       analyser.smoothingTimeConstant = 0.25;
@@ -119,7 +130,7 @@ export function useMicrophonePitch(): UseMicrophonePitchReturn {
         currentAnalyser.getFloatTimeDomainData(currentBuffer);
         const frequency = detectPitch(
           currentBuffer,
-          currentAudioContext.sampleRate
+          currentAudioContext.sampleRate,
         );
 
         if (!frequency) {
@@ -153,16 +164,23 @@ export function useMicrophonePitch(): UseMicrophonePitchReturn {
 
       frameRef.current = requestAnimationFrame(tick);
     } catch (error) {
+      if (!mounted.current || generation !== requestGeneration.current) return;
       setPermissionState(
         error instanceof DOMException && error.name === "NotAllowedError"
           ? "denied"
-          : "error"
+          : "error",
       );
       stopListening();
     }
   }, [stopListening]);
 
-  useEffect(() => stopListening, [stopListening]);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      stopListening();
+    };
+  }, [stopListening]);
 
   return {
     permissionState,

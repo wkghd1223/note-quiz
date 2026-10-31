@@ -47,6 +47,7 @@ interface GameSettings {
   };
   answerMode: AnswerMode;
   enableSound: boolean;
+  questionLimit?: number | null; // 10 by default, null/undefined for free practice
   timeLimit?: number; // seconds, undefined for no limit
   enableAccidentals: boolean; // 임시표 사용 여부
   accidentalProbability: number; // 임시표가 나올 확률 (0-1)
@@ -65,7 +66,22 @@ interface Question {
 }
 
 // 답안 정보
+type PracticeSessionKind = "practice" | "review" | "daily";
+
+interface NoteSessionOptions {
+  kind?: PracticeSessionKind;
+  questions?: Question[];
+  questionLimit?: number;
+}
+
+interface EarSessionOptions {
+  kind?: PracticeSessionKind;
+  questions?: EarTrainingQuestion[];
+  questionLimit?: number;
+}
+
 interface Answer {
+  question?: Question;
   note: Note;
   correctNote: Note;
   isCorrect: boolean;
@@ -75,6 +91,7 @@ interface Answer {
 
 // 게임 결과
 interface GameResult {
+  completed?: boolean;
   sessionId: string;
   sessionPoints: number;
   totalQuestions: number;
@@ -100,6 +117,7 @@ interface Feedback {
 }
 
 interface EarTrainingSettings {
+  questionLimit?: number | null;
   inputMode: EarTrainingInputMode;
   noteSet: EarTrainingNoteSet;
   timeLimit?: number;
@@ -117,6 +135,7 @@ interface EarTrainingQuestion {
 }
 
 interface EarTrainingAnswer {
+  question?: EarTrainingQuestion;
   note: Note;
   correctNote: Note;
   isCorrect: boolean;
@@ -125,6 +144,8 @@ interface EarTrainingAnswer {
 }
 
 interface EarTrainingResult {
+  sessionId?: string;
+  completed?: boolean;
   totalQuestions: number;
   correctAnswers: number;
   totalTime: number;

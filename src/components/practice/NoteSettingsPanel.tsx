@@ -1,50 +1,58 @@
 "use client";
 
-import React from "react";
+import React, { useId } from "react";
 import { CLEFS, KEY_SIGNATURES } from "@/lib/music/constants";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useGameStore } from "@/store/gameStore";
+import {
+  SettingsChoice,
+  settingsActionClassName,
+  settingsCheckboxClassName,
+  settingsLabelClassName,
+  settingsSelectClassName,
+  settingsToggleClassName,
+} from "./SettingsControls";
 
 export default function NoteSettingsPanel() {
+  const settingsId = useId();
   const { t } = useTranslation();
   const { settings, updateSettings, resetSettings, resetStats } =
     useGameStore();
 
   return (
     <div className="grid gap-4">
-      <section className="grid gap-2">
-        <label className="text-xs font-black uppercase text-slate-500">
+      <fieldset className="grid gap-2">
+        <legend className={`mb-2 ${settingsLabelClassName}`}>
           {t.settingsLabels.clef}
-        </label>
+        </legend>
         <div className="grid grid-cols-2 gap-2">
           {(["random", ...CLEFS] as Array<ClefType | "random">).map((clef) => (
-            <button
+            <SettingsChoice
               key={clef}
-              type="button"
+              selected={settings.clef === clef}
               onClick={() => updateSettings({ clef })}
-              className={`min-h-10 rounded-lg border px-3 text-sm font-black ${
-                settings.clef === clef
-                  ? "border-slate-950 bg-slate-950 text-white"
-                  : "border-slate-200 bg-white text-slate-700"
-              }`}
             >
               {clef === "random" ? t.clefs.random : t.clefs[clef]}
-            </button>
+            </SettingsChoice>
           ))}
         </div>
-      </section>
+      </fieldset>
 
       <section className="grid gap-2">
-        <label className="text-xs font-black uppercase text-slate-500">
+        <label
+          htmlFor={`${settingsId}-key-signature`}
+          className={settingsLabelClassName}
+        >
           {t.settingsLabels.keySignature}
         </label>
         <select
+          id={`${settingsId}-key-signature`}
           aria-label={t.settingsLabels.keySignature}
           value={settings.keySignature}
           onChange={(event) =>
             updateSettings({ keySignature: event.target.value })
           }
-          className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900"
+          className={settingsSelectClassName}
         >
           <option value="random">{t.keySignatures.random}</option>
           {Object.keys(KEY_SIGNATURES).map((key) => (
@@ -55,32 +63,27 @@ export default function NoteSettingsPanel() {
         </select>
       </section>
 
-      <section className="grid gap-2">
-        <label className="text-xs font-black uppercase text-slate-500">
+      <fieldset className="grid gap-2">
+        <legend className={`mb-2 ${settingsLabelClassName}`}>
           {t.settingsLabels.answerMode}
-        </label>
+        </legend>
         <div className="grid gap-2">
           {(["piano", "solfege", "microphone"] as AnswerMode[]).map((mode) => (
-            <button
+            <SettingsChoice
               key={mode}
-              type="button"
+              selected={settings.answerMode === mode}
               onClick={() => updateSettings({ answerMode: mode })}
-              className={`min-h-10 rounded-lg border px-3 text-sm font-black ${
-                settings.answerMode === mode
-                  ? "border-[#5b21b6] bg-[#5b21b6] text-white"
-                  : "border-slate-200 bg-white text-slate-700"
-              }`}
             >
               {mode === "piano" && t.answerModes.piano}
               {mode === "solfege" && t.answerModes.solfege}
               {mode === "microphone" && t.answerModes.microphone}
-            </button>
+            </SettingsChoice>
           ))}
         </div>
-      </section>
+      </fieldset>
 
-      <section className="grid gap-3">
-        <label className="flex min-h-11 items-center justify-between rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-800">
+      <section className="grid gap-2">
+        <label className={settingsToggleClassName}>
           {t.settingsLabels.enableSound}
           <input
             type="checkbox"
@@ -88,10 +91,10 @@ export default function NoteSettingsPanel() {
             onChange={(event) =>
               updateSettings({ enableSound: event.target.checked })
             }
-            className="h-4 w-4"
+            className={settingsCheckboxClassName}
           />
         </label>
-        <label className="flex min-h-11 items-center justify-between rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-800">
+        <label className={settingsToggleClassName}>
           {t.settingsLabels.accidentals}
           <input
             type="checkbox"
@@ -99,43 +102,72 @@ export default function NoteSettingsPanel() {
             onChange={(event) =>
               updateSettings({ enableAccidentals: event.target.checked })
             }
-            className="h-4 w-4"
+            className={settingsCheckboxClassName}
           />
         </label>
       </section>
 
       <section className="grid gap-2">
-        <label className="text-xs font-black uppercase text-slate-500">
-          {t.settingsLabels.timeLimit}
+        <label
+          htmlFor={`${settingsId}-session-type`}
+          className={settingsLabelClassName}
+        >
+          {t.learning.sessionType}
         </label>
         <select
-          aria-label={t.settingsLabels.timeLimit}
-          value={settings.timeLimit ?? 0}
-          onChange={(event) => {
-            const value = Number(event.target.value);
-            updateSettings({ timeLimit: value === 0 ? undefined : value });
-          }}
-          className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900"
+          id={`${settingsId}-session-type`}
+          aria-label={t.learning.sessionType}
+          value={
+            settings.questionLimit
+              ? "ten"
+              : settings.timeLimit
+                ? "timed"
+                : "free"
+          }
+          onChange={(event) =>
+            updateSettings({
+              questionLimit: event.target.value === "ten" ? 10 : undefined,
+              timeLimit: event.target.value === "timed" ? 60 : undefined,
+            })
+          }
+          className={settingsSelectClassName}
         >
-          <option value={0}>{t.earTraining.session.practice}</option>
-          <option value={30}>30 {t.units.seconds}</option>
-          <option value={60}>60 {t.units.seconds}</option>
-          <option value={180}>180 {t.units.seconds}</option>
+          <option value="ten">{t.learning.ten}</option>
+          <option value="free">{t.learning.free}</option>
+          <option value="timed">{t.learning.timed}</option>
         </select>
+        {settings.timeLimit !== undefined && (
+          <fieldset className="mt-2 grid gap-2">
+            <legend className={`mb-2 ${settingsLabelClassName}`}>
+              {t.settingsLabels.timeLimit}
+            </legend>
+            <div className="grid grid-cols-3 gap-2">
+              {[30, 60, 180].map((time) => (
+                <SettingsChoice
+                  key={time}
+                  selected={settings.timeLimit === time}
+                  onClick={() => updateSettings({ timeLimit: time })}
+                >
+                  {time} {t.units.seconds}
+                </SettingsChoice>
+              ))}
+            </div>
+          </fieldset>
+        )}
       </section>
 
       <div className="grid grid-cols-2 gap-2 border-t border-slate-200 pt-4">
         <button
           type="button"
           onClick={resetSettings}
-          className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-black text-slate-700"
+          className={settingsActionClassName}
         >
           {t.settingsLabels.resetToDefault}
         </button>
         <button
           type="button"
           onClick={resetStats}
-          className="min-h-10 rounded-lg bg-slate-950 px-3 text-sm font-black text-white"
+          className={settingsActionClassName}
         >
           {t.settingsLabels.resetAllStats}
         </button>

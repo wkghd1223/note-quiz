@@ -30,14 +30,33 @@ export default function PracticeDialog({
     const previousOverflowX = document.body.style.overflowX;
     const previousOverflowY = document.body.style.overflowY;
     const { scrollX, scrollY } = window;
+    const workspace = document.querySelector<HTMLElement>(
+      "[data-practice-scroll]",
+    );
+    const previousWorkspace = workspace
+      ? {
+          top: workspace.scrollTop,
+          left: workspace.scrollLeft,
+          overflow: workspace.style.overflowY,
+        }
+      : null;
     dialog.showModal();
     document.body.style.overflow = "hidden";
+    if (workspace) workspace.style.overflowY = "hidden";
     closeButtonRef.current?.focus({ preventScroll: true });
 
     return () => {
       dialog.close();
       document.body.style.overflowX = previousOverflowX;
       document.body.style.overflowY = previousOverflowY;
+      if (workspace && previousWorkspace) {
+        workspace.style.overflowY = previousWorkspace.overflow;
+        workspace.scrollTo({
+          top: previousWorkspace.top,
+          left: previousWorkspace.left,
+          behavior: "instant",
+        });
+      }
       const returnTarget =
         previousFocus instanceof HTMLElement &&
         previousFocus !== document.body &&
@@ -53,6 +72,12 @@ export default function PracticeDialog({
   return (
     <dialog
       ref={dialogRef}
+      style={{
+        inset:
+          "16px var(--ad-dialog-side-inset, var(--ad-side-inset, 0px)) calc(var(--ad-bottom-inset, 0px) + 16px) 0",
+        maxHeight:
+          "min(70dvh, calc(100dvh - var(--ad-bottom-inset, 0px) - 32px))",
+      }}
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
@@ -90,7 +115,7 @@ export default function PracticeDialog({
       }}
       className="m-auto max-h-[70dvh] w-[calc(100%-2rem)] max-w-lg overflow-hidden rounded-xl border border-slate-200 bg-white p-0 text-slate-950 shadow-[0_18px_48px_rgba(15,23,42,0.18)] backdrop:bg-slate-950/35"
     >
-      <div className="flex max-h-[70dvh] flex-col">
+      <div className="flex flex-col" style={{ maxHeight: "inherit" }}>
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
           <h2 id={titleId} className="text-base font-black">
             {title}

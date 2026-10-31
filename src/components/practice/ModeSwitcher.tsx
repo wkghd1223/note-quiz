@@ -1,55 +1,35 @@
 "use client";
-
-import React from "react";
-import { FaBookOpen, FaHeadphones } from "react-icons/fa";
+import React, { useId } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
-
-export type PracticeMode = "note" | "ear";
-
-interface ModeSwitcherProps {
+import type { TrainingMode } from "@/lib/practice/types";
+export type PracticeMode = TrainingMode;
+export default function ModeSwitcher({
+  mode,
+  onChange,
+}: {
   mode: PracticeMode;
   onChange: (mode: PracticeMode) => void;
-}
-
-export default function ModeSwitcher({ mode, onChange }: ModeSwitcherProps) {
-  const { t } = useTranslation();
-
-  const modes = [
-    {
-      id: "note" as const,
-      label: t.gameNavTitle,
-      icon: FaBookOpen,
-    },
-    {
-      id: "ear" as const,
-      label: t.earTraining.title,
-      icon: FaHeadphones,
-    },
-  ];
-
+}) {
+  const { t } = useTranslation(),
+    id = useId();
   return (
-    <div className="grid grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1">
-      {modes.map((item) => {
-        const Icon = item.icon;
-        const isActive = item.id === mode;
-
-        return (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => onChange(item.id)}
-            aria-pressed={isActive}
-            className={`flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 text-sm font-black transition-colors ${
-              isActive
-                ? "bg-white text-slate-950 shadow-[0_8px_20px_rgba(15,23,42,0.08)]"
-                : "text-slate-600 hover:bg-white/70 hover:text-slate-950"
-            }`}
-          >
-            <Icon className={isActive ? "text-[#5b21b6]" : "text-slate-500"} />
-            <span>{item.label}</span>
-          </button>
-        );
-      })}
+    <div className="grid min-w-0 gap-1">
+      <label htmlFor={id} className="text-xs font-bold text-slate-500">
+        {t.learning.chooseMode}
+      </label>
+      <select
+        id={id}
+        data-practice-mode
+        value={mode}
+        onChange={(e) => onChange(e.target.value as PracticeMode)}
+        className="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900"
+      >
+        {(["note", "ear", "interval", "chord"] as const).map((value) => (
+          <option key={value} value={value}>
+            {t.learning[value]}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

@@ -1,7 +1,14 @@
 "use client";
 
-import React from "react";
+import React, { useId } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
+import {
+  SettingsChoice,
+  settingsCheckboxClassName,
+  settingsLabelClassName,
+  settingsSelectClassName,
+  settingsToggleClassName,
+} from "@/components/practice/SettingsControls";
 
 interface EarTrainingSettingsProps {
   settings: EarTrainingSettings;
@@ -15,6 +22,7 @@ const EarTrainingSettings: React.FC<EarTrainingSettingsProps> = ({
   embedded = false,
 }) => {
   const { t } = useTranslation();
+  const settingsId = useId();
   const octaveValues = [0, 1, 2, 3, 4, 5, 6, 7, 8] as const;
 
   const handleOctaveChange = (bound: "min" | "max", value: number) => {
@@ -34,133 +42,133 @@ const EarTrainingSettings: React.FC<EarTrainingSettingsProps> = ({
       className={
         embedded
           ? ""
-          : "rounded-xl border border-[#ded6f7] bg-white p-5 shadow-[0_14px_40px_rgba(76,29,149,0.08)]"
+          : "rounded-xl border border-slate-200 bg-white p-4 shadow-[0_12px_30px_rgba(15,23,42,0.06)]"
       }
     >
       {!embedded && (
-        <h2 className="text-lg font-black tracking-[-0.03em] text-slate-950">
+        <h2 className="text-base font-black text-slate-950">
           {t.earTraining.settings}
         </h2>
       )}
 
-      <div className={`${embedded ? "" : "mt-5 "}space-y-5`}>
-        <div>
-          <label className="mb-2 block text-xs font-bold text-slate-500">
-            {t.earTraining.session.practice} / {t.earTraining.session.timed}
+      <div className={`${embedded ? "" : "mt-4 "}grid gap-4`}>
+        <div className="grid gap-2">
+          <label
+            htmlFor={`${settingsId}-session-type`}
+            className={settingsLabelClassName}
+          >
+            {t.learning.sessionType}
           </label>
-          <div className="grid grid-cols-2 gap-2">
-            {(["practice", "timed"] as EarTrainingSessionType[]).map((type) => (
-              <button
-                key={type}
-                onClick={() =>
-                  onChange({
-                    sessionType: type,
-                    timeLimit:
-                      type === "timed" ? (settings.timeLimit ?? 60) : undefined,
-                  })
-                }
-                className={`rounded-lg border px-4 py-3 text-sm font-bold ${
-                  settings.sessionType === type
-                    ? "border-[#7c3aed] bg-[#ede9fe] text-[#5b21b6]"
-                    : "border-[#ded6f7] bg-white text-slate-700"
-                }`}
-              >
-                {type === "practice"
-                  ? t.earTraining.session.practice
-                  : t.earTraining.session.timed}
-              </button>
-            ))}
-          </div>
+          <select
+            id={`${settingsId}-session-type`}
+            aria-label={t.learning.sessionType}
+            value={
+              settings.questionLimit
+                ? "ten"
+                : settings.sessionType === "timed"
+                  ? "timed"
+                  : "free"
+            }
+            onChange={(event) =>
+              onChange({
+                sessionType:
+                  event.target.value === "timed" ? "timed" : "practice",
+                questionLimit: event.target.value === "ten" ? 10 : undefined,
+                timeLimit:
+                  event.target.value === "timed"
+                    ? (settings.timeLimit ?? 60)
+                    : undefined,
+              })
+            }
+            className={settingsSelectClassName}
+          >
+            <option value="ten">{t.learning.ten}</option>
+            <option value="free">{t.learning.free}</option>
+            <option value="timed">{t.learning.timed}</option>
+          </select>
         </div>
 
         {settings.sessionType === "timed" && (
-          <div>
-            <label className="mb-2 block text-xs font-bold text-slate-500">
+          <fieldset className="grid gap-2">
+            <legend className={`mb-2 ${settingsLabelClassName}`}>
               {t.timer.timeLimit}
-            </label>
+            </legend>
             <div className="grid grid-cols-3 gap-2">
               {[30, 60, 180].map((time) => (
-                <button
+                <SettingsChoice
                   key={time}
+                  selected={settings.timeLimit === time}
                   onClick={() => onChange({ timeLimit: time })}
-                  className={`rounded-lg border px-4 py-3 text-sm font-bold ${
-                    settings.timeLimit === time
-                      ? "border-[#7c3aed] bg-[#ede9fe] text-[#5b21b6]"
-                      : "border-[#ded6f7] bg-white text-slate-700"
-                  }`}
                 >
                   {time} {t.units.seconds}
-                </button>
+                </SettingsChoice>
               ))}
             </div>
-          </div>
+          </fieldset>
         )}
 
-        <div>
-          <label className="mb-2 block text-xs font-bold text-slate-500">
+        <fieldset className="grid gap-2">
+          <legend className={`mb-2 ${settingsLabelClassName}`}>
             {t.earTraining.noteSet.title}
-          </label>
+          </legend>
           <div className="grid grid-cols-2 gap-2">
             {(["natural", "chromatic"] as EarTrainingNoteSet[]).map(
               (noteSet) => (
-                <button
+                <SettingsChoice
                   key={noteSet}
+                  selected={settings.noteSet === noteSet}
                   onClick={() => onChange({ noteSet })}
-                  className={`rounded-lg border px-4 py-3 text-sm font-bold ${
-                    settings.noteSet === noteSet
-                      ? "border-[#7c3aed] bg-[#ede9fe] text-[#5b21b6]"
-                      : "border-[#ded6f7] bg-white text-slate-700"
-                  }`}
                 >
                   {noteSet === "natural"
                     ? t.earTraining.noteSet.natural
                     : t.earTraining.noteSet.chromatic}
-                </button>
+                </SettingsChoice>
               ),
             )}
           </div>
-        </div>
+        </fieldset>
 
-        <div>
-          <label className="mb-2 block text-xs font-bold text-slate-500">
+        <fieldset className="grid gap-2">
+          <legend className={`mb-2 ${settingsLabelClassName}`}>
             {t.earTraining.inputMode.title}
-          </label>
+          </legend>
           <div className="grid grid-cols-2 gap-2">
             {(["piano", "solfege"] as EarTrainingInputMode[]).map(
               (inputMode) => (
-                <button
+                <SettingsChoice
                   key={inputMode}
+                  selected={settings.inputMode === inputMode}
                   onClick={() => onChange({ inputMode })}
-                  className={`rounded-lg border px-4 py-3 text-sm font-bold ${
-                    settings.inputMode === inputMode
-                      ? "border-[#7c3aed] bg-[#ede9fe] text-[#5b21b6]"
-                      : "border-[#ded6f7] bg-white text-slate-700"
-                  }`}
                 >
                   {inputMode === "piano"
                     ? t.earTraining.inputMode.piano
                     : t.earTraining.inputMode.solfege}
-                </button>
+                </SettingsChoice>
               ),
             )}
           </div>
-        </div>
+        </fieldset>
 
-        <div>
-          <label className="mb-2 block text-xs font-bold text-slate-500">
+        <fieldset className="grid gap-2">
+          <legend className={`mb-2 ${settingsLabelClassName}`}>
             {t.settingsLabels.octaveRange}
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-lg border border-[#ede9fe] bg-[#faf9fe] p-3">
-              <label className="mb-2 block text-[11px] font-bold text-slate-500">
+          </legend>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="grid gap-2">
+              <label
+                htmlFor={`${settingsId}-octave-min`}
+                className={settingsLabelClassName}
+              >
                 {t.settingsLabels.octaveMin}
               </label>
               <select
+                id={`${settingsId}-octave-min`}
+                aria-label={t.settingsLabels.octaveMin}
                 value={settings.octaveRange.min}
                 onChange={(event) =>
                   handleOctaveChange("min", parseInt(event.target.value, 10))
                 }
-                className="w-full rounded-lg border border-[#ded6f7] bg-white px-3 py-2 text-sm font-semibold text-slate-700"
+                className={settingsSelectClassName}
               >
                 {octaveValues.map((octave) => (
                   <option key={`ear-min-${octave}`} value={octave}>
@@ -170,16 +178,21 @@ const EarTrainingSettings: React.FC<EarTrainingSettingsProps> = ({
               </select>
             </div>
 
-            <div className="rounded-lg border border-[#ede9fe] bg-[#faf9fe] p-3">
-              <label className="mb-2 block text-[11px] font-bold text-slate-500">
+            <div className="grid gap-2">
+              <label
+                htmlFor={`${settingsId}-octave-max`}
+                className={settingsLabelClassName}
+              >
                 {t.settingsLabels.octaveMax}
               </label>
               <select
+                id={`${settingsId}-octave-max`}
+                aria-label={t.settingsLabels.octaveMax}
                 value={settings.octaveRange.max}
                 onChange={(event) =>
                   handleOctaveChange("max", parseInt(event.target.value, 10))
                 }
-                className="w-full rounded-lg border border-[#ded6f7] bg-white px-3 py-2 text-sm font-semibold text-slate-700"
+                className={settingsSelectClassName}
               >
                 {octaveValues.map((octave) => (
                   <option key={`ear-max-${octave}`} value={octave}>
@@ -189,18 +202,18 @@ const EarTrainingSettings: React.FC<EarTrainingSettingsProps> = ({
               </select>
             </div>
           </div>
-        </div>
+        </fieldset>
 
-        <label className="flex items-center gap-3 text-sm font-medium text-slate-700">
+        <label className={settingsToggleClassName}>
+          {t.settingsLabels.enableSound}
           <input
             type="checkbox"
             checked={settings.enableSound}
             onChange={(event) =>
               onChange({ enableSound: event.target.checked })
             }
-            className="h-4 w-4 rounded border-[#ded6f7] text-[#5b21b6] focus:ring-[#7c3aed]"
+            className={settingsCheckboxClassName}
           />
-          {t.settingsLabels.enableSound}
         </label>
       </div>
     </div>

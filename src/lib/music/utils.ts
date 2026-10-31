@@ -4,7 +4,6 @@ import {
   SOLFEGE_TO_NOTE_MAPPING,
   KEY_SIGNATURES,
   DEFAULT_OCTAVE_RANGES,
-  NOTE_FREQUENCIES,
   CHROMATIC_NOTE_PATTERN,
 } from "./constants";
 
@@ -14,12 +13,13 @@ import {
 export function generateRandomNote(
   octaveMin: Octave = 4,
   octaveMax: Octave = 6,
-  allowedNotes?: NoteName[]
+  allowedNotes?: NoteName[],
+  rng: () => number = Math.random,
 ): Note {
   const notes = allowedNotes || NOTE_NAMES;
-  const randomNote = notes[Math.floor(Math.random() * notes.length)];
+  const randomNote = notes[Math.floor(rng() * notes.length)];
   const randomOctave =
-    Math.floor(Math.random() * (octaveMax - octaveMin + 1)) + octaveMin;
+    Math.floor(rng() * (octaveMax - octaveMin + 1)) + octaveMin;
 
   return {
     name: randomNote,
@@ -33,7 +33,7 @@ export function generateRandomNote(
  */
 export function applyKeySignature(
   note: Note,
-  keySignature: KeySignature
+  keySignature: KeySignature,
 ): Note {
   const { name, octave, accidental } = note;
 
@@ -108,9 +108,54 @@ export function solfegeToNote(solfege: SolfegeNote): NoteName {
 /**
  * 음표의 주파수 계산
  */
+const NATURAL_PITCH: Record<NoteName, number> = {
+  C: 0,
+  D: 2,
+  E: 4,
+  F: 5,
+  G: 7,
+  A: 9,
+  B: 11,
+};
+
+/** Equal temperament, including enharmonic spellings that cross an octave. */
+export function noteToMidi(note: Note): number {
+  if (
+    !Object.prototype.hasOwnProperty.call(NATURAL_PITCH, note.name) ||
+    !Number.isInteger(note.octave) ||
+    note.octave < 0 ||
+    note.octave > 8 ||
+    ![null, "natural", "sharp", "flat"].includes(note.accidental)
+  ) {
+    throw new RangeError("Invalid note");
+  }
+  return (
+    (note.octave + 1) * 12 +
+    NATURAL_PITCH[note.name] +
+    (note.accidental === "sharp" ? 1 : note.accidental === "flat" ? -1 : 0)
+  );
+}
+
+export function midiToNote(midi: number, preferFlats = false): Note {
+  if (!Number.isInteger(midi) || midi < 12 || midi > 119)
+    throw new RangeError("MIDI note is outside the supported octave range");
+  const names = preferFlats
+    ? ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]
+    : ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  const name = names[midi % 12];
+  return {
+    name: name[0] as NoteName,
+    accidental: name.endsWith("#")
+      ? "sharp"
+      : name.endsWith("b")
+        ? "flat"
+        : "natural",
+    octave: (Math.floor(midi / 12) - 1) as Octave,
+  };
+}
+
 export function getNoteFrequency(note: Note): number {
-  const noteString = noteToString(note);
-  return NOTE_FREQUENCIES[noteString] || 440; // 기본값은 A4
+  return 440 * Math.pow(2, (noteToMidi(note) - 69) / 12);
 }
 
 /**
@@ -129,7 +174,7 @@ export function notesEqual(note1: Note, note2: Note): boolean {
  */
 export function isNoteAffectedByKeySignature(
   note: Note,
-  keySignature: KeySignature
+  keySignature: KeySignature,
 ): boolean {
   return (
     keySignature.sharps.includes(note.name) ||
@@ -140,9 +185,11 @@ export function isNoteAffectedByKeySignature(
 /**
  * 랜덤 조표 선택
  */
-export function getRandomKeySignature(): KeySignature {
+export function getRandomKeySignature(
+  rng: () => number = Math.random,
+): KeySignature {
   const keys = Object.keys(KEY_SIGNATURES);
-  const randomKey = keys[Math.floor(Math.random() * keys.length)];
+  const randomKey = keys[Math.floor(rng() * keys.length)];
   return KEY_SIGNATURES[randomKey];
 }
 
@@ -161,7 +208,8 @@ export function getDefaultOctaveRange(clef: ClefType): {
  */
 function generateNoteInStaffRange(
   clef: ClefType,
-  staffRange: { ledgerLinesAbove: number; ledgerLinesBelow: number }
+  staffRange: { ledgerLinesAbove: number; ledgerLinesBelow: number },
+  rng: () => number,
 ): Note {
   // 오선지 기본 위치 정의
   // 오선지 5줄: 0, 2, 4, 6, 8 (짝수는 선, 홀수는 간격)
@@ -195,8 +243,7 @@ function generateNoteInStaffRange(
   }
 
   // 랜덤 위치 선택
-  const randomPosition =
-    allPositions[Math.floor(Math.random() * allPositions.length)];
+  const randomPosition = allPositions[Math.floor(rng() * allPositions.length)];
 
   // 위치를 음표로 변환
   return convertStaffPositionToNote(randomPosition, clef);
@@ -270,7 +317,8 @@ function convertStaffPositionToNote(position: number, clef: ClefType): Note {
 function addAccidental(
   note: Note,
   settings: GameSettings,
-  keySignature: KeySignature
+  keySignature: KeySignature,
+  rng: () => number,
 ): Note {
   // 임시표가 비활성화되어 있으면 아무것도 하지 않음
   if (!settings.enableAccidentals) {
@@ -278,7 +326,7 @@ function addAccidental(
   }
 
   // 임시표가 나올 확률 체크
-  if (Math.random() > settings.accidentalProbability) {
+  if (rng() > settings.accidentalProbability) {
     return note;
   }
 
@@ -290,7 +338,7 @@ function addAccidental(
 
   if (note.name === "E" || note.name === "B") {
     availableAccidentals = availableAccidentals.filter(
-      (acc) => acc !== "sharp"
+      (acc) => acc !== "sharp",
     );
   }
 
@@ -309,7 +357,7 @@ function addAccidental(
   } else {
     // 조표가 적용되지 않은 음표는 natural 제외 (natural은 표시하지 않음)
     availableAccidentals = availableAccidentals.filter(
-      (acc) => acc !== "natural"
+      (acc) => acc !== "natural",
     );
   }
 
@@ -320,9 +368,7 @@ function addAccidental(
 
   // 랜덤 임시표 선택
   const randomAccidental =
-    availableAccidentals[
-      Math.floor(Math.random() * availableAccidentals.length)
-    ];
+    availableAccidentals[Math.floor(rng() * availableAccidentals.length)];
 
   return {
     ...note,
@@ -333,33 +379,36 @@ function addAccidental(
 /**
  * 게임 설정에 따른 문제 생성
  */
-export function generateQuestion(settings: GameSettings): Question {
+export function generateQuestion(
+  settings: GameSettings,
+  rng: () => number = Math.random,
+): Question {
   // 음자리표 결정
   const clef =
     settings.clef === "random"
       ? (["treble", "bass", "alto", "tenor"] as ClefType[])[
-          Math.floor(Math.random() * 4)
+          Math.floor(rng() * 4)
         ]
       : settings.clef;
 
   // 조표 결정
   const keySignature =
     settings.keySignature === "random"
-      ? getRandomKeySignature()
+      ? getRandomKeySignature(rng)
       : KEY_SIGNATURES[settings.keySignature] || KEY_SIGNATURES["C"];
 
   // 보조선 범위에 따른 음표 생성
-  let baseNote = generateNoteInStaffRange(clef, settings.staffRange);
+  let baseNote = generateNoteInStaffRange(clef, settings.staffRange, rng);
 
   // 임시표 추가 (조표와 별개)
-  baseNote = addAccidental(baseNote, settings, keySignature);
+  baseNote = addAccidental(baseNote, settings, keySignature, rng);
 
   // 조표 적용 (임시표가 있으면 조표는 무시됨)
   // applyKeySignature 함수 내에서 임시표 여부를 확인하므로 항상 호출 가능
   const displayNote = applyKeySignature(baseNote, keySignature);
 
   return {
-    id: `question_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    id: `question_${rng().toString(36).slice(2, 12)}`,
     note: baseNote,
     clef,
     keySignature,
@@ -390,7 +439,7 @@ const ENHARMONIC_EQUIVALENTS: Record<string, string[]> = {
  */
 function getNoteWithAccidental(
   note: Note,
-  keySignature?: KeySignature
+  keySignature?: KeySignature,
 ): string {
   // 임시표가 있는 경우
   if (note.accidental === "sharp") {
@@ -440,7 +489,7 @@ export function validateAnswer(question: Question, userAnswer: Note): boolean {
   // 문제의 음표 (조표와 임시표가 적용된 최종 음표)
   const questionNoteStr = getNoteWithAccidental(
     question.note,
-    question.keySignature
+    question.keySignature,
   );
 
   // 사용자 답안 음표 (조표 정보 없이 - 사용자가 입력한 그대로)
@@ -451,25 +500,26 @@ export function validateAnswer(question: Question, userAnswer: Note): boolean {
 }
 
 export function generateEarTrainingQuestion(
-  settings: EarTrainingSettings
+  settings: EarTrainingSettings,
+  rng: () => number = Math.random,
 ): EarTrainingQuestion {
   const octave =
     Math.floor(
-      Math.random() * (settings.octaveRange.max - settings.octaveRange.min + 1)
+      rng() * (settings.octaveRange.max - settings.octaveRange.min + 1),
     ) + settings.octaveRange.min;
 
   const target =
     settings.noteSet === "chromatic"
       ? CHROMATIC_NOTE_PATTERN[
-          Math.floor(Math.random() * CHROMATIC_NOTE_PATTERN.length)
+          Math.floor(rng() * CHROMATIC_NOTE_PATTERN.length)
         ]
       : {
-          name: NOTE_NAMES[Math.floor(Math.random() * NOTE_NAMES.length)],
+          name: NOTE_NAMES[Math.floor(rng() * NOTE_NAMES.length)],
           accidental: "natural" as const,
         };
 
   return {
-    id: `ear_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+    id: `ear_${rng().toString(36).slice(2, 12)}`,
     targetNote: {
       name: target.name,
       accidental: target.accidental,
@@ -480,7 +530,7 @@ export function generateEarTrainingQuestion(
 
 export function validateEarTrainingAnswer(
   question: EarTrainingQuestion,
-  userAnswer: Note
+  userAnswer: Note,
 ): boolean {
   return (
     question.targetNote.name === userAnswer.name &&

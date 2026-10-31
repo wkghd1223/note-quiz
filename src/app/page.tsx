@@ -38,44 +38,65 @@ export default function HomePage() {
               {t.home.hero.title}
             </h1>
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              {t.home.hero.description}
+              {t.learning.entryDescription}
             </p>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              {(
+                [
+                  [
+                    "note",
+                    t.learning.note,
+                    t.home.hero.sightReadingDescription,
+                    FaBook,
+                  ],
+                  [
+                    "ear",
+                    t.learning.ear,
+                    t.earTraining.description,
+                    FaHeadphones,
+                  ],
+                  [
+                    "interval",
+                    t.learning.interval,
+                    t.learning.directionPreset,
+                    FaWaveSquare,
+                  ],
+                  ["chord", t.learning.chord, t.learning.chordPreset, FaMusic],
+                ] as const
+              ).map(([mode, title, description, Icon]) => (
+                <Link
+                  key={mode}
+                  href={`/practice?mode=${mode}`}
+                  className="group flex flex-col items-start rounded-xl border border-[#ded6f7] bg-white p-4 hover:border-[#7c3aed] sm:p-5"
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className="text-xl text-[#5b21b6]" />
+                    <h2 className="text-xl font-black text-slate-950">
+                      {title}
+                    </h2>
+                  </div>
+                  <p className="my-3 flex-1 text-sm leading-6 text-slate-600">
+                    {description}
+                  </p>
+                  <span className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#5b21b6] px-4 text-sm font-bold text-white">
+                    <FaPlay />
+                    {t.learning.ten}
+                  </span>
+                </Link>
+              ))}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-3 text-sm font-bold text-[#5b21b6]">
               <Link
-                href="/practice?mode=note"
-                className="group flex flex-col items-start rounded-xl border border-[#ded6f7] bg-white p-4 shadow-[0_14px_40px_rgba(76,29,149,0.08)] hover:border-[#7c3aed] sm:p-5"
+                href="/practice?share=1&mode=note&clef=bass&length=ten"
+                className="inline-flex min-h-11 items-center underline underline-offset-4"
               >
-                <div className="flex items-center gap-3">
-                  <FaBook className="text-xl text-[#5b21b6]" />
-                  <h2 className="text-xl font-black text-slate-950">
-                    {t.gameNavTitle}
-                  </h2>
-                </div>
-                <p className="my-3 flex-1 text-sm leading-6 text-slate-600">
-                  {t.home.hero.sightReadingDescription}
-                </p>
-                <span className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#5b21b6] px-4 text-sm font-bold text-white">
-                  <FaPlay />
-                  {t.startGame}
-                </span>
+                {t.learning.bassPreset}
               </Link>
               <Link
-                href="/practice?mode=ear"
-                className="group flex flex-col items-start rounded-xl border border-[#ded6f7] bg-white p-4 shadow-[0_14px_40px_rgba(76,29,149,0.08)] hover:border-[#7c3aed] sm:p-5"
+                href="/practice?mode=note&daily=1"
+                className="inline-flex min-h-11 items-center underline underline-offset-4"
               >
-                <div className="flex items-center gap-3">
-                  <FaWaveSquare className="text-xl text-[#5b21b6]" />
-                  <h2 className="text-xl font-black text-slate-950">
-                    {t.earTraining.title}
-                  </h2>
-                </div>
-                <p className="my-3 flex-1 text-sm leading-6 text-slate-600">
-                  {t.earTraining.description}
-                </p>
-                <span className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#5b21b6] px-4 text-sm font-bold text-white">
-                  <FaHeadphones />
-                  {t.earTraining.start}
-                </span>
+                {t.learning.daily}
               </Link>
             </div>
             <Link

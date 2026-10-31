@@ -1,4 +1,7 @@
+import { learningTranslations, type LearningTranslations } from "./learning";
+
 export interface Translations {
+  learning: LearningTranslations;
   // 게임 제목 및 기본
   gameTitle: string;
   gameNavTitle: string;
@@ -358,6 +361,7 @@ export interface Translations {
 
 export const translations: Record<Language, Translations> = {
   en: {
+    learning: learningTranslations.en,
     gameTitle: "Note Quiz",
     gameNavTitle: "Sight reading",
     brandDescription: "Master the Musical Staff",
@@ -723,6 +727,7 @@ export const translations: Record<Language, Translations> = {
   },
 
   ko: {
+    learning: learningTranslations.ko,
     gameTitle: "계이름 맞추기 게임",
     gameNavTitle: "독보 연습",
     brandDescription: "오선 위의 음을 더 빠르게 읽어보세요",
@@ -1085,6 +1090,7 @@ export const translations: Record<Language, Translations> = {
   },
 
   ja: {
+    learning: learningTranslations.ja,
     gameTitle: "音符クイズ",
     gameNavTitle: "譜読み練習",
     brandDescription: "五線譜の音をすばやく読めるように",
@@ -1446,6 +1452,7 @@ export const translations: Record<Language, Translations> = {
   },
 
   es: {
+    learning: learningTranslations.es,
     gameTitle: "Quiz de Notas",
     gameNavTitle: "Lectura musical",
     brandDescription: "Domina las notas del pentagrama",
@@ -1816,6 +1823,7 @@ export const translations: Record<Language, Translations> = {
   },
 
   de: {
+    learning: learningTranslations.de,
     gameTitle: "Noten-Quiz",
     gameNavTitle: "Notenlesen",
     brandDescription: "Meistere die Noten auf dem Notensystem",
@@ -2188,6 +2196,7 @@ export const translations: Record<Language, Translations> = {
   },
 
   fr: {
+    learning: learningTranslations.fr,
     gameTitle: "Quiz des Notes",
     gameNavTitle: "Lecture de notes",
     brandDescription: "Maîtrisez les notes sur la portée",

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 interface LanguageStore {
   language: Language;
@@ -41,10 +41,45 @@ export const useLanguageStore = create<LanguageStore>()(
     }),
     {
       name: "language-storage",
+      storage: createJSONStorage(() => ({
+        getItem: (key: string) => {
+          try {
+            const raw = window.localStorage.getItem(key);
+            if (raw) JSON.parse(raw);
+            return raw;
+          } catch {
+            return null;
+          }
+        },
+        setItem: (key: string, value: string) => {
+          try {
+            window.localStorage.setItem(key, value);
+          } catch {
+            /* Practice works without persistence. */
+          }
+        },
+        removeItem: (key: string) => {
+          try {
+            window.localStorage.removeItem(key);
+          } catch {
+            /* No stored state to remove. */
+          }
+        },
+      })),
+      merge: (persisted, current) => {
+        const value = persisted as Partial<LanguageStore> | undefined;
+        const supported = ["en", "ko", "ja", "es", "de", "fr"];
+        return {
+          ...current,
+          ...(value?.language && supported.includes(value.language)
+            ? { language: value.language, isInitialized: true }
+            : {}),
+        };
+      },
       partialize: (state) => ({
         language: state.language,
         isInitialized: state.isInitialized,
       }),
-    }
-  )
+    },
+  ),
 );

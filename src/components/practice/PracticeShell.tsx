@@ -39,7 +39,7 @@ export default function PracticeShell({
   const { t } = useTranslation();
 
   return (
-    <div className="grid w-full min-w-0 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_380px]">
+    <div className="grid w-full min-w-0 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_320px]">
       <section className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_14px_36px_rgba(15,23,42,0.06)]">
         <div className="border-b border-slate-200 p-3 sm:p-4">
           <div className="grid min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_minmax(260px,360px)] md:items-center">

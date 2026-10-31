@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { playPianoNote } from "@/lib/music/audio";
 import { useTranslation } from "@/hooks/useTranslation";
 
 interface SolfegeKeyboardProps {
-  onNoteClick?: (note: Note) => void;
+  onNoteClick?: (note: Note) => void | boolean | null;
+  onAudioError?: () => void;
   selectedNote?: Note | null;
   disabled?: boolean;
   showAccidentals?: boolean;
@@ -36,6 +37,7 @@ const SOLFEGE_LAYOUT: SolfegeKey[] = [
 
 const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
   onNoteClick,
+  onAudioError,
   selectedNote,
   disabled = false,
   showAccidentals = true,
@@ -43,6 +45,13 @@ const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
 }) => {
   const { t } = useTranslation();
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   // 도레미 텍스트 가져오기 함수
   const getSolfegeText = useCallback(
@@ -51,7 +60,7 @@ const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
         keyData.accidental === "sharp" ? `${keyData.note}#` : keyData.note;
       return t.solfege.notes[noteKey as keyof typeof t.solfege.notes];
     },
-    [t]
+    [t],
   );
 
   // 키 클릭 핸들러
@@ -67,6 +76,9 @@ const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
 
       const keyId = getSolfegeText(keyData);
 
+      // Submit synchronously; audio completion must never submit an old answer.
+      if (onNoteClick?.(note) === null) return;
+
       // 키 눌림 상태 업데이트
       setPressedKeys((prev) => new Set(prev).add(keyId));
 
@@ -75,21 +87,20 @@ const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
         await playPianoNote(note, 500);
       } catch (error) {
         console.error("Failed to play note:", error);
+        if (mounted.current) onAudioError?.();
       }
 
       // 키 눌림 상태 해제
       setTimeout(() => {
+        if (!mounted.current) return;
         setPressedKeys((prev) => {
           const newSet = new Set(prev);
           newSet.delete(keyId);
           return newSet;
         });
       }, 150);
-
-      // 부모 컴포넌트에 알림
-      onNoteClick?.(note);
     },
-    [disabled, onNoteClick, getSolfegeText]
+    [disabled, onNoteClick, onAudioError, getSolfegeText],
   );
 
   // 선택된 키인지 확인
@@ -102,7 +113,7 @@ const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
         selectedNote.accidental === keyData.accidental
       );
     },
-    [selectedNote]
+    [selectedNote],
   );
 
   return (
@@ -130,7 +141,9 @@ const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
       <div className="mx-auto max-w-5xl">
         {/* 도레미 키보드 */}
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-12">
-          {SOLFEGE_LAYOUT.filter((keyData) => showAccidentals || keyData.color === "white").map((keyData) => {
+          {SOLFEGE_LAYOUT.filter(
+            (keyData) => showAccidentals || keyData.color === "white",
+          ).map((keyData) => {
             const solfegeText = getSolfegeText(keyData);
             const isPressed = pressedKeys.has(solfegeText);
             const isSelected = isKeySelected(keyData);
@@ -138,6 +151,7 @@ const SolfegeKeyboard: React.FC<SolfegeKeyboardProps> = ({
 
             return (
               <button
+                type="button"
                 key={solfegeText}
                 className={`
                     solfege-key rounded-[1.4rem] border-2 p-4 text-sm font-bold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#c4b5fd] sm:p-5 sm:text-base

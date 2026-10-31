@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { playPianoNote } from "@/lib/music/audio";
 import { PIANO_KEYS } from "@/lib/music/constants";
 // import { useTranslation } from "@/hooks/useTranslation";
 
 interface PianoKeyboardProps {
-  onNoteClick?: (note: Note) => void;
+  onNoteClick?: (note: Note) => void | boolean | null;
+  onAudioError?: () => void;
   selectedNote?: Note | null;
   disabled?: boolean;
   showLabels?: boolean;
@@ -23,6 +24,7 @@ interface PianoKey {
 
 const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
   onNoteClick,
+  onAudioError,
   selectedNote,
   disabled = false,
   showLabels = true,
@@ -31,6 +33,13 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
 }) => {
   // const { t } = useTranslation();
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   // 키보드 키 생성
   const generateKeys = useCallback((): PianoKey[] => {
@@ -66,6 +75,9 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
 
       const keyId = `${key.note}${key.octave}`;
 
+      // Submit synchronously; audio completion must never submit an old answer.
+      if (onNoteClick?.(note) === null) return;
+
       // 키 눌림 상태 업데이트
       setPressedKeys((prev) => new Set(prev).add(keyId));
 
@@ -74,21 +86,20 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
         await playPianoNote(note, 500);
       } catch (error) {
         console.error("Failed to play note:", error);
+        if (mounted.current) onAudioError?.();
       }
 
       // 키 눌림 상태 해제
       setTimeout(() => {
+        if (!mounted.current) return;
         setPressedKeys((prev) => {
           const newSet = new Set(prev);
           newSet.delete(keyId);
           return newSet;
         });
       }, 150);
-
-      // 부모 컴포넌트에 알림
-      onNoteClick?.(note);
     },
-    [disabled, onNoteClick]
+    [disabled, onNoteClick, onAudioError],
   );
 
   // 선택된 키인지 확인
@@ -107,7 +118,7 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
         // 옥타브는 비교하지 않음
       );
     },
-    [selectedNote]
+    [selectedNote],
   );
 
   const keys = generateKeys();
@@ -148,6 +159,7 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
 
             return (
               <button
+                type="button"
                 key={keyId}
                 className={`
                   white-key relative border border-gray-300 bg-white md:hover:bg-gray-50
@@ -187,12 +199,13 @@ const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
             const whiteKeyIndex = whiteKeys.findIndex(
               (wk) =>
                 wk.octave === key.octave &&
-                getWhiteKeyBeforeBlack(key.note as string) === wk.note
+                getWhiteKeyBeforeBlack(key.note as string) === wk.note,
             );
             const leftPosition = whiteKeyIndex * 40 + 28; // 흰 건반 사이에 위치
 
             return (
               <button
+                type="button"
                 key={keyId}
                 className={`
                   black-key absolute border border-gray-800 bg-gray-900 md:hover:bg-gray-800

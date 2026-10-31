@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import "@/styles/globals.css";
 import { defaultMetadata } from "@/lib/metadata";
-import Footer from "@/components/layouts/footer";
+import GlobalFooter from "@/components/layouts/GlobalFooter";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import GoogleAnalyticsRouteTracker from "@/components/analytics/GoogleAnalyticsRouteTracker";
 import LanguageInitializer from "@/components/providers/LanguageInitializer";
@@ -43,7 +43,7 @@ export default function RootLayout({
         <LanguageInitializer />
         <GoogleAnalyticsRouteTracker />
         {children}
-        <Footer />
+        <GlobalFooter />
       </body>
     </html>
   );

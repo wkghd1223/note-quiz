@@ -21,8 +21,8 @@ export default function SettingsSurface({
 }: SettingsSurfaceProps) {
   return (
     <>
-      <aside className="hidden lg:block">
-        <div className="sticky top-4 rounded-xl border border-slate-200 bg-white p-4 shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+      <aside data-practice-settings className="hidden lg:block">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
           <div className="mb-4 flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-950 text-white">
               <FaSlidersH />

@@ -102,26 +102,36 @@ function getClientIpFromHeaders(headersList: Headers): string | null {
   return null;
 }
 
-async function lookupCountryByIp(ipAddress: string): Promise<LeaderboardCountry | null> {
+async function lookupCountryByIp(
+  ipAddress: string,
+): Promise<LeaderboardCountry | null> {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<null>((resolve) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      resolve(null);
+    }, 2000);
+  });
   try {
-    const response = await fetch(
-      `https://freeipapi.com/api/json/${encodeURIComponent(ipAddress)}`,
-      {
-        cache: "no-store",
-      },
-    );
-
-    if (!response.ok) return null;
-
-    const payload = (await response.json()) as {
-      countryCode?: string;
-    };
-
-    if (!payload.countryCode) return null;
-    return getCountryFromCode(payload.countryCode);
-  } catch (error) {
-    console.error("Failed to look up country by IP:", error);
+    return await Promise.race([
+      (async () => {
+        const response = await fetch(
+          `https://freeipapi.com/api/json/${encodeURIComponent(ipAddress)}`,
+          { cache: "no-store", signal: controller.signal },
+        );
+        if (!response.ok) return null;
+        const payload = (await response.json()) as { countryCode?: string };
+        return payload.countryCode
+          ? getCountryFromCode(payload.countryCode)
+          : null;
+      })(),
+      timeout,
+    ]);
+  } catch {
     return null;
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
   }
 }
 

@@ -5,14 +5,18 @@ import { FaPause, FaPlay, FaRedoAlt, FaStop } from "react-icons/fa";
 import { useGameStore } from "@/store/gameStore";
 import { useTranslation } from "@/hooks/useTranslation";
 
-const GameControl: React.FC = () => {
+const GameControl: React.FC<{ onStart?: () => void; busy?: boolean }> = ({
+  onStart,
+  busy = false,
+}) => {
   const { t } = useTranslation();
   const { gameState, startGame, pauseGame, resumeGame, endGame, resetGame } =
     useGameStore();
 
   // 게임 제어 함수들
   const handleStartGame = () => {
-    startGame();
+    if (onStart) onStart();
+    else startGame();
   };
 
   const handlePauseGame = () => {
@@ -38,6 +42,7 @@ const GameControl: React.FC = () => {
           <button
             type="button"
             onClick={handleStartGame}
+            disabled={busy}
             className="col-span-2 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-[#5b21b6] px-3 py-2 text-sm font-bold text-white hover:bg-[#4c1d95]"
           >
             <FaPlay className="mr-2 text-sm" />
