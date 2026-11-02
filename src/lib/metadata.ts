@@ -103,6 +103,9 @@ export const defaultMetadata: Metadata = {
   },
   verification: {
     google: "G-RHJP137HQZ",
+    other: {
+      "naver-site-verification": "1aa30f4acf39fc69dd2adf0fa367051adb873fe9",
+    },
   },
   other: {
     "application/ld+json": JSON.stringify(jsonLdSchema),
