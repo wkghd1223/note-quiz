@@ -1,3 +1,6 @@
+import { chineseLearning } from "./zh";
+import { portugueseLearning } from "./pt";
+
 // Each row is English, Korean, Japanese, Spanish, German, French.
 const rows = {
   chooseMode: [
@@ -838,4 +841,6 @@ export const learningTranslations: Record<Language, LearningTranslations> = {
   es: language(3),
   de: language(4),
   fr: language(5),
+  zh: chineseLearning,
+  pt: portugueseLearning,
 };

@@ -16,7 +16,7 @@ function detectBrowserLanguage(): Language {
   const langCode = browserLang.split("-")[0].toLowerCase();
 
   // 지원하는 언어 목록
-  const supportedLanguages: Language[] = ["en", "ko", "ja", "es", "de", "fr"];
+  const supportedLanguages: Language[] = ["en", "ko", "ja", "es", "de", "fr", "zh", "pt"];
 
   if (supportedLanguages.includes(langCode as Language)) {
     return langCode as Language;
@@ -68,7 +68,7 @@ export const useLanguageStore = create<LanguageStore>()(
       })),
       merge: (persisted, current) => {
         const value = persisted as Partial<LanguageStore> | undefined;
-        const supported = ["en", "ko", "ja", "es", "de", "fr"];
+        const supported = ["en", "ko", "ja", "es", "de", "fr", "zh", "pt"];
         return {
           ...current,
           ...(value?.language && supported.includes(value.language)

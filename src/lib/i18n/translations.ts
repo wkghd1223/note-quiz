@@ -1,12 +1,17 @@
+import { navigationTranslations, type NavigationTranslations } from "./navigation";
 import { learningTranslations, type LearningTranslations } from "./learning";
+import { chineseTranslations } from "./zh";
+import { portugueseTranslations } from "./pt";
 
 export interface Translations {
+  navigation: NavigationTranslations;
   learning: LearningTranslations;
   // 게임 제목 및 기본
   gameTitle: string;
   gameNavTitle: string;
   brandDescription: string;
   startGame: string;
+  practiceUi: { minimizeResults: string; viewResults: string };
   pauseGame: string;
   resumeGame: string;
   endGame: string;
@@ -53,6 +58,9 @@ export interface Translations {
 
   microphone: {
     title: string;
+    signal: string;
+    signalQuiet: string;
+    signalActive: string;
     description: string;
     startListening: string;
     stopListening: string;
@@ -360,12 +368,16 @@ export interface Translations {
 }
 
 export const translations: Record<Language, Translations> = {
+  zh: chineseTranslations,
+  pt: portugueseTranslations,
   en: {
+    navigation: navigationTranslations.en,
     learning: learningTranslations.en,
     gameTitle: "Note Quiz",
     gameNavTitle: "Sight reading",
     brandDescription: "Master the Musical Staff",
-    startGame: "Start Game",
+    startGame: "Start practice",
+    practiceUi: { minimizeResults: "Minimize results", viewResults: "View results" },
     pauseGame: "Pause",
     resumeGame: "Resume",
     endGame: "End Game",
@@ -408,6 +420,9 @@ export const translations: Record<Language, Translations> = {
 
     microphone: {
       title: "Microphone Input",
+      signal: "Microphone signal",
+      signalQuiet: "Waiting for sound",
+      signalActive: "Sound detected",
       description: "Sing or play a steady note, then submit the detected note.",
       startListening: "Start Listening",
       stopListening: "Stop Listening",
@@ -530,7 +545,7 @@ export const translations: Record<Language, Translations> = {
       correctAnswer: "Correct Answer",
       yourAnswer: "Your Answer",
       playSound: "🔊 Play Sound",
-      startGameInstruction: 'Adjust settings and click "Start Game" button.',
+      startGameInstruction: "Adjust settings, then click “Start practice”.",
       gameCompleteInstruction:
         "Game complete! Check your results on the scoreboard.",
     },
@@ -584,14 +599,14 @@ export const translations: Record<Language, Translations> = {
         },
         multiLanguage: {
           title: "Multi-Language Support",
-          description: "Support for 6 languages worldwide",
+          description: "Support for 8 languages worldwide",
         },
       },
       howToUse: {
         title: "How to Use",
         step1: {
-          title: "Start Game",
-          description: "Click the 'Start Game' button to begin learning notes",
+          title: "Start practice",
+          description: "Click “Start practice” to begin learning notes.",
         },
         step2: {
           title: "Check Note",
@@ -628,7 +643,7 @@ export const translations: Record<Language, Translations> = {
         q4: {
           question: "What languages are supported?",
           answer:
-            "We support 6 languages: English, Korean, Japanese, Spanish, German, and French. The language is automatically selected based on your browser settings.",
+            "We support 8 languages: English, Korean, Japanese, Spanish, German, French, Simplified Chinese, and Brazilian Portuguese. On pages without a language prefix, the language is selected from your browser settings.",
         },
         q5: {
           question: "Is there a cost?",
@@ -727,11 +742,13 @@ export const translations: Record<Language, Translations> = {
   },
 
   ko: {
+    navigation: navigationTranslations.ko,
     learning: learningTranslations.ko,
     gameTitle: "계이름 맞추기 게임",
     gameNavTitle: "독보 연습",
     brandDescription: "오선 위의 음을 더 빠르게 읽어보세요",
-    startGame: "게임 시작",
+    startGame: "연습 시작",
+    practiceUi: { minimizeResults: "결과 접기", viewResults: "결과 보기" },
     pauseGame: "일시정지",
     resumeGame: "계속하기",
     endGame: "게임 종료",
@@ -774,6 +791,9 @@ export const translations: Record<Language, Translations> = {
 
     microphone: {
       title: "마이크 입력",
+      signal: "마이크 신호",
+      signalQuiet: "소리를 기다리는 중",
+      signalActive: "소리 감지됨",
       description: "한 음을 안정적으로 소리낸 뒤, 감지된 음을 제출하세요.",
       startListening: "듣기 시작",
       stopListening: "듣기 중지",
@@ -895,7 +915,7 @@ export const translations: Record<Language, Translations> = {
       correctAnswer: "정답",
       yourAnswer: "당신의 답안",
       playSound: "🔊 소리 듣기",
-      startGameInstruction: '설정을 조정한 후 "게임 시작" 버튼을 클릭하세요.',
+      startGameInstruction: "설정을 확인한 뒤 “연습 시작”을 누르세요.",
       gameCompleteInstruction:
         "게임이 완료되었습니다. 점수판에서 결과를 확인하세요.",
     },
@@ -949,14 +969,14 @@ export const translations: Record<Language, Translations> = {
         },
         multiLanguage: {
           title: "다국어 지원",
-          description: "6개 언어로 전 세계 사용자 지원",
+          description: "8개 언어로 전 세계 사용자 지원",
         },
       },
       howToUse: {
         title: "이용 방법",
         step1: {
-          title: "게임 시작",
-          description: '"게임 시작" 버튼을 클릭하여 음표 학습을 시작하세요',
+          title: "연습 시작",
+          description: "“연습 시작”을 눌러 음표 학습을 시작하세요.",
         },
         step2: {
           title: "음표 확인",
@@ -991,7 +1011,7 @@ export const translations: Record<Language, Translations> = {
         q4: {
           question: "어떤 언어를 지원하나요?",
           answer:
-            "영어, 한국어, 일본어, 스페인어, 독일어, 프랑스어 총 6개 언어를 지원합니다. 브라우저 언어 설정에 따라 자동으로 언어가 선택됩니다.",
+            "영어, 한국어, 일본어, 스페인어, 독일어, 프랑스어, 중국어 간체, 포르투갈어(브라질) 총 8개 언어를 지원합니다. 언어별 주소가 아닌 페이지에서는 브라우저 언어 설정에 따라 선택됩니다.",
         },
         q5: {
           question: "비용이 드나요?",
@@ -1090,11 +1110,13 @@ export const translations: Record<Language, Translations> = {
   },
 
   ja: {
+    navigation: navigationTranslations.ja,
     learning: learningTranslations.ja,
     gameTitle: "音符クイズ",
     gameNavTitle: "譜読み練習",
     brandDescription: "五線譜の音をすばやく読めるように",
-    startGame: "ゲーム開始",
+    startGame: "練習を開始",
+    practiceUi: { minimizeResults: "結果を小さく表示", viewResults: "結果を見る" },
     pauseGame: "一時停止",
     resumeGame: "再開",
     endGame: "ゲーム終了",
@@ -1132,6 +1154,9 @@ export const translations: Record<Language, Translations> = {
 
     microphone: {
       title: "マイク入力",
+      signal: "マイク信号",
+      signalQuiet: "音声を待っています",
+      signalActive: "音声を検出しました",
       description: "安定した単音を出して、検出された音を送信してください。",
       startListening: "聴き取り開始",
       stopListening: "聴き取り停止",
@@ -1217,7 +1242,7 @@ export const translations: Record<Language, Translations> = {
       correctAnswer: "正解",
       yourAnswer: "あなたの回答",
       playSound: "音を再生",
-      startGameInstruction: "ゲームを開始するには設定を確認してください。",
+      startGameInstruction: "設定を確認して「練習を開始」を押してください。",
       gameCompleteInstruction:
         "ゲームが完了しました。スコアボードで結果を確認してください。",
     },
@@ -1311,14 +1336,14 @@ export const translations: Record<Language, Translations> = {
         },
         multiLanguage: {
           title: "多言語対応",
-          description: "6言語で世界中のユーザーをサポート",
+          description: "8言語で世界中のユーザーをサポート",
         },
       },
       howToUse: {
         title: "使い方",
         step1: {
-          title: "ゲーム開始",
-          description: '"ゲーム開始"ボタンをクリックして音符学習を始めましょう',
+          title: "練習を開始",
+          description: "「練習を開始」を押して音符の学習を始めましょう。",
         },
         step2: {
           title: "音符確認",
@@ -1354,7 +1379,7 @@ export const translations: Record<Language, Translations> = {
         q4: {
           question: "どの言語に対応していますか？",
           answer:
-            "英語、日本語、韓国語、スペイン語、ドイツ語、フランス語の6言語に対応しています。ブラウザの言語設定に基づいて自動的に言語が選択されます。",
+            "英語、日本語、韓国語、スペイン語、ドイツ語、フランス語、簡体字中国語、ポルトガル語（ブラジル）の8言語に対応しています。言語別URLのないページでは、ブラウザの言語設定に基づいて選択されます。",
         },
         q5: {
           question: "費用はかかりますか？",
@@ -1452,11 +1477,13 @@ export const translations: Record<Language, Translations> = {
   },
 
   es: {
+    navigation: navigationTranslations.es,
     learning: learningTranslations.es,
     gameTitle: "Quiz de Notas",
     gameNavTitle: "Lectura musical",
     brandDescription: "Domina las notas del pentagrama",
-    startGame: "Iniciar Juego",
+    startGame: "Empezar práctica",
+    practiceUi: { minimizeResults: "Minimizar resultados", viewResults: "Ver resultados" },
     pauseGame: "Pausar",
     resumeGame: "Reanudar",
     endGame: "Terminar Juego",
@@ -1494,6 +1521,9 @@ export const translations: Record<Language, Translations> = {
 
     microphone: {
       title: "Entrada por micrófono",
+      signal: "Señal del micrófono",
+      signalQuiet: "Esperando sonido",
+      signalActive: "Sonido detectado",
       description:
         "Canta o toca una nota sostenida y luego envía la nota detectada.",
       startListening: "Comenzar a escuchar",
@@ -1582,7 +1612,8 @@ export const translations: Record<Language, Translations> = {
       correctAnswer: "Respuesta correcta",
       yourAnswer: "Tu respuesta",
       playSound: "Reproducir sonido",
-      startGameInstruction: "Revisa la configuración para comenzar el juego.",
+      startGameInstruction:
+        "Revisa la configuración y pulsa «Empezar práctica».",
       gameCompleteInstruction:
         "Juego completado. Revisa tus resultados en el marcador.",
     },
@@ -1678,15 +1709,15 @@ export const translations: Record<Language, Translations> = {
         },
         multiLanguage: {
           title: "Soporte Multilingüe",
-          description: "Soporte para 6 idiomas en todo el mundo",
+          description: "Soporte para 8 idiomas en todo el mundo",
         },
       },
       howToUse: {
         title: "Cómo Usar",
         step1: {
-          title: "Iniciar Juego",
+          title: "Empezar práctica",
           description:
-            'Haz clic en el botón "Iniciar Juego" para comenzar a aprender notas',
+            "Haz clic en «Empezar práctica» para empezar a aprender notas.",
         },
         step2: {
           title: "Verificar Nota",
@@ -1723,7 +1754,7 @@ export const translations: Record<Language, Translations> = {
         q4: {
           question: "¿Qué idiomas se admiten?",
           answer:
-            "Admitimos 6 idiomas: inglés, coreano, japonés, español, alemán y francés. El idioma se selecciona automáticamente según la configuración de tu navegador.",
+            "Admitimos 8 idiomas: inglés, coreano, japonés, español, alemán, francés, chino simplificado y portugués de Brasil. En páginas sin prefijo de idioma, se usa la configuración del navegador.",
         },
         q5: {
           question: "¿Hay algún costo?",
@@ -1823,11 +1854,13 @@ export const translations: Record<Language, Translations> = {
   },
 
   de: {
+    navigation: navigationTranslations.de,
     learning: learningTranslations.de,
     gameTitle: "Noten-Quiz",
     gameNavTitle: "Notenlesen",
     brandDescription: "Meistere die Noten auf dem Notensystem",
-    startGame: "Spiel starten",
+    startGame: "Übung starten",
+    practiceUi: { minimizeResults: "Ergebnisse minimieren", viewResults: "Ergebnisse ansehen" },
     pauseGame: "Pausieren",
     resumeGame: "Fortsetzen",
     endGame: "Spiel beenden",
@@ -1865,6 +1898,9 @@ export const translations: Record<Language, Translations> = {
 
     microphone: {
       title: "Mikrofoneingabe",
+      signal: "Mikrofonsignal",
+      signalQuiet: "Warte auf Ton",
+      signalActive: "Ton erkannt",
       description:
         "Singen oder spielen Sie einen stabilen Ton und senden Sie dann den erkannten Ton.",
       startListening: "Aufnahme starten",
@@ -1953,7 +1989,7 @@ export const translations: Record<Language, Translations> = {
       yourAnswer: "Ihre Antwort",
       playSound: "Ton abspielen",
       startGameInstruction:
-        "Überprüfen Sie die Einstellungen, um das Spiel zu starten.",
+        "Prüfen Sie die Einstellungen und klicken Sie auf „Übung starten“.",
       gameCompleteInstruction:
         "Spiel beendet. Überprüfen Sie Ihre Ergebnisse auf der Anzeigetafel.",
     },
@@ -2050,15 +2086,15 @@ export const translations: Record<Language, Translations> = {
         },
         multiLanguage: {
           title: "Mehrsprachige Unterstützung",
-          description: "Unterstützung für 6 Sprachen weltweit",
+          description: "Unterstützung für 8 Sprachen weltweit",
         },
       },
       howToUse: {
         title: "Anleitung",
         step1: {
-          title: "Spiel starten",
+          title: "Übung starten",
           description:
-            'Klicken Sie auf die Schaltfläche "Spiel starten", um mit dem Notenlernen zu beginnen',
+            "Klicken Sie auf „Übung starten“, um mit dem Notenlernen zu beginnen.",
         },
         step2: {
           title: "Note überprüfen",
@@ -2096,7 +2132,7 @@ export const translations: Record<Language, Translations> = {
         q4: {
           question: "Welche Sprachen werden unterstützt?",
           answer:
-            "Wir unterstützen 6 Sprachen: Englisch, Koreanisch, Japanisch, Spanisch, Deutsch und Französisch. Die Sprache wird automatisch basierend auf Ihren Browsereinstellungen ausgewählt.",
+            "Wir unterstützen 8 Sprachen: Englisch, Koreanisch, Japanisch, Spanisch, Deutsch, Französisch, vereinfachtes Chinesisch und brasilianisches Portugiesisch. Auf Seiten ohne Sprachpräfix wird die Browsereinstellung verwendet.",
         },
         q5: {
           question: "Kostet es etwas?",
@@ -2196,11 +2232,13 @@ export const translations: Record<Language, Translations> = {
   },
 
   fr: {
+    navigation: navigationTranslations.fr,
     learning: learningTranslations.fr,
     gameTitle: "Quiz des Notes",
     gameNavTitle: "Lecture de notes",
     brandDescription: "Maîtrisez les notes sur la portée",
-    startGame: "Commencer le Jeu",
+    startGame: "Commencer",
+    practiceUi: { minimizeResults: "Réduire les résultats", viewResults: "Voir les résultats" },
     pauseGame: "Pause",
     resumeGame: "Reprendre",
     endGame: "Terminer le Jeu",
@@ -2238,6 +2276,9 @@ export const translations: Record<Language, Translations> = {
 
     microphone: {
       title: "Entrée microphone",
+      signal: "Signal du microphone",
+      signalQuiet: "En attente de son",
+      signalActive: "Son détecté",
       description:
         "Chantez ou jouez une note stable, puis envoyez la note détectée.",
       startListening: "Commencer l'écoute",
@@ -2326,7 +2367,8 @@ export const translations: Record<Language, Translations> = {
       correctAnswer: "Bonne réponse",
       yourAnswer: "Votre réponse",
       playSound: "Jouer le son",
-      startGameInstruction: "Vérifiez les paramètres pour commencer le jeu.",
+      startGameInstruction:
+        "Vérifiez les paramètres, puis cliquez sur « Commencer ».",
       gameCompleteInstruction:
         "Jeu terminé. Vérifiez vos résultats sur le tableau de bord.",
     },
@@ -2425,15 +2467,15 @@ export const translations: Record<Language, Translations> = {
         },
         multiLanguage: {
           title: "Support Multilingue",
-          description: "Support pour 6 langues dans le monde",
+          description: "Support pour 8 langues dans le monde",
         },
       },
       howToUse: {
         title: "Comment Utiliser",
         step1: {
-          title: "Commencer le Jeu",
+          title: "Commencer",
           description:
-            'Cliquez sur le bouton "Commencer le Jeu" pour commencer à apprendre les notes',
+            "Cliquez sur « Commencer » pour pratiquer la lecture de notes.",
         },
         step2: {
           title: "Vérifier la Note",
@@ -2470,7 +2512,7 @@ export const translations: Record<Language, Translations> = {
         q4: {
           question: "Quelles langues sont supportées ?",
           answer:
-            "Nous supportons 6 langues : anglais, coréen, japonais, espagnol, allemand et français. La langue est automatiquement sélectionnée en fonction des paramètres de votre navigateur.",
+            "Nous proposons 8 langues : anglais, coréen, japonais, espagnol, allemand, français, chinois simplifié et portugais du Brésil. Sur les pages sans préfixe de langue, le réglage du navigateur est utilisé.",
         },
         q5: {
           question: "Y a-t-il un coût ?",

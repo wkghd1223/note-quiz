@@ -21,6 +21,8 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
     { code: "es" as Language, name: "Español", flag: "🇪🇸" },
     { code: "de" as Language, name: "Deutsch", flag: "🇩🇪" },
     { code: "fr" as Language, name: "Français", flag: "🇫🇷" },
+    { code: "zh" as Language, name: "简体中文", flag: "🇨🇳" },
+    { code: "pt" as Language, name: "Português (Brasil)", flag: "🇧🇷" },
   ];
 
   return (
