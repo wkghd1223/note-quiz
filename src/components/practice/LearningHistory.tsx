@@ -7,7 +7,7 @@ import {
   parsePracticeConfig,
   type PracticeConfig,
 } from "@/lib/practice/config";
-import { theoryLabel } from "./TheoryPracticeMode";
+import { theoryLabel } from "@/lib/practice/theoryLabel";
 export default function LearningHistory({
   data,
   available,
@@ -23,8 +23,7 @@ export default function LearningHistory({
     c = t.learning,
     weak = weakestAreas(data.sessions);
   return (
-    <section className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
-      <h2 className="text-lg font-bold">{c.history}</h2>
+    <section aria-label={c.history} className="min-w-0">
       <p className="mt-2 text-sm leading-6 text-slate-500">{c.localOnly}</p>
       {!available && (
         <p role="status" className="mt-2 text-sm text-amber-800">

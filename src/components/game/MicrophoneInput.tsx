@@ -4,6 +4,7 @@ import React from "react";
 import { FaMicrophone, FaPause, FaCheckCircle } from "react-icons/fa";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useMicrophonePitch } from "@/hooks/useMicrophonePitch";
+import MicrophoneSignalDisplay from "./MicrophoneSignal";
 
 interface MicrophoneInputProps {
   onSubmit: (note: Note) => void;
@@ -22,6 +23,7 @@ const MicrophoneInput: React.FC<MicrophoneInputProps> = ({
     isListening,
     detectedNote,
     detectedLabel,
+    signalRef,
     startListening,
     stopListening,
   } = useMicrophonePitch();
@@ -53,9 +55,15 @@ const MicrophoneInput: React.FC<MicrophoneInputProps> = ({
 
       <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
         <div className="rounded-[1.25rem] border border-[#e2e8f0] bg-white p-4">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
-            {t.microphone.detectedNote}
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
+              {t.microphone.detectedNote}
+            </p>
+            <MicrophoneSignalDisplay
+              signal={signalRef}
+              listening={isListening}
+            />
+          </div>
           <div className="mt-3 flex items-end justify-between gap-4">
             <div>
               <div className="text-3xl font-black tracking-[-0.05em] text-slate-950 sm:text-4xl">

@@ -1,7 +1,14 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { FaPlay, FaStop, FaVolumeUp } from "react-icons/fa";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  FaPlay,
+  FaStop,
+  FaVolumeUp,
+  FaClock,
+  FaCheck,
+  FaBullseye,
+} from "react-icons/fa";
 import EarTrainingSettings from "@/components/ear-training/EarTrainingSettings";
 import PianoKeyboard from "@/components/game/PianoKeyboard";
 import SolfegeKeyboard from "@/components/game/SolfegeKeyboard";
@@ -12,9 +19,14 @@ import {
   stopAllNotes,
 } from "@/lib/music/audio";
 import { noteToString } from "@/lib/music/utils";
+import { useShallow } from "zustand/react/shallow";
+import PracticeFeedback from "./PracticeFeedback";
+import MusicNotation from "./MusicNotation";
 import { useEarTrainingStore } from "@/store/earTrainingStore";
 import { useTranslation } from "@/hooks/useTranslation";
 import PracticeShell from "./PracticeShell";
+import PracticeController from "./PracticeController";
+import PracticeMetrics from "./PracticeMetrics";
 import ModeSwitcher, { PracticeMode } from "./ModeSwitcher";
 import LearningResult from "./LearningResult";
 
@@ -22,6 +34,8 @@ interface EarPracticeModeProps {
   mode: PracticeMode;
   onModeChange: (mode: PracticeMode) => void;
   settingsOpen: boolean;
+  settingsIntro?: React.ReactNode;
+  headerActions?: React.ReactNode;
   onSettingsOpen: () => void;
   onSettingsClose: () => void;
   onLeaderboardOpen: () => void;
@@ -34,6 +48,8 @@ export default function EarPracticeMode({
   mode,
   onModeChange,
   settingsOpen,
+  settingsIntro,
+  headerActions,
   onSettingsOpen,
   onSettingsClose,
   runOptions,
@@ -41,7 +57,22 @@ export default function EarPracticeMode({
   onChangePractice,
 }: EarPracticeModeProps) {
   const { t } = useTranslation();
-  const store = useEarTrainingStore();
+  const store = useEarTrainingStore(
+    useShallow((state) => ({
+      settings: state.settings,
+      sessionSettings: state.sessionSettings,
+      sessionState: state.sessionState,
+      sessionKind: state.sessionKind,
+      currentQuestion: state.currentQuestion,
+      isAdvancingQuestion: state.isAdvancingQuestion,
+      answers: state.answers,
+      result: state.result,
+      questionLimit: state.questionLimit,
+      resetSession: state.resetSession,
+      endSession: state.endSession,
+      updateSettings: state.updateSettings,
+    })),
+  );
   const {
     settings,
     sessionSettings,
@@ -51,13 +82,11 @@ export default function EarPracticeMode({
     isAdvancingQuestion,
     answers,
     result,
-    elapsedTime,
     questionLimit,
   } = store;
   const [audioReady, setAudioReady] = useState(false);
   const [audioError, setAudioError] = useState(false);
   const [starting, setStarting] = useState(false);
-  const [, refreshClock] = useState(0);
   const audioAttempt = useRef(0);
   const startingRef = useRef(false);
   const mounted = useRef(true);
@@ -77,7 +106,6 @@ export default function EarPracticeMode({
     if (sessionState !== "playing") return;
     const interval = setInterval(() => {
       useEarTrainingStore.getState().updateTimer(Date.now());
-      refreshClock((value) => value + 1);
     }, 50);
     return () => clearInterval(interval);
   }, [sessionState]);
@@ -179,12 +207,21 @@ export default function EarPracticeMode({
     if (onChangePractice) onChangePractice();
     else onSettingsOpen();
   };
-  const currentAccuracy = answers.length
-    ? (answers.filter((answer) => answer.isCorrect).length / answers.length) *
-      100
-    : 0;
   const lastAnswer = answers[answers.length - 1];
-  const feedback = isAdvancingQuestion && lastAnswer ? lastAnswer : null;
+  const isFinished = sessionState === "finished";
+  const feedback =
+    sessionState !== "idle" && !isFinished && isAdvancingQuestion && lastAnswer
+      ? lastAnswer
+      : null;
+  const notationNotes = useMemo(
+    () =>
+      feedback
+        ? [feedback.correctNote]
+        : isFinished && lastAnswer
+          ? [lastAnswer.correctNote]
+          : [],
+    [feedback, isFinished, lastAnswer],
+  );
   const mistakes =
     result?.answers.filter((entry) => !entry.isCorrect && entry.question) ?? [];
   const activeSettings = sessionState === "idle" ? settings : sessionSettings;
@@ -198,9 +235,11 @@ export default function EarPracticeMode({
     t.earTraining.inputMode[settings.inputMode],
   ].join(" / ");
 
-  const stage =
-    result && sessionState === "finished" ? (
+  const resultContent =
+    result && isFinished ? (
       <LearningResult
+        preserveScroll
+        focusOnMount={false}
         result={result}
         hasMistakes={mistakes.length > 0}
         onRestart={() => void start()}
@@ -247,69 +286,80 @@ export default function EarPracticeMode({
           </details>
         )}
       </LearningResult>
-    ) : sessionState === "idle" ? (
-      <p className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
-        {t.earTraining.description}
-      </p>
-    ) : (
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-        <div className="flex items-center justify-between gap-3">
-          <p className="min-w-0 text-sm leading-5 text-slate-600">
+    ) : null;
+  const stage = (
+    <div
+      data-practice-stage
+      data-practice-phase={
+        sessionState === "idle" ? "idle" : isFinished ? "finished" : "active"
+      }
+      className="relative rounded-lg border border-slate-200 bg-slate-50 p-3"
+    >
+      <div className="mb-2 flex h-11 items-center justify-between gap-3">
+        <div className="relative h-11 min-w-0 flex-1" data-practice-prompt-band>
+          <h2
+            data-practice-prompt
+            tabIndex={-1}
+            className={`max-h-10 min-w-0 overflow-auto text-sm font-bold leading-5 text-slate-600 ${feedback ? "opacity-0" : ""}`}
+          >
             {t.earTraining.listenPrompt}
-          </p>
-          <button
-            type="button"
-            onClick={() =>
-              currentQuestion && void replay(currentQuestion.targetNote, true)
-            }
-            disabled={!currentQuestion}
-            className="inline-flex min-h-11 max-w-[50%] shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-[#5b21b6] hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7c3aed] focus-visible:ring-offset-2 disabled:opacity-50"
-          >
-            <FaVolumeUp aria-hidden="true" className="shrink-0" />
-            {t.earTraining.replay}
-          </button>
-        </div>
-        <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
-          <div
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-            className="min-w-0"
-          >
-            <p
-              className={`min-h-5 text-sm font-bold leading-5 ${feedback?.isCorrect ? "text-emerald-700" : feedback ? "text-red-700" : "text-slate-600"}`}
-            >
-              {feedback
+          </h2>
+          <PracticeFeedback
+            message={
+              feedback
                 ? feedback.isCorrect
                   ? t.messages.correct
                   : t.messages.incorrect
-                : sessionKind === "review"
-                  ? t.learning.review
-                  : null}
-            </p>
-            <p
-              aria-hidden={!feedback}
-              className={`text-xs leading-5 text-slate-600 ${feedback ? "" : "invisible"}`}
-            >
-              {t.messages.correctAnswer}:{" "}
-              <span className="inline-block w-8 font-semibold">
-                {feedback ? noteToString(feedback.correctNote) : "\u00a0"}
-              </span>{" "}
-              / {t.messages.yourAnswer}:{" "}
-              <span className="inline-block w-8 font-semibold">
-                {feedback ? noteToString(feedback.note) : "\u00a0"}
-              </span>
-            </p>
-          </div>
-          <p className="text-sm font-bold leading-5 tabular-nums text-slate-600">
-            {answers.length}
-            {questionLimit ? `/${questionLimit}` : ""}
-          </p>
+                : undefined
+            }
+            correct={feedback?.isCorrect}
+            announcementKey={answers.length}
+          />
         </div>
+        <button
+          type="button"
+          onClick={() =>
+            currentQuestion && void replay(currentQuestion.targetNote, true)
+          }
+          disabled={sessionState !== "playing" || !currentQuestion}
+          className="inline-flex h-11 max-w-[50%] shrink-0 items-center justify-center gap-2 overflow-auto rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold leading-5 text-[#5b21b6] hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7c3aed] focus-visible:ring-offset-2 disabled:opacity-50"
+        >
+          <FaVolumeUp aria-hidden="true" className="shrink-0" />
+          {t.earTraining.replay}
+        </button>
+        <p className="shrink-0 text-sm font-bold tabular-nums text-slate-600">
+          {answers.length}
+          {questionLimit ? `/${questionLimit}` : ""}
+        </p>
       </div>
-    );
+      <MusicNotation
+        compact
+        notes={notationNotes}
+        label={t.messages.correctAnswer}
+        revealed={!!feedback || (isFinished && !!lastAnswer)}
+      />
+      <div
+        data-practice-explanation
+        tabIndex={
+          sessionState === "idle" || feedback || isFinished ? 0 : undefined
+        }
+        className="mt-1 h-8 overflow-auto text-xs leading-4 text-slate-600 [overflow-wrap:anywhere]"
+      >
+        {sessionState === "idle" ? (
+          <p>{t.earTraining.description}</p>
+        ) : (
+          (feedback || (isFinished && lastAnswer)) && (
+            <p>
+              {t.messages.correctAnswer}: {noteToString(lastAnswer.correctNote)}{" "}
+              / {t.messages.yourAnswer}: {noteToString(lastAnswer.note)}
+            </p>
+          )
+        )}
+      </div>
+    </div>
+  );
   const input =
-    sessionState === "playing" ? (
+    sessionState === "playing" || isFinished ? (
       <div className="rounded-lg border border-slate-200 bg-white p-3">
         <p className="mb-3 text-xs font-bold text-slate-500">
           {t.earTraining.currentTarget}:{" "}
@@ -321,7 +371,7 @@ export default function EarPracticeMode({
               useEarTrainingStore.getState().submitAnswer(note)
             }
             onAudioError={() => setAudioError(true)}
-            disabled={isAdvancingQuestion}
+            disabled={isFinished || isAdvancingQuestion}
             showAccidentals={activeSettings.noteSet === "chromatic"}
             className="flex max-w-full flex-col items-center overflow-x-auto"
           />
@@ -331,56 +381,44 @@ export default function EarPracticeMode({
               useEarTrainingStore.getState().submitAnswer(note)
             }
             onAudioError={() => setAudioError(true)}
-            disabled={isAdvancingQuestion}
+            disabled={isFinished || isAdvancingQuestion}
             showAccidentals={activeSettings.noteSet === "chromatic"}
           />
         )}
       </div>
     ) : null;
-  const actions =
-    sessionState === "finished" ? null : sessionState === "playing" ? (
-      <button
-        type="button"
-        onClick={() => store.endSession()}
-        className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-red-500 px-3 py-2 text-sm font-bold text-white"
-      >
-        <FaStop />
-        {t.earTraining.stop}
-      </button>
-    ) : (
-      <button
-        type="button"
-        onClick={() => void start()}
-        disabled={starting}
-        className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#5b21b6] px-3 py-2 text-sm font-bold text-white disabled:opacity-50"
-      >
-        <FaPlay />
-        {t.earTraining.start}
-      </button>
-    );
+  const actions = (
+    <PracticeController
+      state={sessionState}
+      states={{
+        playing: [
+          {
+            id: "end",
+            label: t.earTraining.stop,
+            onClick: () => store.endSession(),
+            tone: "danger",
+            icon: <FaStop />,
+          },
+        ],
+        idle: [
+          {
+            id: "start",
+            label: t.startGame,
+            onClick: () => void start(),
+            disabled: starting,
+            tone: "primary",
+            icon: <FaPlay />,
+          },
+        ],
+      }}
+    />
+  );
   return (
     <PracticeShell
       modeSwitcher={<ModeSwitcher mode={mode} onChange={onModeChange} />}
       title={t.earTraining.title}
       kicker={t.earTraining.subtitle}
-      status={
-        sessionState === "finished" ? null : (
-          <div className="grid grid-cols-3 gap-2">
-            <StatusTile
-              label={t.timer.elapsed}
-              value={formatTime(elapsedTime)}
-            />
-            <StatusTile
-              label={t.ui.currentQuestionTime}
-              value={formatTime(store.getQuestionElapsedTime())}
-            />
-            <StatusTile
-              label={t.scoreboard.accuracy}
-              value={`${currentAccuracy.toFixed(0)}%`}
-            />
-          </div>
-        )
-      }
+      status={<EarStatus />}
       stage={
         <>
           {audioError && (
@@ -407,6 +445,8 @@ export default function EarPracticeMode({
       }
       input={input}
       actions={actions}
+      headerActions={headerActions}
+      settingsIntro={settingsIntro}
       settings={
         <EarTrainingSettings
           embedded
@@ -416,22 +456,46 @@ export default function EarPracticeMode({
       }
       settingsSummary={summary}
       isIdle={sessionState === "idle"}
+      isFinished={isFinished}
+      result={resultContent}
+      resultKey={result?.sessionId ?? null}
       settingsOpen={settingsOpen}
       onSettingsOpen={onSettingsOpen}
       onSettingsClose={onSettingsClose}
     />
   );
 }
-function StatusTile({ label, value }: { label: string; value: string }) {
+function EarStatus() {
+  const { t } = useTranslation();
+  const elapsed = useEarTrainingStore((state) => state.elapsedTime);
+  const questionAt = useEarTrainingStore((state) => state.questionStartTime);
+  const phase = useEarTrainingStore((state) => state.sessionState);
+  const answers = useEarTrainingStore((state) => state.answers);
+  const correct = answers.filter((answer) => answer.isCorrect).length;
   return (
-    <div className="flex min-w-0 flex-col justify-between rounded-lg border border-slate-200 px-2 py-2">
-      <p className="text-xs font-bold text-slate-500 [overflow-wrap:anywhere]">
-        {label}
-      </p>
-      <p className="mt-1 text-lg font-black tabular-nums">{value}</p>
-    </div>
+    <PracticeMetrics
+      items={[
+        {
+          label: t.timer.elapsed,
+          value: formatTime(elapsed),
+          icon: <FaClock />,
+        },
+        {
+          label: t.scoreboard.correct,
+          value: String(correct),
+          icon: <FaCheck />,
+        },
+        {
+          label: t.scoreboard.accuracy,
+          value: `${(answers.length ? (correct / answers.length) * 100 : 0).toFixed(0)}%`,
+          icon: <FaBullseye />,
+        },
+      ]}
+      detail={`${t.ui.currentQuestionTime}: ${formatTime(phase === "playing" && questionAt !== null ? Math.max(0, Date.now() - questionAt) : 0)}`}
+    />
   );
 }
+
 function formatTime(ms: number) {
   const seconds = Math.floor(ms / 1000);
   return `${Math.floor(seconds / 60)

@@ -1,359 +1,122 @@
 "use client";
 
-import React from "react";
+import React, { memo, useMemo, useState } from "react";
+import { getNotePositionOnStaff } from "@/lib/music/utils";
 import {
-  getNotePositionOnStaff,
-  needsLedgerLines,
-  getLedgerLinePositions,
-} from "@/lib/music/utils";
+  legacyToScore,
+  type LegacyStaffInput,
+} from "@/lib/notation/legacy-to-score";
+import { notationRenderer } from "@/lib/notation/score";
+import AlphaTabNotationView from "@/components/notation/AlphaTabNotationView";
+import LegacyStaff from "@/components/notation/legacy/Staff";
+import StableNotationSurface from "@/components/practice/StableNotationSurface";
+import PracticeStaffFallback from "@/components/practice/PracticeStaffFallback";
 
-interface StaffProps {
-  clef: ClefType;
-  keySignature: KeySignature;
-  note?: Note; // 표시할 음표 (displayNote)
-  originalNote?: Note; // 원본 음표 (임시표 표시 판단용)
+interface StaffProps extends LegacyStaffInput {
   width?: number;
   height?: number;
   className?: string;
   responsive?: boolean;
+  stable?: boolean;
 }
 
-interface ClefProps {
-  x?: number;
-  y?: number;
-  width?: number;
-  height?: number;
-}
-
-const Staff: React.FC<StaffProps> = ({
-  clef,
-  keySignature,
-  note,
-  originalNote,
-  width = 400,
-  height = 200,
-  className = "",
-  responsive = false,
-}) => {
-  // 오선지 기본 설정
-  const staffLineSpacing = 20;
-  const staffStartY = height / 2 - staffLineSpacing * 2;
-  const staffLineLength = staffLineSpacing * 4;
-  const clefX = 40;
-  const keySignatureX = clefX + 100;
-  const noteX =
-    keySignatureX +
-    (keySignature.sharps.length + keySignature.flats.length) * 15 +
-    40;
-
-  // 음표 위치 계산
-  const notePosition = note ? getNotePositionOnStaff(note, clef) : null;
-  const noteY =
-    notePosition !== null
-      ? staffStartY + (8 - notePosition) * (staffLineSpacing / 2)
-      : 0;
-
-  // 보조선 계산
-  const ledgerLines =
-    notePosition !== null && needsLedgerLines(notePosition)
-      ? getLedgerLinePositions(notePosition)
-      : [];
-
-  // Include stems and accidentals when saved settings allow distant ledger notes.
-  const viewBoxTop = note ? Math.min(0, noteY - 50) : 0;
-  const viewBoxBottom = note ? Math.max(height, noteY + 50) : height;
-
-  return (
-    <div className={`staff-container ${className}`}>
-      <svg
-        width={width}
-        viewBox={
-          responsive
-            ? `0 ${viewBoxTop} ${width} ${viewBoxBottom - viewBoxTop}`
-            : undefined
-        }
-        style={
-          responsive
-            ? undefined
-            : {
-                minHeight: `${height}px`,
-                padding: "28px 0",
-                overflow: "visible",
-              }
-        }
-        className={
-          responsive
-            ? "staff-svg h-auto w-full rounded-lg bg-white"
-            : "staff-svg my-5 rounded-[1.75rem] border border-[#d9e0ea] bg-[#fbfcff] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.65)] md:my-8"
-        }
+function Staff(props: StaffProps) {
+  const {
+    clef,
+    keySignature,
+    note,
+    originalNote,
+    width = 400,
+    height = 200,
+    className = "",
+    responsive = false,
+    stable = false,
+  } = props;
+  const [failed, setFailed] = useState(false);
+  const score = useMemo(
+    () => legacyToScore({ clef, keySignature, note, originalNote }),
+    [clef, keySignature, note, originalNote],
+  );
+  const legacy = notationRenderer() === "legacy" || failed;
+  if (stable)
+    return (
+      <StableNotationSurface
+        revision={score}
+        concealed={!note}
+        className={`h-[112px] sm:h-[184px] ${className}`}
+        placeholder={({ width, height }) => (
+          <PracticeStaffFallback
+            width={width}
+            height={height}
+            clef={clef}
+            keySignature={keySignature}
+            notes={[]}
+          />
+        )}
       >
-        {/* 오선 (5줄) */}
-        {[0, 1, 2, 3, 4].map((lineIndex) => (
-          <line
-            key={`staff-line-${lineIndex}`}
-            x1={20}
-            y1={staffStartY + lineIndex * staffLineSpacing}
-            x2={width - 20}
-            y2={staffStartY + lineIndex * staffLineSpacing}
-            stroke="#c8d0dd"
-            strokeWidth="1.6"
-          />
-        ))}
-
-        {/* 음자리표 */}
-        <g
-          transform={`translate(${clefX}, ${staffStartY + staffLineSpacing * 2})`}
-        >
-          {clef === "treble" && (
-            <TrebleClef
-              y={-1 * staffStartY + staffLineSpacing / 2}
-              height={staffLineLength + staffLineSpacing * 2}
-            />
-          )}
-          {clef === "bass" && (
-            <BassClef
-              y={-1 * staffStartY + staffLineSpacing}
-              height={staffLineLength - staffLineSpacing}
-            />
-          )}
-          {clef === "alto" && (
-            <AltoClef
-              y={-1 * staffStartY + staffLineSpacing}
-              height={staffLineLength}
-            />
-          )}
-          {clef === "tenor" && (
-            <TenorClef y={-1 * staffStartY} height={staffLineLength} />
-          )}
-        </g>
-
-        {/* 조표 */}
-        {keySignature.sharps.length > 0 && (
-          <g>
-            {keySignature.sharps.map((sharpNote, index) => (
-              <g
-                key={`sharp-${index}`}
-                transform={`translate(${keySignatureX + index * 12 - 40}, ${getAccidentalY(sharpNote, clef, staffStartY, staffLineSpacing, "sharp")})`}
-              >
-                <SharpSymbol />
-              </g>
-            ))}
-          </g>
-        )}
-
-        {keySignature.flats.length > 0 && (
-          <g>
-            {keySignature.flats.map((flatNote, index) => (
-              <g
-                key={`flat-${index}`}
-                transform={`translate(${keySignatureX + index * 10 - 40}, ${getAccidentalY(flatNote, clef, staffStartY, staffLineSpacing, "flat")})`}
-              >
-                <FlatSymbol />
-              </g>
-            ))}
-          </g>
-        )}
-
-        {/* 보조선 */}
-        {ledgerLines.map((linePosition) => (
-          <line
-            key={`ledger-${linePosition}`}
-            x1={noteX - 20}
-            y1={staffStartY + (8 - linePosition) * (staffLineSpacing / 2)}
-            x2={noteX + 20}
-            y2={staffStartY + (8 - linePosition) * (staffLineSpacing / 2)}
-            stroke="#6b7280"
-            strokeWidth="1.3"
-          />
-        ))}
-
-        {/* 음표 */}
-        {note && notePosition !== null && (
-          <g transform={`translate(${noteX}, ${noteY})`}>
-            {/* Accidentals are drawn before the note head so they never appear late. */}
-            {originalNote && originalNote.accidental === "sharp" && (
-              <text
-                x="-34"
-                y="9"
-                fontSize="34"
-                fontFamily="serif"
-                fontWeight="700"
-                fill="#000"
-              >
-                ♯
-              </text>
-            )}
-            {originalNote && originalNote.accidental === "flat" && (
-              <text
-                x="-32"
-                y="9"
-                fontSize="34"
-                fontFamily="serif"
-                fontWeight="700"
-                fill="#000"
-              >
-                ♭
-              </text>
-            )}
-            {originalNote &&
-              originalNote.accidental === "natural" &&
-              (keySignature.sharps.includes(originalNote.name) ||
-                keySignature.flats.includes(originalNote.name)) && (
-                <text
-                  x="-34"
-                  y="9"
-                  fontSize="32"
-                  fontFamily="serif"
-                  fontWeight="700"
-                  fill="#000"
-                >
-                  ♮
-                </text>
+        {({ width: frameWidth, height: frameHeight, onReady }) =>
+          legacy ? (
+            <PracticeStaffFallback
+              width={frameWidth}
+              height={frameHeight}
+              clef={clef}
+              keySignature={keySignature}
+              notes={note ? [note] : []}
+              accidentals={score.events.flatMap((event) =>
+                event.notes.map((written) => written.explicitAccidental),
               )}
-            <QuarterNote position={notePosition} />
-          </g>
-        )}
-      </svg>
+              onReady={onReady}
+            />
+          ) : (
+            <AlphaTabNotationView
+              score={score}
+              fittedBasic
+              width={frameWidth}
+              height={frameHeight}
+              viewBox={`0 0 ${frameWidth} ${frameHeight}`}
+              className="staff-svg h-full w-full rounded-lg bg-white"
+              onRender={onReady}
+              onError={() => setFailed(true)}
+            />
+          )
+        }
+      </StableNotationSurface>
+    );
+  if (legacy && !stable) return <LegacyStaff {...props} />;
+  const y = note
+    ? height / 2 - 40 + (8 - getNotePositionOnStaff(note, clef)) * 10
+    : 0;
+  const top = note ? Math.min(0, y - 50) : 0;
+  const bottom = note ? Math.max(height, y + 50) : height;
+  const engraving = legacy ? (
+    <div data-notation-fallback className="h-full">
+      <LegacyStaff {...props} className="h-full" />
     </div>
+  ) : (
+    <AlphaTabNotationView
+      score={score}
+      width={width}
+      height={height}
+      viewBox={`0 ${top} ${width} ${bottom - top}`}
+      responsive={responsive}
+      className={
+        responsive
+          ? "staff-svg h-auto w-full rounded-lg bg-white"
+          : "staff-svg my-5 rounded-[1.75rem] border border-[#d9e0ea] bg-[#fbfcff] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.65)] md:my-8"
+      }
+      style={
+        responsive
+          ? undefined
+          : {
+              minHeight: `${height}px`,
+              padding: "28px 0",
+              overflow: "visible",
+            }
+      }
+      onError={() => setFailed(true)}
+    />
   );
-};
-
-// 높은음자리표 SVG
-const TrebleClef: React.FC<ClefProps> = ({
-  x = 0,
-  y = 0,
-  width,
-  height = 80,
-}) => <image href="/g-clef.svg" x={x} y={y} width={width} height={height} />;
-
-// 낮은음자리표 SVG
-const BassClef: React.FC<ClefProps> = ({
-  x = -10,
-  y = 0,
-  width,
-  height = 100,
-}) => <image href="/bass-clef.svg" x={x} y={y} width={width} height={height} />;
-
-// 알토음자리표 SVG
-const AltoClef: React.FC<ClefProps> = ({
-  x = 0,
-  y = 0,
-  width,
-  height = 100,
-}) => <image href="/alto-clef.svg" x={x} y={y} width={width} height={height} />;
-
-// 테너음자리표 SVG
-const TenorClef: React.FC<ClefProps> = ({
-  x = 0,
-  y = -25,
-  width,
-  height = 80,
-}) => <image href="/alto-clef.svg" x={x} y={y} width={width} height={height} />;
-
-// 4분음표 SVG
-interface QuarterNoteProps {
-  position: number;
+  return <div className={`staff-container ${className}`}>{engraving}</div>;
 }
 
-const QuarterNote: React.FC<QuarterNoteProps> = ({ position }) => {
-  // 3선(가운데 선)은 position 4에 해당
-  // 3선보다 위에 있으면 막대기를 아래로, 아래에 있으면 막대기를 위로
-  const stemDown = position > 4;
-
-  return (
-    <g>
-      <ellipse
-        cx="0"
-        cy="0"
-        rx="11"
-        ry="8"
-        fill="#000"
-        transform="rotate(-20)"
-      />
-      {stemDown ? (
-        // 막대기 아래로 (왼쪽에 위치)
-        <rect x="-11" y="0" width="2" height="45" fill="#000" />
-      ) : (
-        // 막대기 위로 (오른쪽에 위치)
-        <rect x="9" y="-45" width="2" height="45" fill="#000" />
-      )}
-    </g>
-  );
-};
-
-// 샾 기호 SVG
-const SharpSymbol: React.FC = () => (
-  <image href="/sharp-sign.svg" height={35} y={2} />
-);
-
-// 플랫 기호 SVG
-const FlatSymbol: React.FC = () => (
-  <image href="/flat-sign.svg" height={35} y={-4} />
-);
-
-// natural 기호 SVG
-// 조표 위치 계산 함수
-function getAccidentalY(
-  noteName: string,
-  clef: ClefType,
-  staffStartY: number,
-  staffLineSpacing: number,
-  accidentalType: "sharp" | "flat",
-): number {
-  // 각 음자리표별 조표 위치 매핑
-  const positions: Record<ClefType, Record<string, number>> = {
-    treble: {
-      F:
-        staffStartY +
-        staffLineSpacing * (accidentalType === "sharp" ? -1 : 2.5), // F5
-      C: staffStartY + staffLineSpacing * 0.5, // C5
-      G:
-        staffStartY +
-        staffLineSpacing * (accidentalType === "sharp" ? -1.5 : 2), // G5
-      D: staffStartY + staffLineSpacing * 0, // D5
-      A: staffStartY + staffLineSpacing * 1.5, // A4
-      E: staffStartY + staffLineSpacing * -0.5, // E5
-      B: staffStartY + staffLineSpacing * 1, // B4
-    },
-    bass: {
-      F:
-        staffStartY + staffLineSpacing * (accidentalType === "sharp" ? 0 : 3.5), // F5
-      C: staffStartY + staffLineSpacing * 1.5, // C5
-      G:
-        staffStartY +
-        staffLineSpacing * (accidentalType === "sharp" ? -0.5 : 3), // G5
-      D: staffStartY + staffLineSpacing * 1, // D5
-      A: staffStartY + staffLineSpacing * 2.5, // A4
-      E: staffStartY + staffLineSpacing * 0.5, // E5
-      B: staffStartY + staffLineSpacing * 2, // B4
-    },
-    alto: {
-      F:
-        staffStartY +
-        staffLineSpacing * (accidentalType === "sharp" ? -0.5 : 3), // F5
-      C: staffStartY + staffLineSpacing * 1, // C5
-      G:
-        staffStartY +
-        staffLineSpacing * (accidentalType === "sharp" ? -1 : 2.5), // G5
-      D: staffStartY + staffLineSpacing * 0.5, // D5
-      A: staffStartY + staffLineSpacing * 2, // A4
-      E: staffStartY + staffLineSpacing * 0, // E5
-      B: staffStartY + staffLineSpacing * 1.5, // B4
-    },
-    tenor: {
-      F: staffStartY + staffLineSpacing * (accidentalType === "sharp" ? 2 : 2), // F5
-      C: staffStartY + staffLineSpacing * 0, // C5
-      G:
-        staffStartY +
-        staffLineSpacing * (accidentalType === "sharp" ? 1.5 : 1.5), // G5
-      D: staffStartY + staffLineSpacing * -0.5, // D5
-      A: staffStartY + staffLineSpacing * 1, // A4
-      E: staffStartY + staffLineSpacing * -1, // E5
-      B: staffStartY + staffLineSpacing * 0.5, // B4
-    },
-  };
-
-  return positions[clef][noteName] || staffStartY + staffLineSpacing * 2;
-}
-
-export default Staff;
+export default memo(Staff);

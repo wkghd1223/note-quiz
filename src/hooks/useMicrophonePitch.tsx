@@ -1,6 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
+import {
+  emptyMicrophoneSignal,
+  updateMicrophoneSignal,
+  type MicrophoneSignal,
+} from "@/lib/music/microphoneSignal";
 import {
   detectPitch,
   formatDetectedNote,
@@ -20,6 +31,7 @@ interface UseMicrophonePitchReturn {
   isListening: boolean;
   detectedNote: Note | null;
   detectedLabel: string;
+  signalRef: RefObject<MicrophoneSignal>;
   startListening: () => Promise<void>;
   stopListening: () => void;
 }
@@ -41,6 +53,7 @@ export function useMicrophonePitch(): UseMicrophonePitchReturn {
   const candidateKeyRef = useRef<string | null>(null);
   const candidateStartRef = useRef<number>(0);
   const bufferRef = useRef<Float32Array | null>(null);
+  const signalRef = useRef<MicrophoneSignal>(emptyMicrophoneSignal());
 
   const stopListening = useCallback(() => {
     requestGeneration.current++;
@@ -65,6 +78,7 @@ export function useMicrophonePitch(): UseMicrophonePitchReturn {
     sourceRef.current = null;
     streamRef.current = null;
     bufferRef.current = null;
+    signalRef.current = emptyMicrophoneSignal();
     candidateKeyRef.current = null;
     candidateStartRef.current = 0;
 
@@ -108,6 +122,7 @@ export function useMicrophonePitch(): UseMicrophonePitchReturn {
       source.connect(analyser);
 
       const buffer = new Float32Array(analyser.fftSize);
+      const frequencyBuffer = new Float32Array(analyser.frequencyBinCount);
 
       streamRef.current = stream;
       audioContextRef.current = audioContext;
@@ -131,6 +146,14 @@ export function useMicrophonePitch(): UseMicrophonePitchReturn {
         const frequency = detectPitch(
           currentBuffer,
           currentAudioContext.sampleRate,
+        );
+        currentAnalyser.getFloatFrequencyData(frequencyBuffer);
+        updateMicrophoneSignal(
+          signalRef.current,
+          currentBuffer,
+          frequencyBuffer,
+          currentAudioContext.sampleRate,
+          frequency,
         );
 
         if (!frequency) {
@@ -187,6 +210,7 @@ export function useMicrophonePitch(): UseMicrophonePitchReturn {
     isListening,
     detectedNote,
     detectedLabel: formatDetectedNote(detectedNote),
+    signalRef,
     startListening,
     stopListening,
   };

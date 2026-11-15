@@ -1,0 +1,35 @@
+# Melody compact presentation and live pitch guidance
+
+Approved scope: share action/metric/result presentation with basic practice while retaining independent game state, handlers, clocks and scoring. Uniformly reduce native timed spacing without shrinking music glyphs; show provisional microphone pitch separately from final timing/duration judgments; put mobile result actions in two columns.
+
+The engraving worker changed quarter width96→92 and onset inset12→8. This is a measured4.17% timed-body reduction, not a large visual scale reduction. Native128geometry combinations across clefs/flat keys/scales/long notes/rests/triplets and final-sixteenth notation fixtures pass. Smaller84/8 and88/7 produced real final-barline or whole-note containment collisions and were rejected. Sixteenth generation/input support was not introduced. Focused6files/104tests passed; no glyph redraw or CSS scale was used.
+
+The new pure live-feedback reducer requires two distinct reliable frames, reuses microphone confidence/pitch tolerance and clears on silence, uncertainty, stale input, pause/count-in/preview/reset and target changes. It never writes an input/scored event. The current written note and play line use provisional red/green; final note judgments take precedence. Eight-language copy explains that pitch is live while timing/duration are evaluated after the note.
+
+Root connected the reducer/prop and shared PracticeController/PracticeMetrics/PracticeResultSurface. Melody continues to own every action and session state. Results minimize/reopen on mobile and render inline on desktop; next/retry share a two-column mobile row. Independent static review of the integration found no actionable regression.
+
+Preliminary build `xdDj62BbxKo8u0EyIsN4x`: full59files/979tests, strict TypeScript and production build passed. Targeted browser report `/tmp/note-quiz-melody-presentation-qa/report.json` passed390/1440preview-clock/cue/piano/cleanup cases and the real browser fake-WAV flow. Measured native quarter spacing183.9998..184.0002pixels. Preview played29sampled piano notes with no microphone request. C4 input displayed261.6Hz/0cents; matched/incorrect/neutral provisional states were all observed. Final32targets yielded31matched including correct rest judgments, with the deliberately wrong pitch red. Tested result dialog role/modal, horizontal next/retry, minimize focus return, Escape, reopen, mobile→desktop→mobile resize, same-melody retry, pause/resume/end, fresh melody generation and released audio/microphone resources.
+
+Native Orca verified settings resize/unlock and actual preview movement/stop at1440×900 with a visible bottom-ad creative. No physical instrument/voice or subjective piano listening claim is made. The shared-dialog lint/focus follow-up is pending a final snapshot check; earlier evidence is not relabelled as its verification.
+
+## Final approved presentation and current-candidate checks
+
+The later explicit user decision supersedes the preliminary mobile-only dialog description above: controls/metrics are sticky within the ad-safe practice scroll owner, and results use the same minimizable dialog on both mobile and desktop. Recent history is a separate basic-practice panel; no melody history schema/storage was added. All shared components remain presentation-only.
+
+Completed melody note judgments now use `PracticeAnswerToast` in the existing fixed44px score footer, outside the actual music viewport. The original hint remains as a layout reference while count-in, pause or feedback is shown, preventing first-note vertical shifts. Raw provisional pitch remains green/red/neutral on the current note and judgment line; it is separate from final scored-note feedback. Toast appearance uses4px translate/fade and reduced-motion handling; caller-owned timing/scoring/audio are unchanged.
+
+Current build `koqrhtg_aIDg2uiFDMszQ` passes strict TypeScript and production build; independent full60files/1009tests and lint(two existing warnings) pass. Root targeted browser report `/tmp/note-quiz-melody-final-qa/report.json` passes390/1440 preview-clock/piano/beat-cue cleanup, real browser fake-WAV count-in/answer/result/retry/new-melody flow, and synthetic ad reservations/dialog reachability/reduced motion. Both correct and incorrect completed-note toasts were observed and their bounds stay outside the music viewport. All-width result minimize/reopen/Escape/refocus/resize and provisional matched/incorrect/neutral states were exercised.
+
+One compact-controls case in that report failed because the verifier still selected the old direct-grid buttons. The product uses the approved shared controller. The selector was corrected to visible buttons inside `data-practice-controller`, and the isolated rerun now covers all8locales and passes (`/tmp/note-quiz-melody-final-controls/report.json`). No application source changed for this test correction. Keep the original failed harness record alongside the successful scoped rerun.
+
+Independent read-only final review `/tmp/note-quiz-final-presentation-review.md` found no actionable issue and confirmed all9 reviewed component/CSS files byte-match the current snapshot. No claim is made about subjective piano listening, human voice/instrument hardware, Bluetooth latency or every live Journey creative.
+
+
+## User follow-up: horizontal result review
+
+The user requested horizontal score review after results while retaining automatic scrolling during practice. ScoreViewport now enables native horizontal overflow and keyboard focus only when finished and inactive. Mobile hides the scrollbar; desktop keeps the normal scrollbar. The review rail clips unused rendering reservation after the actual engraved content, and leaving review resets scrollLeft before a new count-in. Existing translated scrollReview copy is shown for results instead of the pre-start hint; no new translation keys or scoring/audio changes.
+
+Focused ScoreViewport/score-scroll tests pass35tests and TypeScript passes. The fake-WAV production verifier now exercises a Chromium touch gesture, keyboard arrow, first/last-bar reachability at390/1440, preserved answer colors, and scroll reset on retry. Those new browser assertions await the combined fresh candidate with the basic minimum-bar correction; they are not claimed as passed yet.
+
+
+Fresh build `MilD86pkOyTtriYSNuDoa` now passes the result-review browser assertions at390and1440: native touch gesture, keyboard arrow, wheel access to first/last bar, unchanged answer colors, result reopen/minimize/Escape, resize and retry offset reset. `/tmp/note-quiz-review-scroll-final/report.json` has the successful fake-WAV run; `/tmp/note-quiz-review-scroll-qa/report.json` also preserves both passing preview/clock cases and the initial wheel assertion failure. The latter was reproduced in plain HTML: Chromium ignores the first wheel event while keyboard scrolling still animates. The verifier now lets that preceding gesture settle before switching input methods; application source did not change for this correction. The diagnostic failed report remains in `/tmp/note-quiz-review-scroll-diagnostic`.

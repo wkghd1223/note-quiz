@@ -34,8 +34,8 @@ async function eventually(check, message, timeout = 15000) {
 }
 const en = {
   result: "Game Result",
-  start: "Start Game",
-  earStart: "Start Session",
+  start: "Start practice",
+  earStart: "Start practice",
   restart: "Same settings again",
   review: "Review mistakes",
   change: "Change practice or difficulty",
@@ -56,6 +56,57 @@ const choices = {
   interval: "Major third",
   chord: "Major",
 };
+
+const storedLearning = (page) =>
+  page.evaluate(() =>
+    JSON.parse(
+      localStorage.getItem("note-quiz-learning-v1") ||
+        '{"version":1,"sessions":[],"daily":{}}',
+    ),
+  );
+
+async function minimizeResult(page) {
+  if (await page.locator("dialog[open] [data-practice-result]").count()) {
+    await page.keyboard.press("Escape");
+    await page.locator("dialog[open]").waitFor({ state: "hidden" });
+    return true;
+  }
+  return false;
+}
+async function withHistory(page, read) {
+  const restoreResult = await minimizeResult(page);
+  const trigger = page.locator("[data-practice-history-trigger]");
+  assert(
+    await trigger.isEnabled(),
+    "History is available in this idle/finished fixture",
+  );
+  await trigger.click();
+  const panel = page.locator("dialog[open]");
+  await panel.waitFor();
+  const result = await read(panel);
+  await panel.locator("button[aria-label]").first().click();
+  await page.locator("dialog[open]").waitFor({ state: "hidden" });
+  assert(
+    await trigger.evaluate((node) => document.activeElement === node),
+    "History returns focus to its trigger",
+  );
+  if (restoreResult) {
+    await page.locator('[data-practice-action="view-results"]:visible').click();
+    await page.locator("dialog[open]").waitFor();
+  }
+  return result;
+}
+const historyRows = (page) =>
+  withHistory(page, (panel) =>
+    panel.getByRole("table").locator("tbody tr").count(),
+  );
+const resetHistory = (page) =>
+  withHistory(page, async (panel) => {
+    await panel
+      .getByRole("button", { name: "Reset learning history", exact: true })
+      .click();
+    await panel.getByText(en.noHistory, { exact: true }).waitFor();
+  });
 
 (async () => {
   fs.mkdirSync(output, { recursive: true });
@@ -385,20 +436,24 @@ const choices = {
             );
           for (const mode of Object.keys(mainPaths))
             assert(
-              (await page.locator(`a[href*="mode=${mode}"]`).count()) >= 1,
+              (await page
+                .locator(`a[href="/practice/${mode}"], a[href*="mode=${mode}"]`)
+                .count()) >= 1,
               `${mode} home action is available`,
             );
           await s.shot(`${size}-home`);
           for (const mode of Object.keys(mainPaths)) {
             await s.go(mainPaths[mode]);
             assert.equal(
-              await page.locator("[data-practice-mode]").inputValue(),
+              await page
+                .locator("[data-practice-mode] input:checked")
+                .inputValue(),
               mode,
             );
             assert.equal(
-              await page.locator(".piano-keyboard").count(),
+              await page.locator(".piano-keyboard button:enabled").count(),
               0,
-              "No disabled idle keyboard",
+              "The stable idle keyboard must not accept answers before start",
             );
             const beforePosts = s.api.posts.length;
             await s.start(mode);
@@ -475,13 +530,15 @@ const choices = {
             await eventually(
               () =>
                 page
-                  .locator("[data-practice-mode]")
+                  .locator("[data-practice-mode] input:checked")
                   .evaluate((element) => element === document.activeElement),
               "Change practice returns focus to mode selector",
             );
           }
           assert(
-            (await page.getByRole("table").count()) >= 1,
+            (await withHistory(page, (panel) =>
+              panel.getByRole("table").count(),
+            )) >= 1,
             "Visible local history records completed sessions",
           );
         },
@@ -1141,9 +1198,7 @@ const choices = {
       "timed ear boundary and mode change cancel old transitions",
       async () => {
         await s.go(mainPaths.ear);
-        await page
-          .getByRole("button", { name: "Reset learning history", exact: true })
-          .click();
+        await resetHistory(page);
         await s.go(
           "/practice?share=1&mode=ear&length=timed&seconds=30&input=piano&notes=natural&sound=0",
         );
@@ -1154,21 +1209,28 @@ const choices = {
         await s.resultHeading().waitFor();
         await s.result().getByText("30.0 sec", { exact: true }).waitFor();
         await s.result().getByText("Completed", { exact: true }).waitFor();
-        const rows = await page.getByRole("table").locator("tbody tr").count();
+        const rows = await historyRows(page);
         await s.advance(5000);
         assert.equal(
-          await page.getByRole("table").locator("tbody tr").count(),
+          await historyRows(page),
           rows,
           "Timed completion records only once",
         );
-        await page.locator("[data-practice-mode]").selectOption("note");
+        await minimizeResult(page);
+        await page
+          .locator('[data-practice-mode] input[value="note"]')
+          .locator("..")
+          .click();
         await s
           .card()
           .getByRole("button", { name: en.start, exact: true })
           .waitFor();
         await s.start("note");
         await s.card().getByRole("button", { name: "C4", exact: true }).click();
-        await page.locator("[data-practice-mode]").selectOption("interval");
+        await page
+          .locator('[data-practice-mode] input[value="interval"]')
+          .locator("..")
+          .click();
         await s.advance(2000);
         assert.equal(await s.resultHeading().count(), 0);
         assert(
@@ -1189,6 +1251,7 @@ const choices = {
       async () => {
         const path = "/practice?mode=interval&level=basic&daily=1";
         await daily.go(path);
+        const key = `${await d.evaluate(() => new Date().toISOString().slice(0, 10))}:interval:basic`;
         await daily.start("interval");
         const initial = await daily.answer("interval", "Major third");
         await daily.go(path);
@@ -1201,10 +1264,17 @@ const choices = {
         );
         const remaining = await daily.finishTen("interval", "Major third");
         const firstSet = [repeated, ...remaining];
-        await d.getByText(en.dailyDone, { exact: true }).waitFor();
-        assert.equal(await d.getByRole("table").locator("tbody tr").count(), 1);
+        await eventually(
+          async () => (await storedLearning(d)).daily[key] === true,
+          "Daily completion is stored for this browser",
+        );
+        assert.equal(await historyRows(d), 1);
         await daily.go(path);
-        await d.getByText(en.dailyDone, { exact: true }).waitFor();
+        assert.equal(
+          (await storedLearning(d)).daily[key],
+          true,
+          "Reload retains the browser's daily completion",
+        );
         await daily.start("interval");
         const nextSet = await daily.finishTen("interval", "Major third");
         assert.deepEqual(
@@ -1213,7 +1283,7 @@ const choices = {
           "Daily replay reproduces all ten question notations",
         );
         assert.equal(
-          await d.getByRole("table").locator("tbody tr").count(),
+          await historyRows(d),
           1,
           "Completed daily replay creates no duplicate record",
         );
@@ -1222,25 +1292,49 @@ const choices = {
           0,
           "Daily sessions never submit country points",
         );
+        await minimizeResult(d);
         await daily
-          .result()
-          .getByRole("button", { name: en.change, exact: true })
+          .card()
+          .getByRole("button", { name: "Settings", exact: true })
           .click();
+        await d.waitForURL(
+          (url) => url.searchParams.get("settings") === "open",
+        );
         await d
-          .getByRole("button", { name: "Reset learning history", exact: true })
+          .getByRole("dialog")
+          .locator("[data-practice-settings-intro] button")
           .click();
-        await d.getByText(en.noHistory, { exact: true }).waitFor();
+        await d.waitForURL(
+          (url) =>
+            !url.searchParams.has("daily") &&
+            url.searchParams.get("settings") === "open",
+        );
+        await daily.close().click();
+        await d.waitForURL((url) => !url.searchParams.has("settings"));
+        assert(
+          await daily
+            .card()
+            .getByRole("button", { name: en.start, exact: true })
+            .isVisible(),
+          "Legacy daily mode can return to normal practice from Settings",
+        );
+        assert.equal(
+          (await storedLearning(d)).daily[key],
+          true,
+          "Returning to normal practice preserves completion",
+        );
+        await resetHistory(d);
         await daily.go(path);
         assert.equal(
-          await d.getByText(en.dailyDone, { exact: true }).count(),
-          0,
+          (await storedLearning(d)).daily[key] === true,
+          false,
           "History reset also clears daily completion",
         );
         await daily.shot("daily-and-local-history");
       },
     );
     await run(
-      "shared settings precedence, no auto start/audio and copy recovery",
+      "shared URL settings, settings-only preset controls and removed share/daily entry UI",
       async () => {
         await daily.go(
           "/practice?share=1&mode=interval&level=basic&view=visual&direction=descending&task=interval&length=free",
@@ -1258,65 +1352,91 @@ const choices = {
             .getByRole("button", { name: en.start, exact: true })
             .isVisible(),
         );
-        await d
-          .getByText("Preset · Difficulty · Copy practice link", {
-            exact: true,
-          })
-          .click();
-        await daily.context.grantPermissions(
-          ["clipboard-read", "clipboard-write"],
-          { origin: new URL(baseURL).origin },
+        assert.equal(
+          await d
+            .getByText("Preset · Difficulty · Copy practice link", {
+              exact: true,
+            })
+            .count(),
+          0,
+          "Preset/difficulty no longer use a top panel",
         );
-        await d
-          .getByRole("button", { name: "Copy practice link", exact: true })
-          .click();
-        await d
-          .getByText("Link copied. It shares settings only.", { exact: true })
-          .waitFor();
-        const copied = await d.evaluate(() => navigator.clipboard.readText());
-        const shared = new URL(copied);
+        assert.equal(
+          await d
+            .getByRole("button", {
+              name: /Copy practice link|Start today.s practice/,
+            })
+            .count(),
+          0,
+          "Share and daily entry buttons were removed",
+        );
+        const shared = new URL(d.url());
         assert.equal(shared.searchParams.get("mode"), "interval");
         assert.equal(shared.searchParams.get("view"), "visual");
         assert.equal(shared.searchParams.get("direction"), "descending");
         assert.equal(shared.searchParams.get("length"), "free");
         for (const key of shared.searchParams.keys())
           assert(
-            !/answer|session|history|identity|complete|daily/i.test(key),
-            "Only settings enter shared URL",
+            !/answer|session|history|identity|complete/i.test(key),
+            "Supported shared URLs expose settings only",
           );
-        await d.evaluate(() =>
-          Object.defineProperty(navigator, "clipboard", {
-            configurable: true,
-            value: {
-              writeText: async () => {
-                throw new DOMException("Simulated denial");
-              },
-            },
-          }),
-        );
-        await d
-          .getByRole("button", { name: "Copy practice link", exact: true })
+        await daily
+          .card()
+          .getByRole("button", { name: "Settings", exact: true })
           .click();
-        await d
-          .getByText("Could not copy. Select and copy the link below.", {
-            exact: true,
-          })
-          .waitFor();
-        assert(
-          (
-            await d
-              .getByRole("textbox", { name: "Copy practice link" })
-              .inputValue()
-          ).includes("share=1"),
+        await d.waitForURL(
+          (url) => url.searchParams.get("settings") === "open",
+        );
+        const settings = d.getByRole("dialog");
+        await settings.locator("[data-practice-settings-intro]").waitFor();
+        assert.equal(
+          await settings
+            .locator('select:has(option[value="custom"])')
+            .inputValue(),
+          "basic",
+          "Difficulty lives inside Settings",
+        );
+        assert.equal(
+          await settings
+            .locator('select:has(option[value="free"])')
+            .inputValue(),
+          "free",
+          "Shared theory length is retained in Settings",
+        );
+        assert.equal(
+          await settings
+            .locator('select:has(option[value="visual"])')
+            .inputValue(),
+          "visual",
+        );
+        assert.equal(
+          await settings
+            .locator('select:has(option[value="descending"])')
+            .inputValue(),
+          "descending",
+        );
+        await daily.close().click();
+        await d.waitForURL((url) => !url.searchParams.has("settings"));
+        const bad = await daily.context.request.get(
+          new URL(
+            "/practice?share=1&mode=bad&level=bad&above=999&seconds=1&min=8&max=0",
+            baseURL,
+          ).toString(),
+          { maxRedirects: 0 },
+        );
+        assert.equal(
+          bad.status(),
+          404,
+          "Unknown legacy mode returns real HTTP404",
+        );
+        assert.equal(
+          (await bad.text()).includes("data-practice-mode"),
+          false,
+          "Unknown mode does not silently enter note practice",
         );
         await daily.go(
-          "/practice?share=1&mode=bad&level=bad&above=999&seconds=1&min=8&max=0",
+          "/practice?share=1&mode=note&level=bad&above=999&seconds=1&min=8&max=0",
         );
-        await d
-          .getByText("Preset · Difficulty · Copy practice link", {
-            exact: true,
-          })
-          .click();
         await d
           .getByText(
             "Some link settings were invalid and were replaced with safe defaults.",
@@ -1324,10 +1444,13 @@ const choices = {
           )
           .waitFor();
         assert.equal(
-          await d.locator("[data-practice-mode]").inputValue(),
+          await d.locator("[data-practice-mode] input:checked").inputValue(),
           "note",
         );
-        assert.equal(await d.locator(".piano-keyboard").count(), 0);
+        assert.equal(
+          await d.locator(".piano-keyboard button:enabled").count(),
+          0,
+        );
         await daily.shot("malformed-share-safe-start");
         await daily.go(
           "/practice?share=1&mode=note&clef=bass&input=solfege&length=ten&sound=0",
@@ -1349,7 +1472,7 @@ const choices = {
           return text.includes("Treble Clef") && text.includes("Piano Keys");
         }, "Explicit shared settings override saved personal settings");
         assert.equal(
-          await d.locator(".piano-keyboard").count(),
+          await d.locator(".piano-keyboard button:enabled").count(),
           0,
           "The shared note settings still wait for user start",
         );
@@ -1361,7 +1484,7 @@ const choices = {
     const midnight = await session(),
       m = midnight.page;
     await run(
-      "daily UTC midnight preserves the active challenge until explicit next-day selection",
+      "legacy daily URL preserves an active UTC challenge and fresh entry selects the new day",
       async () => {
         assert(
           m.clock,
@@ -1376,7 +1499,7 @@ const choices = {
           .locator("svg.staff-svg")
           .evaluate((element) => element.outerHTML);
         await midnight.advance(39000);
-        await m.getByRole("heading", { name: /2026-10-31 UTC/ }).waitFor();
+        assert.equal(new URL(m.url()).searchParams.get("daily"), "1");
         assert.equal(
           (await midnight.progress()).current,
           1,
@@ -1390,12 +1513,24 @@ const choices = {
           notation,
           "UTC rollover preserves the current question context",
         );
-        const tomorrow = m.getByRole("button", {
-          name: /Start today.s practice · 2026-11-01/,
-        });
-        await tomorrow.waitFor();
+        assert.equal(
+          await m
+            .getByRole("button", { name: /Start today.s practice/ })
+            .count(),
+          0,
+          "UTC rollover does not reintroduce removed daily entry UI",
+        );
         await midnight.finishTen("note", "C#4");
-        await m.getByText(en.dailyDone, { exact: true }).waitFor();
+        await eventually(
+          async () =>
+            (await storedLearning(m)).daily["2026-10-31:note:beginner"] ===
+            true,
+          "UTC-spanning completion belongs to the original daily key",
+        );
+        assert.notEqual(
+          (await storedLearning(m)).daily["2026-11-01:note:beginner"],
+          true,
+        );
         assert(
           await midnight
             .result()
@@ -1408,30 +1543,22 @@ const choices = {
           0,
           "UTC-spanning daily completion submits no country points",
         );
-        await tomorrow.click();
-        await midnight
-          .card()
-          .getByRole("button", { name: en.start, exact: true })
-          .waitFor();
-        await m.getByRole("heading", { name: /2026-11-01 UTC/ }).waitFor();
-        assert.equal(
-          await m.getByText(en.dailyDone, { exact: true }).count(),
-          0,
-          "Completion is attached to the original daily key, not tomorrow",
-        );
+        // A fresh supported daily URL is the explicit next-day entry after removal of that button.
         // Hold the post-midnight wall-clock instant across the navigation fixture.
         const reloadInstant = await m.evaluate(() => Date.now());
         await m.clock.setFixedTime(new Date(reloadInstant));
         const previousGets = midnight.api.gets;
-        await m.reload({ waitUntil: "domcontentloaded" });
+        await m.goto(
+          new URL("/practice?mode=note&daily=1", baseURL).toString(),
+          { waitUntil: "domcontentloaded" },
+        );
         await m.locator("[data-practice-mode]").waitFor();
         await eventually(
           () => Promise.resolve(midnight.api.gets > previousGets),
           "Daily reload finishes client hydration",
         );
         await eventually(
-          async () =>
-            (await m.getByRole("table").locator("tbody tr").count()) === 1,
+          async () => (await historyRows(m)) === 1,
           "Stored old-day result reappears after hydration",
         );
         assert(
@@ -1441,12 +1568,29 @@ const choices = {
           "Reload keeps the fixture on the new UTC date",
         );
         assert.equal(
-          await m.getByText(en.dailyDone, { exact: true }).count(),
-          0,
-          "Reload retains the new day's incomplete state",
+          (await storedLearning(m)).daily["2026-11-01:note:beginner"] === true,
+          false,
+          "Fresh daily URL retains the new day's incomplete state",
         );
         assert.equal(
-          await m.getByRole("table").locator("tbody tr").count(),
+          (await storedLearning(m)).daily["2026-10-31:note:beginner"],
+          true,
+          "Fresh entry preserves the old day's completion",
+        );
+        assert(
+          await midnight
+            .card()
+            .getByRole("button", { name: en.start, exact: true })
+            .isVisible(),
+          "New day's URL waits for user start",
+        );
+        assert.equal(
+          await m.locator(".piano-keyboard button:enabled").count(),
+          0,
+          "New day does not start a session automatically",
+        );
+        assert.equal(
+          await historyRows(m),
           1,
           "Only the old-day completion is recorded",
         );
@@ -1468,12 +1612,14 @@ const choices = {
       "blocked browser storage still permits a full short practice",
       async () => {
         await blocked.go(mainPaths.interval);
-        await blocked.page
-          .getByText(
-            "Browser storage is unavailable. Practice still works, but progress cannot be saved.",
-            { exact: true },
-          )
-          .waitFor();
+        await withHistory(blocked.page, (panel) =>
+          panel
+            .getByText(
+              "Browser storage is unavailable. Practice still works, but progress cannot be saved.",
+              { exact: true },
+            )
+            .waitFor(),
+        );
         await blocked.start("interval");
         await blocked.finishTen("interval");
         await blocked.resultHeading().waitFor();

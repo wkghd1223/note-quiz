@@ -25,6 +25,8 @@
   --shadow-card:
     0 14px 40px rgba(76, 29, 149, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
   --shadow-button: 0 10px 24px rgba(91, 33, 182, 0.28);
+  --motion-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --motion-duration: 160ms;
 }
 
 * {
@@ -48,12 +50,10 @@ select,
 input,
 textarea {
   transition:
-    color 160ms ease,
-    background-color 160ms ease,
-    border-color 160ms ease,
-    box-shadow 160ms ease,
-    transform 160ms ease,
-    opacity 160ms ease;
+    color var(--motion-duration) var(--motion-ease),
+    background-color var(--motion-duration) var(--motion-ease),
+    border-color var(--motion-duration) var(--motion-ease),
+    box-shadow var(--motion-duration) var(--motion-ease);
 }
 
 ::selection {
@@ -86,8 +86,24 @@ textarea {
 
 /* Reserve layout space for observed Journey wrappers; never cover or hide ads. */
 .practice-ad-safe {
+  /* Journey also adds body padding. Keep one viewport-bound scroll owner so
+     outer document scrolling cannot move the reserved strip behind the ad. */
+  position: fixed;
+  top: var(--practice-viewport-top, 0px);
+  left: var(--practice-viewport-left, 0px);
+  width: var(--practice-viewport-width, 100%);
+  height: max(
+    0px,
+    calc(var(--practice-viewport-height, 100dvh) - var(--ad-bottom-inset, 0px))
+  );
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
   padding-inline-end: var(--ad-side-inset, 0px);
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+  scroll-padding-block: 24px;
 }
 html {
   scroll-padding-bottom: calc(var(--ad-bottom-inset, 0px) + 24px);
@@ -95,19 +111,108 @@ html {
 .practice-ad-safe button,
 .practice-ad-safe input,
 .practice-ad-safe select {
-  scroll-margin-block: 24px calc(var(--ad-bottom-inset, 0px) + 24px);
+  scroll-margin-block: 24px;
 }
 
-body {
-  padding-bottom: var(--ad-bottom-inset, 0px);
+.practice-dialog {
+  --dialog-height: max(
+    0px,
+    calc(
+      var(--practice-viewport-height, 100dvh) - var(--ad-bottom-inset, 0px) -
+        env(safe-area-inset-bottom, 0px) - 32px
+    )
+  );
+  position: fixed;
+  inset: calc(var(--practice-viewport-top, 0px) + 16px)
+    calc(
+      100vw - var(--practice-viewport-left, 0px) -
+        var(--practice-viewport-width, 100vw) +
+        var(--ad-dialog-side-inset, var(--ad-side-inset, 0px)) + 16px
+    )
+    calc(
+      100dvh - var(--practice-viewport-top, 0px) -
+        var(--practice-viewport-height, 100dvh) + var(--ad-bottom-inset, 0px) +
+        env(safe-area-inset-bottom, 0px) + 16px
+    )
+    calc(var(--practice-viewport-left, 0px) + 16px);
+  width: max(
+    0px,
+    calc(
+      var(--practice-viewport-width, 100vw) -
+        var(--ad-dialog-side-inset, var(--ad-side-inset, 0px)) - 32px
+    )
+  );
+  max-width: 32rem;
+  max-height: min(70dvh, var(--dialog-height));
+  margin: auto;
 }
 
-/* A visible control can never occupy the fixed adhesion's viewport strip. */
-.practice-ad-safe {
-  height: calc(100dvh - var(--ad-bottom-inset, 0px));
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
-  scrollbar-gutter: stable;
+.choice-segment,
+.motion-control,
+.home-practice-card {
+  transition:
+    color var(--motion-duration) var(--motion-ease),
+    background-color var(--motion-duration) var(--motion-ease),
+    border-color var(--motion-duration) var(--motion-ease),
+    box-shadow var(--motion-duration) var(--motion-ease),
+    transform var(--motion-duration) var(--motion-ease);
+}
+
+.choice-segment:active,
+.motion-control:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .home-practice-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(76, 29, 149, 0.09);
+  }
+}
+
+.home-practice-card:active {
+  transform: translateY(0);
+}
+
+@keyframes surface-enter {
+  from {
+    opacity: 0.6;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.motion-enter {
+  animation: surface-enter 180ms var(--motion-ease);
+}
+
+/* Scored inputs and the audio-clock rail must respond without CSS latency. */
+.piano-keyboard button,
+button[data-midi],
+[data-score-rail],
+[data-score-playhead] {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0s !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+  .choice-segment:active,
+  .motion-control:active,
+  .home-practice-card:hover,
+  .home-practice-card:active {
+    transform: none;
+  }
+  .motion-enter {
+    animation: none;
+  }
 }

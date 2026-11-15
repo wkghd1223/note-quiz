@@ -1,4 +1,4 @@
-import type { HomeCopy } from "./home";
+import type { BasicHomeCopy, HomeCopy } from "./home";
 
 export const portugueseHome: HomeCopy = {
   title: "Leia, ouça e toque as notas",
@@ -60,4 +60,37 @@ export const portugueseHome: HomeCopy = {
     "Note Quiz | Leitura musical, treino auditivo e prática de melodias",
   metaDescription:
     "Pratique notas, intervalos e acordes ou toque uma melodia de oito compassos pelo microfone. Grátis, com exemplos no piano e metrônomo. Sem cadastro.",
+};
+
+export const portugueseBasicHome: BasicHomeCopy = {
+  introduction:
+    "Pratique a leitura de notas e reconheça sons, intervalos e acordes, uma questão por vez.",
+  steps: [
+    {
+      ...portugueseHome.steps[0],
+      description:
+        "Escolha leitura de notas, treino auditivo, intervalos ou acordes.",
+    },
+    {
+      ...portugueseHome.steps[1],
+      description: "Escolha a dificuldade e o conteúdo nas configurações.",
+    },
+    {
+      ...portugueseHome.steps[2],
+      description:
+        "Confira suas respostas e repita com as mesmas configurações.",
+    },
+  ],
+  faq: [
+    portugueseHome.faq[0],
+    {
+      ...portugueseHome.faq[1],
+      answer:
+        "Não. Você pode responder pelas teclas na tela ou pelas alternativas.",
+    },
+    portugueseHome.faq[3],
+  ],
+  metaTitle: "Note Quiz | Leitura musical e treino auditivo",
+  metaDescription:
+    "Pratique notas, intervalos e acordes com exercícios de leitura e escuta. Responda pelas teclas na tela ou pelas alternativas. Grátis e sem cadastro.",
 };

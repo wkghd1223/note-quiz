@@ -1,7 +1,7 @@
 "use client";
-import React, { useId } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
 import type { TrainingMode } from "@/lib/practice/types";
+import SegmentedControl from "@/components/ui/SegmentedControl";
 export type PracticeMode = TrainingMode;
 export default function ModeSwitcher({
   mode,
@@ -10,26 +10,17 @@ export default function ModeSwitcher({
   mode: PracticeMode;
   onChange: (mode: PracticeMode) => void;
 }) {
-  const { t } = useTranslation(),
-    id = useId();
+  const { t } = useTranslation();
   return (
-    <div className="grid min-w-0 gap-1">
-      <label htmlFor={id} className="text-xs font-bold text-slate-500">
-        {t.learning.chooseMode}
-      </label>
-      <select
-        id={id}
-        data-practice-mode
-        value={mode}
-        onChange={(e) => onChange(e.target.value as PracticeMode)}
-        className="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900"
-      >
-        {(["note", "ear", "interval", "chord"] as const).map((value) => (
-          <option key={value} value={value}>
-            {t.learning[value]}
-          </option>
-        ))}
-      </select>
-    </div>
+    <SegmentedControl
+      data-practice-mode
+      label={t.learning.chooseMode}
+      value={mode}
+      onChange={onChange}
+      options={(["note", "ear", "interval", "chord"] as const).map((value) => ({
+        value,
+        label: t.learning[value],
+      }))}
+    />
   );
 }

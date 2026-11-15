@@ -1,0 +1,20 @@
+.review {
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+}
+
+.review:focus-visible {
+  outline: 2px solid #7c3aed;
+  outline-offset: -2px;
+}
+
+@media (max-width: 639px) {
+  .review {
+    scrollbar-width: none;
+  }
+
+  .review::-webkit-scrollbar {
+    display: none;
+  }
+}

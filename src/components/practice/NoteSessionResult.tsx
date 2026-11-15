@@ -25,6 +25,8 @@ interface NoteSessionResultProps {
   onReview?: () => void;
   onChange?: () => void;
   children?: React.ReactNode;
+  preserveScroll?: boolean;
+  focusOnMount?: boolean;
 }
 export default function NoteSessionResult({
   result,
@@ -34,10 +36,14 @@ export default function NoteSessionResult({
   onReview = () => {},
   onChange = () => {},
   children,
+  preserveScroll = false,
+  focusOnMount = true,
 }: NoteSessionResultProps) {
   const { t } = useTranslation();
   return (
     <LearningResult
+      preserveScroll={preserveScroll}
+      focusOnMount={focusOnMount}
       result={result}
       onRestart={onRestart}
       onReview={onReview}

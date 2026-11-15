@@ -3,6 +3,8 @@
 import React from "react";
 import { useLanguageStore } from "@/store/languageStore";
 import { useTranslation } from "@/hooks/useTranslation";
+import { usePathname, useRouter } from "next/navigation";
+import { languageSwitchHref } from "@/lib/i18n/locale";
 
 interface LanguageSelectorProps {
   className?: string;
@@ -11,8 +13,10 @@ interface LanguageSelectorProps {
 const LanguageSelector: React.FC<LanguageSelectorProps> = ({
   className = "",
 }) => {
-  const { language, setLanguage } = useLanguageStore();
-  const { t } = useTranslation();
+  const { setLanguage } = useLanguageStore();
+  const { t, language } = useTranslation();
+  const pathname = usePathname();
+  const router = useRouter();
 
   const languages = [
     { code: "en" as Language, name: "English", flag: "🇬🇧" },
@@ -30,7 +34,17 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
       <select
         aria-label={t.settingsLabels.language}
         value={language}
-        onChange={(e) => setLanguage(e.target.value as Language)}
+        onChange={(e) => {
+          const nextLanguage = e.target.value as Language;
+          const href = languageSwitchHref(
+            pathname,
+            window.location.search,
+            window.location.hash,
+            nextLanguage,
+          );
+          if (href) router.push(href);
+          else setLanguage(nextLanguage);
+        }}
         className="w-full max-w-[8.5rem] rounded-lg border border-[#ded6f7] bg-white px-3 py-2 font-semibold text-slate-700 shadow-[0_8px_18px_rgba(76,29,149,0.08)] focus:border-[#7c3aed] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
       >
         {languages.map((lang) => (

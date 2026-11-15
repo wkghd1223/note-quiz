@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { translations, getTranslation } from "./translations";
 import { chineseLearning, chineseTranslations } from "./zh";
 import { learningTranslations } from "./learning";
-const SUPPORTED_LOCALES = Object.keys(translations) as Language[];
+import { SUPPORTED_LOCALES } from "./locale";
 import { portugueseLearning, portugueseTranslations } from "./pt";
 import { challengeCopy } from "@/features/challenge/i18n";
 import { melodyCopy } from "@/features/melody/i18n";

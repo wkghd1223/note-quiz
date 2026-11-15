@@ -1,15 +1,18 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { FaVolumeUp } from "react-icons/fa";
+import { FaVolumeUp, FaClock, FaCheck, FaBullseye } from "react-icons/fa";
 import Staff from "@/components/game/Staff";
 import PianoKeyboard from "@/components/game/PianoKeyboard";
 import SolfegeKeyboard from "@/components/game/SolfegeKeyboard";
 import MicrophoneInput from "@/components/game/MicrophoneInput";
 import GameControl from "@/components/game/GameControl";
+import { useShallow } from "zustand/react/shallow";
+import PracticeFeedback from "./PracticeFeedback";
 import { useGameStore } from "@/store/gameStore";
 import { useTranslation } from "@/hooks/useTranslation";
 import { noteToString } from "@/lib/music/utils";
+import { KEY_SIGNATURES } from "@/lib/music/constants";
 import {
   initializeAudio,
   playPianoNote,
@@ -19,6 +22,7 @@ import { trackLeaderboardSubmission } from "@/lib/analytics";
 import { isScoreEligible, SCORE_VERSION } from "@/lib/leaderboard/validation";
 import { submitLeaderboardScore } from "@/services/leaderboard";
 import PracticeShell from "./PracticeShell";
+import PracticeMetrics from "./PracticeMetrics";
 import ModeSwitcher, { PracticeMode } from "./ModeSwitcher";
 import NoteSettingsPanel from "./NoteSettingsPanel";
 import NoteSessionResult, {
@@ -29,6 +33,8 @@ interface NotePracticeModeProps {
   mode: PracticeMode;
   onModeChange: (mode: PracticeMode) => void;
   settingsOpen: boolean;
+  settingsIntro?: React.ReactNode;
+  headerActions?: React.ReactNode;
   onSettingsOpen: () => void;
   onSettingsClose: () => void;
   onLeaderboardOpen: () => void;
@@ -41,6 +47,8 @@ export default function NotePracticeMode({
   mode,
   onModeChange,
   settingsOpen,
+  settingsIntro,
+  headerActions,
   onSettingsOpen,
   onSettingsClose,
   runOptions,
@@ -48,7 +56,22 @@ export default function NotePracticeMode({
   onChangePractice,
 }: NotePracticeModeProps) {
   const { t } = useTranslation();
-  const store = useGameStore();
+  const store = useGameStore(
+    useShallow((state) => ({
+      gameState: state.gameState,
+      settings: state.settings,
+      sessionSettings: state.sessionSettings,
+      sessionKind: state.sessionKind,
+      answers: state.answers,
+      currentQuestion: state.currentQuestion,
+      currentAnswer: state.currentAnswer,
+      feedback: state.feedback,
+      gameResult: state.gameResult,
+      isAnswerLocked: state.isAnswerLocked,
+      questionLimit: state.questionLimit,
+      resetGame: state.resetGame,
+    })),
+  );
   const {
     gameState,
     settings,
@@ -59,7 +82,6 @@ export default function NotePracticeMode({
     currentAnswer,
     feedback,
     gameResult,
-    elapsedTime,
     isAnswerLocked,
     questionLimit,
   } = store;
@@ -300,10 +322,28 @@ export default function NotePracticeMode({
         : t.learning.free,
   ].join(" / ");
   const lastAnswer = answers[answers.length - 1];
+  const isIdle = gameState === "idle";
+  const isFinished = gameState === "finished";
+  const stageFeedback = isIdle || isFinished ? null : feedback;
+  // Random settings use a neutral staff; only Start may generate a question.
+  const staffQuestion = isIdle
+    ? null
+    : isFinished
+      ? (gameResult?.answers.at(-1)?.question ?? null)
+      : currentQuestion;
+  const staffClef =
+    staffQuestion?.clef ??
+    (settings.clef === "random" ? "treble" : settings.clef);
+  const staffKeySignature =
+    staffQuestion?.keySignature ??
+    KEY_SIGNATURES[settings.keySignature] ??
+    KEY_SIGNATURES.C;
 
-  const stage =
-    gameState === "finished" && gameResult ? (
+  const resultContent =
+    isFinished && gameResult ? (
       <NoteSessionResult
+        preserveScroll
+        focusOnMount={false}
         result={gameResult}
         sessionPoints={sessionPoints}
         submissionStatus={submissionStatus}
@@ -365,75 +405,88 @@ export default function NotePracticeMode({
           </details>
         )}
       </NoteSessionResult>
-    ) : gameState === "idle" ? (
-      <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
-        <p>{t.messages.startGameInstruction}</p>
-        <p>
-          {runOptions?.kind === "daily"
-            ? t.learning.dailyNotice
-            : t.learning.leaderboardNotice}
-        </p>
-      </div>
-    ) : (
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-2 sm:p-4">
-        <div className="mb-2 flex items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-bold text-[#5b21b6]">
-              {currentQuestion && t.clefs[currentQuestion.clef]}
-            </p>
-            <h2
-              className={`mt-1 text-base font-black sm:text-xl ${feedback?.type === "error" ? "text-red-700" : feedback ? "text-emerald-700" : "text-slate-950"}`}
-            >
-              <span role="status" aria-live="polite">
-                {feedback?.message ?? t.messages.whichNoteShown}
-              </span>
-            </h2>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <p className="text-sm font-bold tabular-nums">
-              {answers.length}
-              {questionLimit ? `/${questionLimit}` : ""}
-            </p>
-            <button
-              type="button"
-              aria-label={t.messages.playSound}
-              title={t.messages.playSound}
-              disabled={gameState !== "playing" || !currentQuestion}
-              onClick={() =>
-                currentQuestion && void replay(currentQuestion.displayNote)
-              }
-              className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-[#5b21b6] disabled:opacity-50"
-            >
-              <FaVolumeUp />
-            </button>
-          </div>
+    ) : null;
+  const stage = (
+    <div
+      data-practice-stage
+      data-practice-phase={isIdle ? "idle" : isFinished ? "finished" : "active"}
+      data-preview-clef={isIdle ? staffClef : undefined}
+      data-preview-key={isIdle ? staffKeySignature.key : undefined}
+      className="relative rounded-lg border border-slate-200 bg-slate-50 p-3 sm:p-4"
+    >
+      <div className="mb-2 flex h-14 items-center justify-between gap-3">
+        <div className="relative h-14 min-w-0 flex-1" data-practice-prompt-band>
+          <p
+            className={`text-xs font-bold leading-4 text-[#5b21b6] ${gameState === "playing" && stageFeedback ? "opacity-0" : ""}`}
+          >
+            {isIdle ? t.clefs[settings.clef] : t.clefs[staffClef]}
+          </p>
+          <h2
+            data-practice-prompt
+            tabIndex={-1}
+            className={`max-h-10 overflow-auto text-base font-black leading-5 text-slate-950 sm:text-xl ${gameState === "playing" && stageFeedback ? "opacity-0" : ""}`}
+          >
+            {t.messages.whichNoteShown}
+          </h2>
+          <PracticeFeedback
+            message={
+              gameState === "playing" ? stageFeedback?.message : undefined
+            }
+            correct={stageFeedback?.type === "success"}
+            announcementKey={answers.length}
+          />
         </div>
-        <p
-          className="mb-2 min-h-8 text-xs leading-4 text-slate-600"
-          aria-live="polite"
-        >
-          {feedback && lastAnswer
-            ? `${t.messages.correctAnswer}: ${noteToString(lastAnswer.correctNote)} / ${t.messages.yourAnswer}: ${noteToString(lastAnswer.note)}`
-            : ""}
-        </p>
-        <div className="flex min-h-[140px] items-center justify-center rounded-lg bg-white sm:min-h-[260px]">
-          {currentQuestion && (
-            <Staff
-              responsive
-              clef={currentQuestion.clef}
-              keySignature={currentQuestion.keySignature}
-              note={currentQuestion.displayNote}
-              originalNote={currentQuestion.note}
-              width={620}
-              height={260}
-              className="w-full max-w-[720px]"
-            />
-          )}
+        <div className="flex shrink-0 items-center gap-2">
+          <p className="text-sm font-bold tabular-nums">
+            {answers.length}
+            {questionLimit ? `/${questionLimit}` : ""}
+          </p>
+          <button
+            type="button"
+            aria-label={t.messages.playSound}
+            title={t.messages.playSound}
+            disabled={gameState !== "playing" || !currentQuestion}
+            onClick={() =>
+              currentQuestion && void replay(currentQuestion.displayNote)
+            }
+            className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-[#5b21b6] disabled:opacity-50"
+          >
+            <FaVolumeUp aria-hidden="true" />
+          </button>
         </div>
       </div>
-    );
+      <Staff
+        stable
+        responsive
+        clef={staffClef}
+        keySignature={staffKeySignature}
+        note={staffQuestion?.displayNote}
+        originalNote={staffQuestion?.note}
+        width={620}
+        height={260}
+      />
+      <div
+        data-practice-explanation
+        tabIndex={isIdle || stageFeedback || isFinished ? 0 : undefined}
+        className="mt-1 h-8 overflow-auto text-xs leading-4 text-slate-600 [overflow-wrap:anywhere]"
+      >
+        {isIdle ? (
+          <>
+            <p>{t.messages.startGameInstruction}</p>
+            <p>
+              {runOptions?.kind === "daily"
+                ? t.learning.dailyNotice
+                : t.learning.leaderboardNotice}
+            </p>
+          </>
+        ) : (stageFeedback || isFinished) && lastAnswer ? (
+          `${t.messages.correctAnswer}: ${noteToString(lastAnswer.correctNote)} / ${t.messages.yourAnswer}: ${noteToString(lastAnswer.note)}`
+        ) : null}
+      </div>
+    </div>
+  );
   const input =
-    gameState === "playing" || gameState === "paused" ? (
+    gameState === "playing" || gameState === "paused" || isFinished ? (
       <div className="rounded-lg border border-slate-200 bg-white p-3">
         <p className="mb-3 text-xs font-bold text-slate-500">
           {t.settingsLabels.answerMode}: {answerModeLabel}
@@ -453,6 +506,10 @@ export default function NotePracticeMode({
             selectedNote={currentAnswer}
             disabled={gameState !== "playing" || isAnswerLocked}
           />
+        ) : isFinished ? (
+          <p className="text-sm text-slate-600">
+            {gameResult?.completed ? t.learning.complete : t.learning.stopped}
+          </p>
         ) : (
           <MicrophoneInput
             onSubmit={answer}
@@ -467,24 +524,7 @@ export default function NotePracticeMode({
       modeSwitcher={<ModeSwitcher mode={mode} onChange={onModeChange} />}
       title={t.gameNavTitle}
       kicker={t.brandDescription}
-      status={
-        gameState === "finished" ? null : (
-          <div className="grid grid-cols-3 gap-2">
-            <StatusTile
-              label={t.timer.elapsed}
-              value={formatTime(elapsedTime)}
-            />
-            <StatusTile
-              label={t.scoreboard.correct}
-              value={String(store.getCurrentScore())}
-            />
-            <StatusTile
-              label={t.scoreboard.accuracy}
-              value={`${store.getAccuracy().toFixed(0)}%`}
-            />
-          </div>
-        )
-      }
+      status={<NoteStatus />}
       stage={
         <>
           {audioError && (
@@ -512,29 +552,57 @@ export default function NotePracticeMode({
       }
       input={input}
       actions={
-        gameState === "finished" ? null : (
+        <div
+          aria-hidden={isFinished || undefined}
+          inert={isFinished || undefined}
+          className={isFinished ? "invisible" : undefined}
+        >
           <GameControl onStart={() => void start()} busy={starting} />
-        )
+        </div>
       }
+      headerActions={headerActions}
+      settingsIntro={settingsIntro}
       settings={<NoteSettingsPanel />}
       settingsSummary={summary}
-      isIdle={gameState === "idle"}
+      isIdle={isIdle}
+      isFinished={isFinished}
+      result={resultContent}
+      resultKey={gameResult?.sessionId ?? null}
       settingsOpen={settingsOpen}
       onSettingsOpen={onSettingsOpen}
       onSettingsClose={onSettingsClose}
     />
   );
 }
-function StatusTile({ label, value }: { label: string; value: string }) {
+/** Clock updates stop here instead of reconciling notation and answer inputs. */
+function NoteStatus() {
+  const { t } = useTranslation();
+  const elapsedTime = useGameStore((state) => state.elapsedTime);
+  const answers = useGameStore((state) => state.answers);
+  const correct = answers.filter((answer) => answer.isCorrect).length;
   return (
-    <div className="flex min-w-0 flex-col justify-between rounded-lg border border-slate-200 px-2 py-2">
-      <p className="text-xs font-bold text-slate-500 [overflow-wrap:anywhere]">
-        {label}
-      </p>
-      <p className="mt-1 text-lg font-black tabular-nums">{value}</p>
-    </div>
+    <PracticeMetrics
+      items={[
+        {
+          label: t.timer.elapsed,
+          value: formatTime(elapsedTime),
+          icon: <FaClock />,
+        },
+        {
+          label: t.scoreboard.correct,
+          value: String(correct),
+          icon: <FaCheck />,
+        },
+        {
+          label: t.scoreboard.accuracy,
+          value: `${(answers.length ? (correct / answers.length) * 100 : 0).toFixed(0)}%`,
+          icon: <FaBullseye />,
+        },
+      ]}
+    />
   );
 }
+
 function formatTime(ms: number) {
   const seconds = Math.floor(ms / 1000);
   return `${Math.floor(seconds / 60)

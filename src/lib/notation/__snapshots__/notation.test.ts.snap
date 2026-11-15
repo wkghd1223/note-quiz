@@ -1,0 +1,1406 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`legacy written music golden semantics > keeps 100 seeded legacy questions and answer semantics unchanged 1`] = `
+[
+  [
+    "tenor",
+    "F Major",
+    {
+      "accidental": null,
+      "name": "C",
+      "octave": 2,
+    },
+    {
+      "accidental": null,
+      "name": "C",
+      "octave": 2,
+    },
+  ],
+  [
+    "bass",
+    "Eb Major",
+    {
+      "accidental": "flat",
+      "name": "G",
+      "octave": 1,
+    },
+    {
+      "accidental": "flat",
+      "name": "G",
+      "octave": 1,
+    },
+  ],
+  [
+    "alto",
+    "Eb Major",
+    {
+      "accidental": null,
+      "name": "B",
+      "octave": 3,
+    },
+    {
+      "accidental": "flat",
+      "name": "B",
+      "octave": 3,
+    },
+  ],
+  [
+    "treble",
+    "E Major",
+    {
+      "accidental": "sharp",
+      "name": "A",
+      "octave": 5,
+    },
+    {
+      "accidental": "sharp",
+      "name": "A",
+      "octave": 5,
+    },
+  ],
+  [
+    "treble",
+    "D Major",
+    {
+      "accidental": "flat",
+      "name": "B",
+      "octave": 3,
+    },
+    {
+      "accidental": "flat",
+      "name": "B",
+      "octave": 3,
+    },
+  ],
+  [
+    "bass",
+    "Bb Major",
+    {
+      "accidental": "sharp",
+      "name": "C",
+      "octave": 2,
+    },
+    {
+      "accidental": "sharp",
+      "name": "C",
+      "octave": 2,
+    },
+  ],
+  [
+    "tenor",
+    "F Major",
+    {
+      "accidental": null,
+      "name": "F",
+      "octave": 4,
+    },
+    {
+      "accidental": null,
+      "name": "F",
+      "octave": 4,
+    },
+  ],
+  [
+    "tenor",
+    "C Major",
+    {
+      "accidental": null,
+      "name": "F",
+      "octave": 2,
+    },
+    {
+      "accidental": null,
+      "name": "F",
+      "octave": 2,
+    },
+  ],
+  [
+    "bass",
+    "A Major",
+    {
+      "accidental": "natural",
+      "name": "F",
+      "octave": 2,
+    },
+    {
+      "accidental": "natural",
+      "name": "F",
+      "octave": 2,
+    },
+  ],
+  [
+    "treble",
+    "E Major",
+    {
+      "accidental": "natural",
+      "name": "C",
+      "octave": 3,
+    },
+    {
+      "accidental": "natural",
+      "name": "C",
+      "octave": 3,
+    },
+  ],
+  [
+    "alto",
+    "Ab Major",
+    {
+      "accidental": "flat",
+      "name": "G",
+      "octave": 3,
+    },
+    {
+      "accidental": "flat",
+      "name": "G",
+      "octave": 3,
+    },
+  ],
+  [
+    "tenor",
+    "Eb Major",
+    {
+      "accidental": null,
+      "name": "D",
+      "octave": 2,
+    },
+    {
+      "accidental": null,
+      "name": "D",
+      "octave": 2,
+    },
+  ],
+  [
+    "bass",
+    "B Major",
+    {
+      "accidental": null,
+      "name": "G",
+      "octave": 2,
+    },
+    {
+      "accidental": "sharp",
+      "name": "G",
+      "octave": 2,
+    },
+  ],
+  [
+    "alto",
+    "B Major",
+    {
+      "accidental": "flat",
+      "name": "B",
+      "octave": 2,
+    },
+    {
+      "accidental": "flat",
+      "name": "B",
+      "octave": 2,
+    },
+  ],
+  [
+    "alto",
+    "F Major",
+    {
+      "accidental": "sharp",
+      "name": "G",
+      "octave": 3,
+    },
+    {
+      "accidental": "sharp",
+      "name": "G",
+      "octave": 3,
+    },
+  ],
+  [
+    "alto",
+    "Ab Major",
+    {
+      "accidental": "sharp",
+      "name": "C",
+      "octave": 6,
+    },
+    {
+      "accidental": "sharp",
+      "name": "C",
+      "octave": 6,
+    },
+  ],
+  [
+    "tenor",
+    "E Major",
+    {
+      "accidental": null,
+      "name": "E",
+      "octave": 3,
+    },
+    {
+      "accidental": null,
+      "name": "E",
+      "octave": 3,
+    },
+  ],
+  [
+    "bass",
+    "C Major",
+    {
+      "accidental": null,
+      "name": "F",
+      "octave": 5,
+    },
+    {
+      "accidental": null,
+      "name": "F",
+      "octave": 5,
+    },
+  ],
+  [
+    "tenor",
+    "F# Major",
+    {
+      "accidental": null,
+      "name": "E",
+      "octave": 5,
+    },
+    {
+      "accidental": "sharp",
+      "name": "E",
+      "octave": 5,
+    },
+  ],
+  [
+    "tenor",
+    "Eb Major",
+    {
+      "accidental": "sharp",
+      "name": "D",
+      "octave": 2,
+    },
+    {
+      "accidental": "sharp",
+      "name": "D",
+      "octave": 2,
+    },
+  ],
+  [
+    "bass",
+    "Ab Major",
+    {
+      "accidental": null,
+      "name": "F",
+      "octave": 1,
+    },
+    {
+      "accidental": null,
+      "name": "F",
+      "octave": 1,
+    },
+  ],
+  [
+    "tenor",
+    "F# Major",
+    {
+      "accidental": null,
+      "name": "B",
+      "octave": 4,
+    },
+    {
+      "accidental": null,
+      "name": "B",
+      "octave": 4,
+    },
+  ],
+  [
+    "treble",
+    "Ab Major",
+    {
+      "accidental": "flat",
+      "name": "G",
+      "octave": 4,
+    },
+    {
+      "accidental": "flat",
+      "name": "G",
+      "octave": 4,
+    },
+  ],
+  [
+    "treble",
+    "Db Major",
+    {
+      "accidental": "natural",
+      "name": "E",
+      "octave": 5,
+    },
+    {
+      "accidental": "natural",
+      "name": "E",
+      "octave": 5,
+    },
+  ],
+  [
+    "bass",
+    "Ab Major",
+    {
+      "accidental": "sharp",
+      "name": "C",
+      "octave": 3,
+    },
+    {
+      "accidental": "sharp",
+      "name": "C",
+      "octave": 3,
+    },
+  ],
+  [
+    "alto",
+    "G Major",
+    {
+      "accidental": "flat",
+      "name": "D",
+      "octave": 2,
+    },
+    {
+      "accidental": "flat",
+      "name": "D",
+      "octave": 2,
+    },
+  ],
+  [
+    "bass",
+    "Cb Major",
+    {
+      "accidental": "natural",
+      "name": "B",
+      "octave": 1,
+    },
+    {
+      "accidental": "natural",
+      "name": "B",
+      "octave": 1,
+    },
+  ],
+  [
+    "alto",
+    "B Major",
+    {
+      "accidental": null,
+      "name": "G",
+      "octave": 5,
+    },
+    {
+      "accidental": "sharp",
+      "name": "G",
+      "octave": 5,
+    },
+  ],
+  [
+    "bass",
+    "C# Major",
+    {
+      "accidental": "natural",
+      "name": "C",
+      "octave": 2,
+    },
+    {
+      "accidental": "natural",
+      "name": "C",
+      "octave": 2,
+    },
+  ],
+  [
+    "treble",
+    "Gb Major",
+    {
+      "accidental": "natural",
+      "name": "E",
+      "octave": 6,
+    },
+    {
+      "accidental": "natural",
+      "name": "E",
+      "octave": 6,
+    },
+  ],
+  [
+    "alto",
+    "F# Major",
+    {
+      "accidental": "flat",
+      "name": "B",
+      "octave": 1,
+    },
+    {
+      "accidental": "flat",
+      "name": "B",
+      "octave": 1,
+    },
+  ],
+  [
+    "treble",
+    "Cb Major",
+    {
+      "accidental": null,
+      "name": "D",
+      "octave": 4,
+    },
+    {
+      "accidental": "flat",
+      "name": "D",
+      "octave": 4,
+    },
+  ],
+  [
+    "alto",
+    "B Major",
+    {
+      "accidental": null,
+      "name": "A",
+      "octave": 1,
+    },
+    {
+      "accidental": "sharp",
+      "name": "A",
+      "octave": 1,
+    },
+  ],
+  [
+    "tenor",
+    "Ab Major",
+    {
+      "accidental": "flat",
+      "name": "G",
+      "octave": 5,
+    },
+    {
+      "accidental": "flat",
+      "name": "G",
+      "octave": 5,
+    },
+  ],
+  [
+    "tenor",
+    "Cb Major",
+    {
+      "accidental": "natural",
+      "name": "F",
+      "octave": 4,
+    },
+    {
+      "accidental": "natural",
+      "name": "F",
+      "octave": 4,
+    },
+  ],
+  [
+    "bass",
+    "Ab Major",
+    {
+      "accidental": "natural",
+      "name": "A",
+      "octave": 4,
+    },
+    {
+      "accidental": "natural",
+      "name": "A",
+      "octave": 4,
+    },
+  ],
+  [
+    "tenor",
+    "E Major",
+    {
+      "accidental": "natural",
+      "name": "G",
+      "octave": 2,
+    },
+    {
+      "accidental": "natural",
+      "name": "G",
+      "octave": 2,
+    },
+  ],
+  [
+    "alto",
+    "F Major",
+    {
+      "accidental": null,
+      "name": "D",
+      "octave": 5,
+    },
+    {
+      "accidental": null,
+      "name": "D",
+      "octave": 5,
+    },
+  ],
+  [
+    "bass",
+    "Bb Major",
+    {
+      "accidental": null,
+      "name": "E",
+      "octave": 3,
+    },
+    {
+      "accidental": "flat",
+      "name": "E",
+      "octave": 3,
+    },
+  ],
+  [
+    "tenor",
+    "Bb Major",
+    {
+      "accidental": "natural",
+      "name": "E",
+      "octave": 4,
+    },
+    {
+      "accidental": "natural",
+      "name": "E",
+      "octave": 4,
+    },
+  ],
+  [
+    "bass",
+    "E Major",
+    {
+      "accidental": null,
+      "name": "F",
+      "octave": 1,
+    },
+    {
+      "accidental": "sharp",
+      "name": "F",
+      "octave": 1,
+    },
+  ],
+  [
+    "alto",
+    "C Major",
+    {
+      "accidental": "flat",
+      "name": "E",
+      "octave": 4,
+    },
+    {
+      "accidental": "flat",
+      "name": "E",
+      "octave": 4,
+    },
+  ],
+  [
+    "treble",
+    "F Major",
+    {
+      "accidental": "natural",
+      "name": "B",
+      "octave": 6,
+    },
+    {
+      "accidental": "natural",
+      "name": "B",
+      "octave": 6,
+    },
+  ],
+  [
+    "alto",
+    "Bb Major",
+    {
+      "accidental": null,
+      "name": "A",
+      "octave": 1,
+    },
+    {
+      "accidental": null,
+      "name": "A",
+      "octave": 1,
+    },
+  ],
+  [
+    "bass",
+    "A Major",
+    {
+      "accidental": "flat",
+      "name": "E",
+      "octave": 1,
+    },
+    {
+      "accidental": "flat",
+      "name": "E",
+      "octave": 1,
+    },
+  ],
+  [
+    "tenor",
+    "Ab Major",
+    {
+      "accidental": null,
+      "name": "F",
+      "octave": 2,
+    },
+    {
+      "accidental": null,
+      "name": "F",
+      "octave": 2,
+    },
+  ],
+  [
+    "bass",
+    "D Major",
+    {
+      "accidental": "sharp",
+      "name": "D",
+      "octave": 2,
+    },
+    {
+      "accidental": "sharp",
+      "name": "D",
+      "octave": 2,
+    },
+  ],
+  [
+    "treble",
+    "Gb Major",
+    {
+      "accidental": "sharp",
+      "name": "F",
+      "octave": 5,
+    },
+    {
+      "accidental": "sharp",
+      "name": "F",
+      "octave": 5,
+    },
+  ],
+  [
+    "tenor",
+    "D Major",
+    {
+      "accidental": "flat",
+      "name": "G",
+      "octave": 5,
+    },
+    {
+      "accidental": "flat",
+      "name": "G",
+      "octave": 5,
+    },
+  ],
+  [
+    "treble",
+    "G Major",
+    {
+      "accidental": "sharp",
+      "name": "C",
+      "octave": 7,
+    },
+    {
+      "accidental": "sharp",
+      "name": "C",
+      "octave": 7,
+    },
+  ],
+  [
+    "treble",
+    "E Major",
+    {
+      "accidental": null,
+      "name": "B",
+      "octave": 6,
+    },
+    {
+      "accidental": null,
+      "name": "B",
+      "octave": 6,
+    },
+  ],
+  [
+    "bass",
+    "Gb Major",
+    {
+      "accidental": "sharp",
+      "name": "F",
+      "octave": 2,
+    },
+    {
+      "accidental": "sharp",
+      "name": "F",
+      "octave": 2,
+    },
+  ],
+  [
+    "treble",
+    "C# Major",
+    {
+      "accidental": null,
+      "name": "D",
+      "octave": 6,
+    },
+    {
+      "accidental": "sharp",
+      "name": "D",
+      "octave": 6,
+    },
+  ],
+  [
+    "bass",
+    "A Major",
+    {
+      "accidental": null,
+      "name": "C",
+      "octave": 4,
+    },
+    {
+      "accidental": "sharp",
+      "name": "C",
+      "octave": 4,
+    },
+  ],
+  [
+    "alto",
+    "Gb Major",
+    {
+      "accidental": "sharp",
+      "name": "F",
+      "octave": 2,
+    },
+    {
+      "accidental": "sharp",
+      "name": "F",
+      "octave": 2,
+    },
+  ],
+  [
+    "bass",
+    "Cb Major",
+    {
+      "accidental": "natural",
+      "name": "E",
+      "octave": 3,
+    },
+    {
+      "accidental": "natural",
+      "name": "E",
+      "octave": 3,
+    },
+  ],
+  [
+    "tenor",
+    "Db Major",
+    {
+      "accidental": null,
+      "name": "D",
+      "octave": 4,
+    },
+    {
+      "accidental": "flat",
+      "name": "D",
+      "octave": 4,
+    },
+  ],
+  [
+    "tenor",
+    "Eb Major",
+    {
+      "accidental": "flat",
+      "name": "G",
+      "octave": 3,
+    },
+    {
+      "accidental": "flat",
+      "name": "G",
+      "octave": 3,
+    },
+  ],
+  [
+    "bass",
+    "Cb Major",
+    {
+      "accidental": "natural",
+      "name": "D",
+      "octave": 1,
+    },
+    {
+      "accidental": "natural",
+      "name": "D",
+      "octave": 1,
+    },
+  ],
+  [
+    "alto",
+    "C# Major",
+    {
+      "accidental": "natural",
+      "name": "B",
+      "octave": 3,
+    },
+    {
+      "accidental": "natural",
+      "name": "B",
+      "octave": 3,
+    },
+  ],
+  [
+    "tenor",
+    "E Major",
+    {
+      "accidental": "flat",
+      "name": "B",
+      "octave": 4,
+    },
+    {
+      "accidental": "flat",
+      "name": "B",
+      "octave": 4,
+    },
+  ],
+  [
+    "treble",
+    "Eb Major",
+    {
+      "accidental": "sharp",
+      "name": "F",
+      "octave": 3,
+    },
+    {
+      "accidental": "sharp",
+      "name": "F",
+      "octave": 3,
+    },
+  ],
+  [
+    "bass",
+    "Gb Major",
+    {
+      "accidental": "natural",
+      "name": "D",
+      "octave": 3,
+    },
+    {
+      "accidental": "natural",
+      "name": "D",
+      "octave": 3,
+    },
+  ],
+  [
+    "alto",
+    "F# Major",
+    {
+      "accidental": "natural",
+      "name": "D",
+      "octave": 5,
+    },
+    {
+      "accidental": "natural",
+      "name": "D",
+      "octave": 5,
+    },
+  ],
+  [
+    "tenor",
+    "B Major",
+    {
+      "accidental": null,
+      "name": "D",
+      "octave": 2,
+    },
+    {
+      "accidental": "sharp",
+      "name": "D",
+      "octave": 2,
+    },
+  ],
+  [
+    "bass",
+    "E Major",
+    {
+      "accidental": null,
+      "name": "A",
+      "octave": 4,
+    },
+    {
+      "accidental": null,
+      "name": "A",
+      "octave": 4,
+    },
+  ],
+  [
+    "tenor",
+    "Gb Major",
+    {
+      "accidental": "natural",
+      "name": "A",
+      "octave": 5,
+    },
+    {
+      "accidental": "natural",
+      "name": "A",
+      "octave": 5,
+    },
+  ],
+  [
+    "treble",
+    "Ab Major",
+    {
+      "accidental": "natural",
+      "name": "D",
+      "octave": 6,
+    },
+    {
+      "accidental": "natural",
+      "name": "D",
+      "octave": 6,
+    },
+  ],
+  [
+    "treble",
+    "B Major",
+    {
+      "accidental": null,
+      "name": "D",
+      "octave": 3,
+    },
+    {
+      "accidental": "sharp",
+      "name": "D",
+      "octave": 3,
+    },
+  ],
+  [
+    "tenor",
+    "Ab Major",
+    {
+      "accidental": null,
+      "name": "E",
+      "octave": 3,
+    },
+    {
+      "accidental": "flat",
+      "name": "E",
+      "octave": 3,
+    },
+  ],
+  [
+    "bass",
+    "F Major",
+    {
+      "accidental": "flat",
+      "name": "D",
+      "octave": 5,
+    },
+    {
+      "accidental": "flat",
+      "name": "D",
+      "octave": 5,
+    },
+  ],
+  [
+    "tenor",
+    "F Major",
+    {
+      "accidental": null,
+      "name": "G",
+      "octave": 2,
+    },
+    {
+      "accidental": null,
+      "name": "G",
+      "octave": 2,
+    },
+  ],
+  [
+    "bass",
+    "Cb Major",
+    {
+      "accidental": "natural",
+      "name": "C",
+      "octave": 3,
+    },
+    {
+      "accidental": "natural",
+      "name": "C",
+      "octave": 3,
+    },
+  ],
+  [
+    "treble",
+    "E Major",
+    {
+      "accidental": "natural",
+      "name": "F",
+      "octave": 4,
+    },
+    {
+      "accidental": "natural",
+      "name": "F",
+      "octave": 4,
+    },
+  ],
+  [
+    "alto",
+    "G Major",
+    {
+      "accidental": "natural",
+      "name": "F",
+      "octave": 2,
+    },
+    {
+      "accidental": "natural",
+      "name": "F",
+      "octave": 2,
+    },
+  ],
+  [
+    "tenor",
+    "Ab Major",
+    {
+      "accidental": "flat",
+      "name": "G",
+      "octave": 5,
+    },
+    {
+      "accidental": "flat",
+      "name": "G",
+      "octave": 5,
+    },
+  ],
+  [
+    "bass",
+    "F Major",
+    {
+      "accidental": "natural",
+      "name": "B",
+      "octave": 2,
+    },
+    {
+      "accidental": "natural",
+      "name": "B",
+      "octave": 2,
+    },
+  ],
+  [
+    "alto",
+    "Ab Major",
+    {
+      "accidental": "natural",
+      "name": "B",
+      "octave": 2,
+    },
+    {
+      "accidental": "natural",
+      "name": "B",
+      "octave": 2,
+    },
+  ],
+  [
+    "bass",
+    "Cb Major",
+    {
+      "accidental": "natural",
+      "name": "A",
+      "octave": 2,
+    },
+    {
+      "accidental": "natural",
+      "name": "A",
+      "octave": 2,
+    },
+  ],
+  [
+    "treble",
+    "Cb Major",
+    {
+      "accidental": "natural",
+      "name": "B",
+      "octave": 4,
+    },
+    {
+      "accidental": "natural",
+      "name": "B",
+      "octave": 4,
+    },
+  ],
+  [
+    "treble",
+    "Ab Major",
+    {
+      "accidental": "natural",
+      "name": "E",
+      "octave": 5,
+    },
+    {
+      "accidental": "natural",
+      "name": "E",
+      "octave": 5,
+    },
+  ],
+  [
+    "treble",
+    "Db Major",
+    {
+      "accidental": "natural",
+      "name": "G",
+      "octave": 4,
+    },
+    {
+      "accidental": "natural",
+      "name": "G",
+      "octave": 4,
+    },
+  ],
+  [
+    "treble",
+    "B Major",
+    {
+      "accidental": "natural",
+      "name": "G",
+      "octave": 5,
+    },
+    {
+      "accidental": "natural",
+      "name": "G",
+      "octave": 5,
+    },
+  ],
+  [
+    "treble",
+    "Bb Major",
+    {
+      "accidental": null,
+      "name": "G",
+      "octave": 2,
+    },
+    {
+      "accidental": null,
+      "name": "G",
+      "octave": 2,
+    },
+  ],
+  [
+    "bass",
+    "F# Major",
+    {
+      "accidental": "natural",
+      "name": "G",
+      "octave": 2,
+    },
+    {
+      "accidental": "natural",
+      "name": "G",
+      "octave": 2,
+    },
+  ],
+  [
+    "tenor",
+    "C Major",
+    {
+      "accidental": "sharp",
+      "name": "G",
+      "octave": 2,
+    },
+    {
+      "accidental": "sharp",
+      "name": "G",
+      "octave": 2,
+    },
+  ],
+  [
+    "tenor",
+    "Bb Major",
+    {
+      "accidental": null,
+      "name": "G",
+      "octave": 1,
+    },
+    {
+      "accidental": null,
+      "name": "G",
+      "octave": 1,
+    },
+  ],
+  [
+    "tenor",
+    "B Major",
+    {
+      "accidental": null,
+      "name": "A",
+      "octave": 2,
+    },
+    {
+      "accidental": "sharp",
+      "name": "A",
+      "octave": 2,
+    },
+  ],
+  [
+    "treble",
+    "G Major",
+    {
+      "accidental": "natural",
+      "name": "F",
+      "octave": 6,
+    },
+    {
+      "accidental": "natural",
+      "name": "F",
+      "octave": 6,
+    },
+  ],
+  [
+    "tenor",
+    "A Major",
+    {
+      "accidental": "flat",
+      "name": "B",
+      "octave": 3,
+    },
+    {
+      "accidental": "flat",
+      "name": "B",
+      "octave": 3,
+    },
+  ],
+  [
+    "alto",
+    "Cb Major",
+    {
+      "accidental": "natural",
+      "name": "E",
+      "octave": 6,
+    },
+    {
+      "accidental": "natural",
+      "name": "E",
+      "octave": 6,
+    },
+  ],
+  [
+    "treble",
+    "Ab Major",
+    {
+      "accidental": null,
+      "name": "D",
+      "octave": 4,
+    },
+    {
+      "accidental": "flat",
+      "name": "D",
+      "octave": 4,
+    },
+  ],
+  [
+    "treble",
+    "C Major",
+    {
+      "accidental": "flat",
+      "name": "G",
+      "octave": 4,
+    },
+    {
+      "accidental": "flat",
+      "name": "G",
+      "octave": 4,
+    },
+  ],
+  [
+    "tenor",
+    "A Major",
+    {
+      "accidental": null,
+      "name": "F",
+      "octave": 4,
+    },
+    {
+      "accidental": "sharp",
+      "name": "F",
+      "octave": 4,
+    },
+  ],
+  [
+    "alto",
+    "Bb Major",
+    {
+      "accidental": "sharp",
+      "name": "A",
+      "octave": 4,
+    },
+    {
+      "accidental": "sharp",
+      "name": "A",
+      "octave": 4,
+    },
+  ],
+  [
+    "treble",
+    "B Major",
+    {
+      "accidental": null,
+      "name": "D",
+      "octave": 5,
+    },
+    {
+      "accidental": "sharp",
+      "name": "D",
+      "octave": 5,
+    },
+  ],
+  [
+    "treble",
+    "Ab Major",
+    {
+      "accidental": null,
+      "name": "G",
+      "octave": 3,
+    },
+    {
+      "accidental": null,
+      "name": "G",
+      "octave": 3,
+    },
+  ],
+  [
+    "treble",
+    "Gb Major",
+    {
+      "accidental": "natural",
+      "name": "A",
+      "octave": 2,
+    },
+    {
+      "accidental": "natural",
+      "name": "A",
+      "octave": 2,
+    },
+  ],
+  [
+    "tenor",
+    "C Major",
+    {
+      "accidental": "flat",
+      "name": "B",
+      "octave": 3,
+    },
+    {
+      "accidental": "flat",
+      "name": "B",
+      "octave": 3,
+    },
+  ],
+  [
+    "bass",
+    "C Major",
+    {
+      "accidental": "flat",
+      "name": "E",
+      "octave": 1,
+    },
+    {
+      "accidental": "flat",
+      "name": "E",
+      "octave": 1,
+    },
+  ],
+]
+`;

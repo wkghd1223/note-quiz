@@ -1,0 +1,40 @@
+# Current verification checkpoint — 2026-11-15
+
+Primary: Codex01a18a6b-b4ca-7d03-aa5b-ba404cb00811 / Orca term_f780478e-2947-4e8b-9dc4-bc74da7c2351. Both Runs remain preserved; default run_1f32a2a34e27. No commit/push/deploy.
+
+All application source is frozen and matches the296-file manifest `/tmp/note-quiz-melody-build-manifest.json`. Current production candidate `/var/folders/h8/233kjp516kjb3dzy0l_dynf00000gn/T/note-quiz-melody-build-o8qlu3f1`, BUILD_ID `koqrhtg_aIDg2uiFDMszQ`, on existing3013 terminal `term_beb960d4-6f1a-42ed-b181-42757d7f31f5`. User3001 untouched. Old3014 exited externally; QA briefly recreated its own3014 before3013-only steering arrived, then stopped only that owned replacement. Do not create another server or restart3013 while QA uses it.
+
+Approved and implemented: actual-width alphaTab glyph sizing with fixed frames; shared nonmodal answer toast in reserved band/footer, game-specific explanation retained; sticky practice-local controls; all-width result dialogs; history button in existing title row and all-width dialog. No shared state machine, scoring/audio change or melody history schema. Home has four direct basic-mode entries and a separate melody entry, natural8locale copy, feature-disabled copy/SEO, one legal footer.
+
+UI task701103ce59c7 / ctx_b7899d2a211f finished succeeded. History task_a11606339c9d / ctx_d1602fce328b finished succeeded. Final independent static presentation review task_290e0577139c / ctx_81eb41c3a9e4 finished succeeded with no actionable findings; report `/tmp/note-quiz-final-presentation-review.md`.
+
+Active independent QA: task_4b4146bb2839 / ctx_fff42fe592d5 / term_e9447ba01abcd16a2b936de1a87afe53; artifacts `/tmp/note-quiz-practice-qa2-tt8o9sar`. Full60files1009tests, strict tsc and lint pass(two existing warnings); build already passed. Build helper omitted vitest config, so QA used provenance-recorded external copy with alias/setup paths only redirected to frozen source. Preserve initial missing-config failure; do not claim it passed unmodified. Additional48basic cases passed:8locales×320/390/1440×normal/reduced motion, toast nonoverlap/clipping/sticky/fixed-frame. Strict route/layout/broad oldUI runners still finishing; do not claim overall completion yet.
+
+Verifier-only corrections after source freeze: layout Settings selector scoped under control dock after history added another dialog trigger; actual renderer ready/placeholder-hidden wait. Route native empty404 checked through request API; rendered unknowns still browser-navigated. Fresh interaction tab avoids Chromium50-entry history cap. After locale-switch assertion restore en for English cases; accessible Preset/Difficulty/Session selects use role/name exact rather than DOM label text containing options. Old UI runner accepts canonical home leaf URLs, requires disabled idle keyboard instead of no keyboard, and checks native404 response directly. All product assertions retained, failed harness evidence preserved.
+
+Root final home24cases(8locales×320/390/1440) pass, `/tmp/note-quiz-home-final-qa/report.json`. Melody targeted390/1440preview/piano/clock/cues, fake-WAV answers/result/retry/provisional+finaltoast and ad-reservation/reducedmotion pass `/tmp/note-quiz-melody-final-qa/report.json`; obsolete compact selector failed there, fixed selector and all8locales pass `/tmp/note-quiz-melody-final-controls/report.json`. No product source changed for that fix.
+
+Actual production glyph before/after `/tmp/note-quiz-staff-before/report.json` and `staff-after/report.json`:390note31.02→46.88px staff, chord29.56→60.39px, unchanged112/156px frames. Native worker20supported-width cases pass including clefs/keys/extreme ledgers; unsupported145.5px alto/Cb cross-product documented, not exposed in current UI.
+
+Owned native browser tab `d17a1704-d29f-4ca6-b816-f2ffbed064db` uses current3013. Old38b tab was closed by user; leave user3001 tab alone. Native actual390×844 and1440×900 checked chord/note/ear start/answer/end, chord details, result minimize/Escape/reopen, history keyboard/resize/Escape/ref focus, settings mobile→desktop cleanup. Desktop host zoom requires viewport1080×675 to obtain1440×900; measure. Current native ad wrappers observed, no current creative yet; preliminary home showed a real Grow bottom creative. Do not generalize to all Journey formats or physical devices/acoustic input/Bluetooth.
+
+Remaining: receive independent QA, fix reproducible defects only, reconcile final script hashes/report, append final evidence to docs/home-refresh/verification.md, docs/melody/verification-presentation.md and docs/practice-layout-routing/plan.md. Final diff whitespace and296-file snapshot match currently pass. No need repeat passed gates unless app changes.
+
+
+## Latest user correction — after current checkpoint
+
+User rejects blank measure collapsing to clef-only width. UI follow-up task_4c9ed0fcd4d4 / ctx_e3485a61a7ec / term_f108860cd08072cf5f0798ef6ca012e3 now owns minimal basic-fitted native bar-width correction and tests. Source freeze is lifted only for that assignment. Root is not editing its files. Current3013 remains pre-correction candidate while independent QA completes it. Root baseline true-native idle/active/unanswered-finish12cases in `/tmp/note-quiz-staff-width-before/report.json`; script `/tmp/note-quiz-staff-width.cjs`. New isolated build helper `/tmp/note-quiz-staff-width-build.py` includes missing vitest.config.ts and keeps separate manifest/log paths. After worker freeze, build without touchingroot.next, verify owned3013PID/cwd then replace sameownedserver only after QA completion. Repeat meaningful renderer checks and320/390/1440 actual-length/native screenshot comparison. Do not claim the currently reviewed glyph enlargement alone resolves this new width defect.
+
+
+## Latest scope: two commits and melody review scroll
+
+User explicitly requests baseline commit after current work, then evidence-based efficiency cleanup and a second commit. No push requested. No commits have been made yet; wait for staff-width worker freeze + combined fresh production check. App edits for refactoring must begin only after firstcommit. Read-only audit completed: `/tmp/note-quiz-efficiency-audit.md` (settings bare store subscription and20identical storagewrites per20timer ticks) and root notes `/tmp/note-quiz-efficiency-root-notes.md` (scoreAttempt reruns on everyRAF despite unchanged inputs). Existing UI presentation is already shared; do not force extra wrappers.
+
+Audit worker accidentally reopened by informational send, now intentionally idle awaiting baseline: task_64855a9f6201 / ctx_65a05f83e653 / term_086caa2559997a17d748d0fd24c8c7ed. Escalation says idle intentional may be left; do not reset/retry/duplicate. After firstcommit send exact scope/hash there for selector+safe duplicate storage boundary. Root owns Melody scoring memo split separately.
+
+User also requests horizontal melody result review. Root edited ScoreViewport.tsx/newScoreViewport.module.css and MelodyPractice result-only hint, plus verify-melody-ui.cjs reviewScore helper. Finished/inactive only native scroll/tabIndex; mobile scrollbar hidden; review railactualcontentwidth; useLayoutEffect resetsmanualoffset on retry. Focused35tests andtscpass; browsernewtouch/arrow/wheel/end/retryassertions await freshbuild. Staff worker knows disjointownership. Include this feature in firstcommit, then optimize.
+
+
+### Baseline commit boundary
+
+The minimum-bar native worker correction and melody finished-score horizontal review have passed fresh production checks on BUILD_ID MilD86pkOyTtriYSNuDoa. Current approved UI/home/routes/notation/melody work is ready for the user-authorized baseline commit. Next separate phase: narrow NoteSettingsPanel subscriptions, skip identical note/ear persisted writes through a tested shared storage boundary, and avoid rescoring unchanged melody inputs on clock-only updates. Preserve formulas/API/DB/independent game ownership. Commit again after focused/full tests, type/lint/build, browser regression and independent review; no push requested.

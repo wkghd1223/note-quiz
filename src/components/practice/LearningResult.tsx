@@ -19,6 +19,8 @@ export interface LearningResultProps {
   onChange: () => void;
   hasMistakes: boolean;
   children?: React.ReactNode;
+  preserveScroll?: boolean;
+  focusOnMount?: boolean;
 }
 
 export default function LearningResult({
@@ -28,15 +30,18 @@ export default function LearningResult({
   onChange,
   hasMistakes,
   children,
+  preserveScroll = false,
+  focusOnMount = true,
 }: LearningResultProps) {
   const { t } = useTranslation();
   const titleId = useId();
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
-    if (document.querySelector("dialog[open]")) return;
+    if (!focusOnMount || document.querySelector("dialog[open]")) return;
     heading.current?.focus({ preventScroll: true });
-    heading.current?.scrollIntoView({ block: "start", behavior: "instant" });
-  }, []);
+    if (!preserveScroll)
+      heading.current?.scrollIntoView({ block: "start", behavior: "instant" });
+  }, [preserveScroll, focusOnMount]);
   return (
     <section
       className="rounded-lg border border-slate-200 bg-white p-4 sm:p-5"
@@ -44,6 +49,7 @@ export default function LearningResult({
     >
       <h2
         ref={heading}
+        data-result-heading
         id={titleId}
         tabIndex={-1}
         className="text-xl font-black text-slate-950"

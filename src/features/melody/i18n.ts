@@ -1,5 +1,15 @@
 // Keep every product label in all eight supported languages, in locale order.
 const rows = {
+  livePitchHint: [
+    "The line shows pitch only: ✓ in tune, × off pitch. Timing and duration are judged after each note.",
+    "판정선은 현재 음정만 표시합니다. ✓ 맞는 음정 · × 다른 음정. 박자와 길이는 음이 끝난 뒤 판정합니다.",
+    "判定線は現在の音程のみを表示します。✓ 正しい音程 · × 異なる音程。タイミングと長さは音の終了後に判定します。",
+    "La línea indica solo la afinación: ✓ correcta, × incorrecta. El ritmo y la duración se evalúan al terminar cada nota.",
+    "Die Linie zeigt nur die Tonhöhe: ✓ passend, × abweichend. Einsatz und Dauer werden nach jeder Note bewertet.",
+    "La ligne indique seulement la justesse : ✓ juste, × faux. Le rythme et la durée sont évalués après chaque note.",
+    "判定线仅显示当前音准：✓ 正确，× 偏离。每个音结束后再判定节奏与时值。",
+    "A linha indica apenas a afinação: ✓ correta, × incorreta. O tempo de entrada e a duração são avaliados após cada nota.",
+  ],
   preparingAudio: [
     "Preparing piano sound…",
     "피아노 소리 준비 중…",

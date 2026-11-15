@@ -1,5 +1,7 @@
 "use client";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { memo, useCallback, useEffect, useRef, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
+import PracticeFeedback from "./PracticeFeedback";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useTheoryStore, type TheoryResult } from "@/store/theoryStore";
 import {
@@ -19,6 +21,7 @@ import {
   stopAllNotes,
 } from "@/lib/music/audio";
 import { noteToString } from "@/lib/music/utils";
+import { theoryLabel } from "@/lib/practice/theoryLabel";
 import {
   serializePracticeConfig,
   type PracticeConfig,
@@ -26,6 +29,9 @@ import {
 import type { LearningTranslations } from "@/lib/i18n/learning";
 import type { SessionKind } from "@/lib/practice/types";
 import PracticeShell from "./PracticeShell";
+import PracticeController from "./PracticeController";
+import PracticeMetrics from "./PracticeMetrics";
+import { FaClock, FaCheck, FaBullseye } from "react-icons/fa";
 import ModeSwitcher, { type PracticeMode } from "./ModeSwitcher";
 import MusicNotation from "./MusicNotation";
 import LearningResult from "./LearningResult";
@@ -36,28 +42,16 @@ import {
   settingsToggleClassName,
 } from "./SettingsControls";
 
-export function theoryLabel(copy: LearningTranslations, value: string): string {
-  if (value.startsWith("inversion_"))
-    return (
-      copy[value.slice(10) as keyof LearningTranslations] ?? copy.inversion
-    );
-  if (value.startsWith("progression_"))
-    return value.slice(12).replaceAll("-", " → ");
-  const key = (
-    value in copy
-      ? value
-      : `interval_${value}` in copy
-        ? `interval_${value}`
-        : `quality_${value}`
-  ) as keyof LearningTranslations;
-  return copy[key] ?? value.replaceAll("-", " → ");
-}
+export { theoryLabel } from "@/lib/practice/theoryLabel";
+
 interface Props {
   mode: PracticeMode;
   onModeChange: (mode: PracticeMode) => void;
   config: PracticeConfig;
   onConfigChange: (config: PracticeConfig) => void;
   settingsOpen: boolean;
+  settingsIntro?: React.ReactNode;
+  headerActions?: React.ReactNode;
   onSettingsOpen: () => void;
   onSettingsClose: () => void;
   runOptions?: { questions: TheoryQuestion[]; kind: SessionKind };
@@ -67,7 +61,23 @@ interface Props {
 export default function TheoryPracticeMode(props: Props) {
   const { t } = useTranslation(),
     c = t.learning,
-    s = useTheoryStore();
+    s = useTheoryStore(
+      useShallow((state) => ({
+        current: state.current,
+        generation: state.generation,
+        state: state.state,
+        result: state.result,
+        feedback: state.feedback,
+        answers: state.answers,
+        kind: state.kind,
+        length: state.length,
+        limit: state.limit,
+        reset: state.reset,
+        review: state.review,
+        end: state.end,
+        submit: state.submit,
+      })),
+    );
   const [audioError, setAudioError] = useState(false),
     [busy, setBusy] = useState(false),
     [exampleType, setExampleType] = useState("");
@@ -332,35 +342,22 @@ export default function TheoryPracticeMode(props: Props) {
       )}
     </div>
   );
-  const question = s.current ?? s.feedback?.question;
-  const feedback = s.feedback;
-  const notation = (q: TheoryQuestion) => (
-    <div
-      className={q.task === "progression" ? "grid grid-cols-2 gap-2" : "w-full"}
-    >
-      {q.task === "progression" ? (
-        q.groups
-          .slice(-4)
-          .map((notes, i) => (
-            <MusicNotation
-              key={i}
-              notes={notes}
-              chord
-              label={`${c.components} ${i + 1}`}
-            />
-          ))
-      ) : (
-        <MusicNotation
-          notes={q.notes}
-          chord={q.kind === "chord"}
-          label={c.components}
-        />
-      )}
-    </div>
-  );
   const result = s.result;
-  const stage = result ? (
+  const isIdle = s.state === "idle";
+  const isFinished = s.state === "finished";
+  const lastAnswer = result?.answers.at(-1);
+  const question = isFinished
+    ? lastAnswer?.question
+    : (s.current ?? s.feedback?.question);
+  const feedback = isIdle || isFinished ? null : s.feedback;
+  const stageAnswer = feedback ?? (isFinished ? lastAnswer : null);
+  const notation = (q: TheoryQuestion, revealed = true) => (
+    <TheoryNotation question={q} label={c.components} revealed={revealed} />
+  );
+  const resultContent = result ? (
     <LearningResult
+      preserveScroll
+      focusOnMount={false}
       result={result}
       hasMistakes={result.answers.some((a) => !a.correct)}
       onRestart={() => void start()}
@@ -400,93 +397,143 @@ export default function TheoryPracticeMode(props: Props) {
           ))}
       </div>
     </LearningResult>
-  ) : s.state === "idle" ? (
-    <div className="grid gap-3 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
-      <p>{help}</p>
-      <label className="grid gap-2">
-        {c.example}
-        <select
-          className={button}
-          value={exampleType}
-          onChange={(e) => setExampleType(e.target.value)}
+  ) : null;
+  const stage = (
+    <div
+      data-practice-stage
+      data-practice-phase={isIdle ? "idle" : isFinished ? "finished" : "active"}
+      className="relative grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3"
+    >
+      <div className="flex h-11 items-center gap-3">
+        <div className="relative h-11 min-w-0 flex-1" data-practice-prompt-band>
+          <h2
+            data-practice-prompt
+            tabIndex={-1}
+            className={`max-h-10 overflow-auto font-bold leading-5 ${feedback ? "opacity-0" : ""}`}
+          >
+            {c.selectAnswer}
+          </h2>
+          <PracticeFeedback
+            message={
+              feedback
+                ? feedback.correct
+                  ? t.messages.correct
+                  : t.messages.incorrect
+                : undefined
+            }
+            correct={feedback?.correct}
+            announcementKey={s.answers.length}
+          />
+        </div>
+        <span
+          data-practice-progress
+          className="shrink-0 text-sm font-bold tabular-nums"
         >
-          <option value="">{c.preset}</option>
-          {getTheoryOptions({
-            ...config,
-            task: config.mode === "interval" ? "interval" : "quality",
-          }).map((id) => (
-            <option key={id} value={id}>
-              {theoryLabel(c, id)}
-            </option>
-          ))}
-        </select>
-      </label>
-      <button
-        type="button"
-        className={button}
-        onClick={example}
-        disabled={busy}
-      >
-        {busy ? c.playingAudio : c.example}
-      </button>
-    </div>
-  ) : question ? (
-    <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-      <h2 className="font-bold" role="status">
-        {feedback
-          ? feedback.correct
-            ? t.messages.correct
-            : t.messages.incorrect
-          : c.selectAnswer}
-      </h2>
+          {s.answers.length}
+          {s.length === "ten" ? `/${s.limit}` : ""}
+        </span>
+      </div>
       {config.task === "progression" && (
-        <p className="text-sm text-slate-600">{c.tonic}</p>
+        <p className="h-10 overflow-auto text-sm leading-5 text-slate-600">
+          {c.tonic}
+        </p>
       )}
-      {(question.presentation === "visual" || feedback) && notation(question)}
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => void play(question)}
-          className={button}
-          disabled={busy}
-        >
-          {busy ? c.playingAudio : c.play}
-        </button>
-        {config.mode === "chord" && (
+      {question && !isIdle ? (
+        notation(
+          question,
+          isFinished || question.presentation === "visual" || !!feedback,
+        )
+      ) : (
+        <TheoryNotation
+          label={c.components}
+          revealed={false}
+          kind={config.kind}
+          task={config.task}
+        />
+      )}
+      <div className="grid h-16 grid-cols-3 gap-2">
+        {isIdle ? (
+          <>
+            <label className="col-span-2 min-w-0">
+              <span className="sr-only">{c.example}</span>
+              <select
+                className={`${button} h-16 w-full`}
+                value={exampleType}
+                onChange={(event) => setExampleType(event.target.value)}
+              >
+                <option value="">{c.preset}</option>
+                {getTheoryOptions({
+                  ...config,
+                  task: config.mode === "interval" ? "interval" : "quality",
+                }).map((id) => (
+                  <option key={id} value={id}>
+                    {theoryLabel(c, id)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              className={`${button} h-16 overflow-auto leading-4`}
+              onClick={example}
+              disabled={busy}
+            >
+              {busy ? c.playingAudio : c.example}
+            </button>
+          </>
+        ) : (
           <>
             <button
               type="button"
-              className={button}
-              onClick={() => void play(question, "chord")}
-              disabled={busy}
+              onClick={() => question && void play(question)}
+              className={`${button} h-16 overflow-auto leading-4`}
+              disabled={busy || !question || isFinished}
             >
-              {c.simultaneous}
+              {busy ? c.playingAudio : c.play}
             </button>
-            <button
-              type="button"
-              className={button}
-              onClick={() => void play(question, "arpeggio")}
-              disabled={busy}
-            >
-              {c.arpeggio}
-            </button>
+            {config.mode === "chord" && (
+              <>
+                <button
+                  type="button"
+                  className={`${button} h-16 overflow-auto leading-4`}
+                  onClick={() => question && void play(question, "chord")}
+                  disabled={busy || !question || isFinished}
+                >
+                  {c.simultaneous}
+                </button>
+                <button
+                  type="button"
+                  className={`${button} h-16 overflow-auto leading-4`}
+                  onClick={() => question && void play(question, "arpeggio")}
+                  disabled={busy || !question || isFinished}
+                >
+                  {c.arpeggio}
+                </button>
+              </>
+            )}
           </>
         )}
       </div>
-      {feedback && (
-        <div className="text-sm">
-          <p>
-            {c.yourAnswer}: {theoryLabel(c, feedback.answer)} · {c.answer}:{" "}
-            {theoryLabel(c, question.answer)}
-          </p>
-          <p>
-            {c.components}: {question.notes.map(noteToString).join(" · ")}
-          </p>
-          <p>{help}</p>
-        </div>
-      )}
+      <div
+        data-practice-explanation
+        tabIndex={0}
+        className="h-20 overflow-auto text-sm sm:h-24 leading-5 [overflow-wrap:anywhere]"
+      >
+        <p>{help}</p>
+        {!isIdle && stageAnswer && question && (
+          <>
+            <p>
+              {c.yourAnswer}: {theoryLabel(c, stageAnswer.answer)} · {c.answer}:{" "}
+              {theoryLabel(c, question.answer)}
+            </p>
+            <p>
+              {c.components}: {question.notes.map(noteToString).join(" · ")}
+            </p>
+          </>
+        )}
+      </div>
     </div>
-  ) : null;
+  );
   return (
     <PracticeShell
       title={c[config.mode]}
@@ -494,50 +541,45 @@ export default function TheoryPracticeMode(props: Props) {
       modeSwitcher={
         <ModeSwitcher mode={props.mode} onChange={props.onModeChange} />
       }
-      isIdle={s.state === "idle"}
+      isIdle={isIdle}
+      isFinished={isFinished}
+      result={resultContent}
+      resultKey={s.generation}
+      headerActions={props.headerActions}
+      settingsIntro={props.settingsIntro}
       settings={settings}
       settingsSummary={`${c[config.difficulty]} · ${config.presentation === "audio" ? c.listening : c.reading}`}
       settingsOpen={props.settingsOpen}
       onSettingsOpen={props.onSettingsOpen}
       onSettingsClose={props.onSettingsClose}
       actions={
-        s.state === "playing" ? (
-          <button
-            type="button"
-            className="min-h-11 w-full rounded-lg bg-red-500 px-4 text-sm font-bold text-white"
-            onClick={() => {
-              audioToken.current++;
-              stopAllNotes();
-              s.end();
-            }}
-          >
-            {c.finish}
-          </button>
-        ) : !result ? (
-          <button
-            type="button"
-            className="min-h-11 w-full rounded-lg bg-[#5b21b6] px-4 text-sm font-bold text-white"
-            onClick={() => void start()}
-          >
-            {t.startGame}
-          </button>
-        ) : null
+        <PracticeController
+          state={s.state}
+          states={{
+            playing: [
+              {
+                id: "end",
+                label: c.finish,
+                tone: "danger",
+                onClick: () => {
+                  audioToken.current++;
+                  stopAllNotes();
+                  s.end();
+                },
+              },
+            ],
+            idle: [
+              {
+                id: "start",
+                label: t.startGame,
+                tone: "primary",
+                onClick: () => void start(),
+              },
+            ],
+          }}
+        />
       }
-      status={
-        result ? null : (
-          <div className="flex flex-wrap justify-between gap-2 text-sm font-bold">
-            <span>
-              {c.progress}: {s.answers.length}
-              {s.length === "ten" ? `/${s.limit}` : ""}
-            </span>
-            <span>
-              {t.timer.elapsed}: {(s.elapsed / 1000).toFixed(1)}{" "}
-              {t.units.seconds}
-            </span>
-            <span>{s.kind === "review" ? c.review : ""}</span>
-          </div>
-        )
-      }
+      status={<TheoryStatus />}
       stage={
         <>
           {audioError && (
@@ -559,22 +601,112 @@ export default function TheoryPracticeMode(props: Props) {
         </>
       }
       input={
-        s.state === "playing" && question ? (
-          <div className="grid grid-cols-2 gap-2">
-            {question.options.map((answer) => (
-              <button
-                key={answer}
-                type="button"
-                className={`${button} disabled:opacity-50`}
-                disabled={!!feedback || busy}
-                onClick={() => s.submit(answer)}
-              >
-                {theoryLabel(c, answer)}
-              </button>
-            ))}
-          </div>
+        (s.state === "playing" && question) || isFinished ? (
+          <TheoryAnswerControls
+            options={question?.options ?? getTheoryOptions(config)}
+            copy={c}
+            disabled={isFinished || !!feedback || busy}
+            onSubmit={s.submit}
+          />
         ) : null
       }
+    />
+  );
+}
+
+const EMPTY_NOTES: Note[] = [];
+const EMPTY_PROGRESSION = [EMPTY_NOTES, EMPTY_NOTES, EMPTY_NOTES, EMPTY_NOTES];
+
+const TheoryNotation = memo(function TheoryNotation({
+  question,
+  label,
+  revealed,
+  kind = "interval",
+  task,
+}: {
+  question?: TheoryQuestion;
+  label: string;
+  revealed: boolean;
+  kind?: TheoryQuestion["kind"];
+  task?: TheoryQuestion["task"];
+}) {
+  return (question?.task ?? task) === "progression" ? (
+    <div className="grid grid-cols-2 gap-2" data-practice-progression>
+      {(question?.groups.slice(-4) ?? EMPTY_PROGRESSION).map((notes, index) => (
+        <MusicNotation
+          key={index}
+          notes={notes}
+          chord
+          compact
+          label={`${label} ${index + 1}`}
+          revealed={revealed}
+        />
+      ))}
+    </div>
+  ) : (
+    <MusicNotation
+      notes={question?.notes ?? EMPTY_NOTES}
+      chord={(question?.kind ?? kind) === "chord"}
+      label={label}
+      revealed={revealed}
+    />
+  );
+});
+
+const TheoryAnswerControls = memo(function TheoryAnswerControls({
+  options,
+  copy,
+  disabled,
+  onSubmit,
+}: {
+  options: string[];
+  copy: LearningTranslations;
+  disabled: boolean;
+  onSubmit: (answer: string) => boolean;
+}) {
+  return (
+    <div className="grid auto-rows-[4rem] grid-cols-2 gap-2">
+      {options.map((answer) => (
+        <button
+          key={answer}
+          type="button"
+          className="h-16 overflow-auto rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold leading-4 text-slate-800 [overflow-wrap:anywhere] disabled:opacity-50"
+          disabled={disabled}
+          onClick={() => onSubmit(answer)}
+        >
+          {theoryLabel(copy, answer)}
+        </button>
+      ))}
+    </div>
+  );
+});
+
+function TheoryStatus() {
+  const { t } = useTranslation();
+  const elapsed = useTheoryStore((state) => state.elapsed);
+  const answers = useTheoryStore((state) => state.answers);
+  const kind = useTheoryStore((state) => state.kind);
+  const correct = answers.filter((answer) => answer.correct).length;
+  return (
+    <PracticeMetrics
+      items={[
+        {
+          label: t.timer.elapsed,
+          value: `${(elapsed / 1000).toFixed(1)} ${t.units.seconds}`,
+          icon: <FaClock />,
+        },
+        {
+          label: t.scoreboard.correct,
+          value: String(correct),
+          icon: <FaCheck />,
+        },
+        {
+          label: t.scoreboard.accuracy,
+          value: `${(answers.length ? (correct / answers.length) * 100 : 0).toFixed(0)}%`,
+          icon: <FaBullseye />,
+        },
+      ]}
+      detail={kind === "review" ? t.learning.review : "\u00a0"}
     />
   );
 }

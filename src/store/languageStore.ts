@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { isLanguage } from "@/lib/i18n/locale";
 
 interface LanguageStore {
   language: Language;
@@ -15,11 +16,8 @@ function detectBrowserLanguage(): Language {
   const browserLang = navigator.language || navigator.languages?.[0] || "en";
   const langCode = browserLang.split("-")[0].toLowerCase();
 
-  // 지원하는 언어 목록
-  const supportedLanguages: Language[] = ["en", "ko", "ja", "es", "de", "fr", "zh", "pt"];
-
-  if (supportedLanguages.includes(langCode as Language)) {
-    return langCode as Language;
+  if (isLanguage(langCode)) {
+    return langCode;
   }
 
   return "en"; // 기본값
@@ -68,10 +66,9 @@ export const useLanguageStore = create<LanguageStore>()(
       })),
       merge: (persisted, current) => {
         const value = persisted as Partial<LanguageStore> | undefined;
-        const supported = ["en", "ko", "ja", "es", "de", "fr", "zh", "pt"];
         return {
           ...current,
-          ...(value?.language && supported.includes(value.language)
+          ...(isLanguage(value?.language)
             ? { language: value.language, isInitialized: true }
             : {}),
         };

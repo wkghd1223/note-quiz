@@ -1,87 +1,88 @@
 "use client";
-import React from "react";
-import {
-  getNotePositionOnStaff,
-  getLedgerLinePositions,
-  needsLedgerLines,
-  noteToString,
-} from "@/lib/music/utils";
-/** Uses the same staff coordinates and clef asset as the existing note exercise. */
-export default function MusicNotation({
+import React, { memo, useMemo, useState } from "react";
+import { noteToString } from "@/lib/music/utils";
+import { theoryToScore } from "@/lib/notation/theory-to-score";
+import { notationRenderer } from "@/lib/notation/score";
+import AlphaTabNotationView from "@/components/notation/AlphaTabNotationView";
+import PracticeStaffFallback from "./PracticeStaffFallback";
+import { KEY_SIGNATURES } from "@/lib/music/constants";
+import StableNotationSurface from "./StableNotationSurface";
+
+const EMPTY_NOTES: Note[] = [];
+
+function MusicNotation({
   notes,
   chord = false,
   label,
+  revealed = true,
+  compact = false,
 }: {
   notes: Note[];
   chord?: boolean;
   label: string;
+  revealed?: boolean;
+  compact?: boolean;
 }) {
-  const ys = notes.map(
-    (note) => 130 + (8 - getNotePositionOnStaff(note, "treble")) * 10,
+  const [failed, setFailed] = useState(false);
+  // Unrevealed answers never enter the renderer or its SVG/accessibility tree.
+  const visibleNotes = revealed ? notes : EMPTY_NOTES;
+  const score = useMemo(
+    () => theoryToScore(visibleNotes, visibleNotes.length ? chord : false),
+    [visibleNotes, chord],
   );
-  const top = Math.min(0, ...ys.map((y) => y - 55)),
-    bottom = Math.max(260, ...ys.map((y) => y + 55));
-  const width = chord ? 360 : 420;
+  const legacy = notationRenderer() === "legacy" || failed;
   return (
-    <svg
-      role="img"
-      aria-label={`${label}: ${notes.map(noteToString).join(", ")}`}
-      viewBox={`0 ${top} ${width} ${bottom - top}`}
-      className="mx-auto max-h-64 w-full rounded-lg bg-white"
-    >
-      {[0, 1, 2, 3, 4].map((i) => (
-        <line
-          key={i}
-          x1={12}
-          x2={width - 12}
-          y1={130 + i * 20}
-          y2={130 + i * 20}
-          stroke="#c8d0dd"
-          strokeWidth="1.6"
+    <StableNotationSurface
+      revision={score}
+      concealed={!revealed}
+      className={compact ? "h-[112px] sm:h-[160px]" : undefined}
+      placeholder={({ width, height }) => (
+        <PracticeStaffFallback
+          width={width}
+          height={height}
+          keySignature={KEY_SIGNATURES.C}
+          notes={EMPTY_NOTES}
         />
-      ))}
-      <image href="/g-clef.svg" x={25} y={90} height={120} />
-      {notes.map((note, i) => {
-        const y = ys[i],
-          x = chord ? 200 + (i % 2) * 2 : 160 + i * 100;
-        const pos = getNotePositionOnStaff(note, "treble");
-        return (
-          <g key={i}>
-            {needsLedgerLines(pos) &&
-              getLedgerLinePositions(pos).map((p) => (
-                <line
-                  key={p}
-                  x1={x - 17}
-                  x2={x + 17}
-                  y1={130 + (8 - p) * 10}
-                  y2={130 + (8 - p) * 10}
-                  stroke="#334155"
-                />
-              ))}
-            {note.accidental && note.accidental !== "natural" && (
-              <text x={x - 25 - i * 2} y={y + 7} fontSize={28}>
-                {note.accidental === "sharp" ? "♯" : "♭"}
-              </text>
+      )}
+    >
+      {({ width, height, onReady }) =>
+        legacy ? (
+          <PracticeStaffFallback
+            width={width}
+            height={height}
+            keySignature={KEY_SIGNATURES.C}
+            notes={visibleNotes}
+            chord={chord}
+            accidentals={visibleNotes.map((note) =>
+              note.accidental === "natural" ? null : note.accidental,
             )}
-            <ellipse
-              cx={x}
-              cy={y}
-              rx={11}
-              ry={8}
-              fill="#0f172a"
-              transform={`rotate(-20 ${x} ${y})`}
-            />
-            <line
-              x1={x + 9}
-              x2={x + 9}
-              y1={y}
-              y2={y - 45}
-              stroke="#0f172a"
-              strokeWidth={2}
-            />
-          </g>
-        );
-      })}
-    </svg>
+            label={
+              revealed
+                ? `${label}: ${notes.map(noteToString).join(", ")}`
+                : label
+            }
+            onReady={onReady}
+          />
+        ) : (
+          <AlphaTabNotationView
+            score={score}
+            fittedBasic
+            accessibleLabel={
+              revealed
+                ? `${label}: ${notes.map(noteToString).join(", ")}`
+                : label
+            }
+            width={width}
+            height={height}
+            viewBox={`0 0 ${width} ${height}`}
+            className="mx-auto h-full w-full rounded-lg bg-white"
+            onRender={onReady}
+            onError={() => setFailed(true)}
+          />
+        )
+      }
+    </StableNotationSurface>
   );
 }
+
+export default memo(MusicNotation);

@@ -9,6 +9,7 @@ interface PracticeDialogProps {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
+  returnFocusRef?: React.RefObject<HTMLElement | null>;
 }
 
 export default function PracticeDialog({
@@ -16,6 +17,7 @@ export default function PracticeDialog({
   title,
   onClose,
   children,
+  returnFocusRef,
 }: PracticeDialogProps) {
   const { t } = useTranslation();
   const titleId = useId();
@@ -26,6 +28,8 @@ export default function PracticeDialog({
     const dialog = dialogRef.current;
     if (!isOpen || !dialog) return;
 
+    // Both shared consumers keep the restore control mounted while the dialog is open.
+    const preferredFocus = returnFocusRef?.current;
     const previousFocus = document.activeElement;
     const previousOverflowX = document.body.style.overflowX;
     const previousOverflowY = document.body.style.overflowY;
@@ -58,26 +62,24 @@ export default function PracticeDialog({
         });
       }
       const returnTarget =
-        previousFocus instanceof HTMLElement &&
-        previousFocus !== document.body &&
-        previousFocus.isConnected &&
-        previousFocus.getClientRects().length > 0
-          ? previousFocus
-          : document.querySelector<HTMLElement>("[data-practice-heading]");
+        preferredFocus?.isConnected &&
+        preferredFocus.getClientRects().length > 0 &&
+        getComputedStyle(preferredFocus).visibility !== "hidden"
+          ? preferredFocus
+          : previousFocus instanceof HTMLElement &&
+              previousFocus !== document.body &&
+              previousFocus.isConnected &&
+              previousFocus.getClientRects().length > 0
+            ? previousFocus
+            : document.querySelector<HTMLElement>("[data-practice-heading]");
       returnTarget?.focus({ preventScroll: true });
       window.scrollTo({ left: scrollX, top: scrollY, behavior: "instant" });
     };
-  }, [isOpen]);
+  }, [isOpen, returnFocusRef]);
 
   return (
     <dialog
       ref={dialogRef}
-      style={{
-        inset:
-          "16px var(--ad-dialog-side-inset, var(--ad-side-inset, 0px)) calc(var(--ad-bottom-inset, 0px) + 16px) 0",
-        maxHeight:
-          "min(70dvh, calc(100dvh - var(--ad-bottom-inset, 0px) - 32px))",
-      }}
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
@@ -113,7 +115,7 @@ export default function PracticeDialog({
         )
           onClose();
       }}
-      className="m-auto max-h-[70dvh] w-[calc(100%-2rem)] max-w-lg overflow-hidden rounded-xl border border-slate-200 bg-white p-0 text-slate-950 shadow-[0_18px_48px_rgba(15,23,42,0.18)] backdrop:bg-slate-950/35"
+      className="practice-dialog motion-enter overflow-hidden rounded-xl border border-slate-200 bg-white p-0 text-slate-950 shadow-[0_18px_48px_rgba(15,23,42,0.18)] backdrop:bg-slate-950/35"
     >
       <div className="flex flex-col" style={{ maxHeight: "inherit" }}>
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
@@ -124,7 +126,7 @@ export default function PracticeDialog({
             ref={closeButtonRef}
             type="button"
             onClick={onClose}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200"
+            className="motion-control flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200"
             aria-label={t.ui.close}
           >
             <FaTimes />
