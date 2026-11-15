@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useId } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { CLEFS, KEY_SIGNATURES } from "@/lib/music/constants";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useGameStore } from "@/store/gameStore";
@@ -16,8 +17,14 @@ import {
 export default function NoteSettingsPanel() {
   const settingsId = useId();
   const { t } = useTranslation();
-  const { settings, updateSettings, resetSettings, resetStats } =
-    useGameStore();
+  const { settings, updateSettings, resetSettings, resetStats } = useGameStore(
+    useShallow((state) => ({
+      settings: state.settings,
+      updateSettings: state.updateSettings,
+      resetSettings: state.resetSettings,
+      resetStats: state.resetStats,
+    })),
+  );
 
   return (
     <div className="grid gap-4">

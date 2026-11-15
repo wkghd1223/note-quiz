@@ -260,3 +260,95 @@ describe("note pause at timed deadline", () => {
     vi.useRealTimers();
   });
 });
+
+describe("note persisted state writes", () => {
+  const key = "note-quiz-game-store";
+  const saved = () => JSON.parse(localStorage.getItem(key)!);
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1000);
+    useGameStore.getState().resetSettings();
+    useGameStore.getState().resetStats();
+  });
+  afterEach(() => {
+    useGameStore.getState().resetGame();
+    vi.useRealTimers();
+  });
+
+  it("keeps 20 timer updates live without rewriting settings or stats", () => {
+    useGameStore.getState().startGame();
+    const write = vi.spyOn(localStorage, "setItem");
+    for (let tick = 1; tick <= 20; tick++) {
+      vi.advanceTimersByTime(50);
+      useGameStore.getState().updateTimer(Date.now());
+    }
+    expect(useGameStore.getState().elapsedTime).toBe(1000);
+    expect(write).not.toHaveBeenCalled();
+    useGameStore.getState().endGame();
+    expect(saved().state.stats.gamesPlayed).toBe(1);
+    expect(write).toHaveBeenCalledTimes(1);
+    useGameStore.getState().updateSettings({ clef: "bass" });
+    expect(saved().state.settings.clef).toBe("bass");
+    expect(write).toHaveBeenCalledTimes(2);
+    useGameStore.getState().resetSettings();
+    expect(saved().state.settings.clef).toBe(
+      useGameStore.getState().settings.clef,
+    );
+    useGameStore.getState().resetStats();
+    expect(saved().state.stats.gamesPlayed).toBe(0);
+  });
+
+  it("writes again after external overwrite or clear and rehydrates current storage", async () => {
+    useGameStore.getState().startGame();
+    const original = localStorage.getItem(key)!;
+    localStorage.setItem(key, "external overwrite");
+    useGameStore.getState().updateTimer(1050);
+    expect(localStorage.getItem(key)).toBe(original);
+    useGameStore.persist.clearStorage();
+    expect(localStorage.getItem(key)).toBeNull();
+    useGameStore.getState().updateTimer(1100);
+    expect(localStorage.getItem(key)).toBe(original);
+    const external = saved();
+    external.state.settings.clef = "bass";
+    localStorage.setItem(key, JSON.stringify(external));
+    await useGameStore.persist.rehydrate();
+    expect(useGameStore.getState().settings.clef).toBe("bass");
+  });
+
+  it("preserves legacy timed settings, nested defaults and missing stats", async () => {
+    localStorage.setItem(
+      key,
+      JSON.stringify({
+        state: {
+          settings: { timeLimit: 30, staffRange: { min: -2 } },
+          stats: { gamesPlayed: 7 },
+        },
+        version: 0,
+      }),
+    );
+    await useGameStore.persist.rehydrate();
+    expect(useGameStore.getState().settings).toMatchObject({
+      questionLimit: null,
+      timeLimit: 30,
+      staffRange: {
+        ...useGameStore.getInitialState().settings.staffRange,
+        min: -2,
+      },
+    });
+    expect(useGameStore.getState().stats.gamesPlayed).toBe(7);
+    expect(useGameStore.getState().stats.bestTime).toBe(Infinity);
+  });
+
+  it("retains explicit null question limits and existing Infinity JSON behavior", async () => {
+    useGameStore
+      .getState()
+      .updateSettings({ questionLimit: undefined, timeLimit: undefined });
+    expect(saved().version).toBe(0);
+    expect(saved().state.settings.questionLimit).toBeNull();
+    expect(saved().state.stats.bestTime).toBeNull();
+    await useGameStore.persist.rehydrate();
+    expect(useGameStore.getState().settings.questionLimit).toBeNull();
+    // Existing JSON null is preserved by the merge; this refactor does not migrate it.
+    expect(useGameStore.getState().stats.bestTime).toBeNull();
+  });
+});

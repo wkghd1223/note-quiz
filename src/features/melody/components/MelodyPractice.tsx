@@ -24,7 +24,7 @@ import {
   getInstrumentProfile,
   getScoringProfile,
 } from "@/features/challenge/domain/instrument-profile";
-import { scoreAttempt } from "@/features/challenge/domain/scoring";
+import { useLiveResult } from "../hooks/useLiveResult";
 import { challengeCopy } from "@/features/challenge/i18n";
 import ScoreViewport from "@/features/challenge/components/ScoreViewport";
 import {
@@ -133,44 +133,16 @@ export default function MelodyPractice() {
     session.frame?.isVoiced && session.frame.detectedHz
       ? Math.round(69 + 12 * Math.log2(session.frame.detectedHz / 440))
       : null;
-  const liveResult = useMemo(() => {
-    if (!active) return null;
-    const evaluated = scoreAttempt(
-      s.events,
-      playback.targets,
-      getScoringProfile(exercise, "voice"),
-      0,
-    );
-    return {
-      ...evaluated,
-      notes: evaluated.notes.filter((note) => {
-        const end = playback.targets.find(
-          (event) => event.stageEventId === note.stageEventId,
-        )!.endAudioSec;
-        return (
-          end <= session.elapsed &&
-          (note.eventId !== null ||
-            (session.heldDuration === 0 && end + 0.45 <= session.elapsed) ||
-            s.events.some((event) => event.onsetAudioSec > end))
-        );
-      }),
-    };
-  }, [
+  const liveResult = useLiveResult(
     active,
-    exercise,
-    playback,
     s.events,
+    playback.targets,
+    scoringProfile,
     session.elapsed,
     session.heldDuration,
-  ]);
-  const finalNote = liveResult?.notes
-    .filter((note) =>
-      playback.targets.some(
-        (target) =>
-          target.stageEventId === note.stageEventId && target.kind === "note",
-      ),
-    )
-    .at(-1);
+  );
+  // scoreAttempt.notes contains pitched targets only, in playback order.
+  const finalNote = liveResult?.notes.at(-1);
   const finalKey = finalNote
     ? `${s.attemptToken}:${finalNote.stageEventId}:${finalNote.status}`
     : null;

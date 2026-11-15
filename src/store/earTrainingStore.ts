@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { safeLocalStorage } from "@/lib/storage/safeLocalStorage";
 import { DEFAULT_EAR_TRAINING_SETTINGS } from "@/lib/music/constants";
 import {
   generateEarTrainingQuestion,
@@ -303,29 +304,7 @@ export const useEarTrainingStore = create<EarTrainingStore>()(
     }),
     {
       name: "ear-training-storage",
-      storage: createJSONStorage(() => ({
-        getItem: (key) => {
-          try {
-            return localStorage.getItem(key);
-          } catch {
-            return null;
-          }
-        },
-        setItem: (key, value) => {
-          try {
-            localStorage.setItem(key, value);
-          } catch {
-            /* Practice remains usable without storage. */
-          }
-        },
-        removeItem: (key) => {
-          try {
-            localStorage.removeItem(key);
-          } catch {
-            /* Storage can be blocked. */
-          }
-        },
-      })),
+      storage: createJSONStorage(() => safeLocalStorage),
       partialize: (state) => ({
         settings: {
           ...state.settings,

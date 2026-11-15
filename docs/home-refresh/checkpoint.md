@@ -38,3 +38,8 @@ User also requests horizontal melody result review. Root edited ScoreViewport.ts
 ### Baseline commit boundary
 
 The minimum-bar native worker correction and melody finished-score horizontal review have passed fresh production checks on BUILD_ID MilD86pkOyTtriYSNuDoa. Current approved UI/home/routes/notation/melody work is ready for the user-authorized baseline commit. Next separate phase: narrow NoteSettingsPanel subscriptions, skip identical note/ear persisted writes through a tested shared storage boundary, and avoid rescoring unchanged melody inputs on clock-only updates. Preserve formulas/API/DB/independent game ownership. Commit again after focused/full tests, type/lint/build, browser regression and independent review; no push requested.
+
+
+### Efficiency phase complete
+
+Baseline commit2940490 created. The approved post-baseline cleanup is implemented and verified: narrow settings subscription, shared duplicate-skipping safeLocalStorage for note/ear, and input-keyed melody score evaluation with separate clock visibility. Full62files/1036tests, strict types/lint, fresh build im6f9pTyP_qhEZ_PV1T39, affected basic/melody browser flows and independent review pass. See docs/efficiency-review.md and docs/efficiency-storage-report.md. Current sources are frozen for the second authorized commit; no push is requested.

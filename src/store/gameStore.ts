@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { safeLocalStorage } from "@/lib/storage/safeLocalStorage";
 import { DEFAULT_GAME_SETTINGS } from "@/lib/music/constants";
 import { generateQuestion, validateAnswer } from "@/lib/music/utils";
 import {
@@ -470,29 +471,7 @@ export const useGameStore = create<GameStore>()(
     },
     {
       name: "note-quiz-game-store",
-      storage: createJSONStorage(() => ({
-        getItem: (key) => {
-          try {
-            return localStorage.getItem(key);
-          } catch {
-            return null;
-          }
-        },
-        setItem: (key, value) => {
-          try {
-            localStorage.setItem(key, value);
-          } catch {
-            /* Practice remains usable without storage. */
-          }
-        },
-        removeItem: (key) => {
-          try {
-            localStorage.removeItem(key);
-          } catch {
-            /* Storage can be blocked. */
-          }
-        },
-      })),
+      storage: createJSONStorage(() => safeLocalStorage),
       partialize: (state) => ({
         settings: {
           ...state.settings,
