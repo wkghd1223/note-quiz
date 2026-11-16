@@ -53,7 +53,6 @@ export default function NotePracticeMode({
   onSettingsClose,
   runOptions,
   onComplete,
-  onChangePractice,
 }: NotePracticeModeProps) {
   const { t } = useTranslation();
   const store = useGameStore(
@@ -299,13 +298,6 @@ export default function NotePracticeMode({
       if (isCurrent()) setAudioError(true);
     }
   };
-  const changePractice = () => {
-    audioAttempt.current++;
-    stopAllNotes();
-    store.resetGame();
-    if (onChangePractice) onChangePractice();
-    else onSettingsOpen();
-  };
   const mistakes =
     gameResult?.answers.filter((entry) => !entry.isCorrect && entry.question) ??
     [];
@@ -347,14 +339,12 @@ export default function NotePracticeMode({
         result={gameResult}
         sessionPoints={sessionPoints}
         submissionStatus={submissionStatus}
-        onRestart={() => void start()}
         onReview={() =>
           void start({
             kind: "review",
             questions: mistakes.map((entry) => entry.question!),
           })
         }
-        onChange={changePractice}
       >
         {sessionKind !== "practice" && (
           <p className="text-sm text-slate-600">{t.learning.reviewNotice}</p>
@@ -395,9 +385,11 @@ export default function NotePracticeMode({
                   <button
                     type="button"
                     onClick={() => void replay(entry.correctNote)}
-                    className="mt-2 min-h-11 rounded-lg border border-slate-200 px-3 text-sm font-bold"
+                    aria-label={t.messages.playSound}
+                    title={t.messages.playSound}
+                    className="mt-2 inline-flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200"
                   >
-                    {t.messages.playSound}
+                    <FaVolumeUp aria-hidden="true" />
                   </button>
                 </div>
               ))}
@@ -414,25 +406,43 @@ export default function NotePracticeMode({
       data-preview-key={isIdle ? staffKeySignature.key : undefined}
       className="relative rounded-lg border border-slate-200 bg-slate-50 p-3 sm:p-4"
     >
-      <div className="mb-2 flex h-14 items-center justify-between gap-3">
-        <div className="relative h-14 min-w-0 flex-1" data-practice-prompt-band>
-          <p
-            className={`text-xs font-bold leading-4 text-[#5b21b6] ${gameState === "playing" && stageFeedback ? "opacity-0" : ""}`}
+      <div className="mb-2 flex min-h-24 items-start justify-between gap-3 sm:min-h-20">
+        <div
+          className="grid min-h-24 min-w-0 flex-1 items-center sm:min-h-20"
+          data-practice-prompt-band
+        >
+          <div
+            className={`col-start-1 row-start-1 ${gameState === "playing" && stageFeedback ? "opacity-0" : ""}`}
           >
-            {isIdle ? t.clefs[settings.clef] : t.clefs[staffClef]}
-          </p>
-          <h2
-            data-practice-prompt
-            tabIndex={-1}
-            className={`max-h-10 overflow-auto text-base font-black leading-5 text-slate-950 sm:text-xl ${gameState === "playing" && stageFeedback ? "opacity-0" : ""}`}
-          >
-            {t.messages.whichNoteShown}
-          </h2>
+            <p className="text-xs font-bold leading-4 text-[#5b21b6]">
+              {isIdle ? t.clefs[settings.clef] : t.clefs[staffClef]}
+            </p>
+            <h2
+              data-practice-prompt
+              tabIndex={-1}
+              className="max-h-10 overflow-auto text-base font-black leading-5 text-slate-950 sm:text-xl"
+            >
+              {t.messages.whichNoteShown}
+            </h2>
+          </div>
           <PracticeFeedback
             message={
               gameState === "playing" ? stageFeedback?.message : undefined
             }
             correct={stageFeedback?.type === "success"}
+            details={
+              gameState === "playing" && stageFeedback && lastAnswer ? (
+                <>
+                  <p>
+                    {t.messages.yourAnswer}: {noteToString(lastAnswer.note)}
+                  </p>
+                  <p>
+                    {t.messages.correctAnswer}:{" "}
+                    {noteToString(lastAnswer.correctNote)}
+                  </p>
+                </>
+              ) : undefined
+            }
             announcementKey={answers.length}
           />
         </div>
@@ -458,6 +468,7 @@ export default function NotePracticeMode({
       <Staff
         stable
         responsive
+        staffRange={(isIdle ? settings : sessionSettings).staffRange}
         clef={staffClef}
         keySignature={staffKeySignature}
         note={staffQuestion?.displayNote}
@@ -465,24 +476,6 @@ export default function NotePracticeMode({
         width={620}
         height={260}
       />
-      <div
-        data-practice-explanation
-        tabIndex={isIdle || stageFeedback || isFinished ? 0 : undefined}
-        className="mt-1 h-8 overflow-auto text-xs leading-4 text-slate-600 [overflow-wrap:anywhere]"
-      >
-        {isIdle ? (
-          <>
-            <p>{t.messages.startGameInstruction}</p>
-            <p>
-              {runOptions?.kind === "daily"
-                ? t.learning.dailyNotice
-                : t.learning.leaderboardNotice}
-            </p>
-          </>
-        ) : (stageFeedback || isFinished) && lastAnswer ? (
-          `${t.messages.correctAnswer}: ${noteToString(lastAnswer.correctNote)} / ${t.messages.yourAnswer}: ${noteToString(lastAnswer.note)}`
-        ) : null}
-      </div>
     </div>
   );
   const input =
@@ -512,6 +505,7 @@ export default function NotePracticeMode({
           </p>
         ) : (
           <MicrophoneInput
+            captureKey={currentQuestion?.id}
             onSubmit={answer}
             selectedNote={currentAnswer}
             disabled={gameState !== "playing" || isAnswerLocked}
@@ -521,6 +515,18 @@ export default function NotePracticeMode({
     ) : null;
   return (
     <PracticeShell
+      description={
+        isIdle ? (
+          <>
+            <span className="block">{t.messages.startGameInstruction}</span>
+            <span className="block">
+              {runOptions?.kind === "daily"
+                ? t.learning.dailyNotice
+                : t.learning.leaderboardNotice}
+            </span>
+          </>
+        ) : undefined
+      }
       modeSwitcher={<ModeSwitcher mode={mode} onChange={onModeChange} />}
       title={t.gameNavTitle}
       kicker={t.brandDescription}
@@ -566,6 +572,8 @@ export default function NotePracticeMode({
       settingsSummary={summary}
       isIdle={isIdle}
       isFinished={isFinished}
+      onRestart={() => void start()}
+      restartDisabled={starting}
       result={resultContent}
       resultKey={gameResult?.sessionId ?? null}
       settingsOpen={settingsOpen}

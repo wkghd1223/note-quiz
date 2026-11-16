@@ -31,7 +31,7 @@ import type { SessionKind } from "@/lib/practice/types";
 import PracticeShell from "./PracticeShell";
 import PracticeController from "./PracticeController";
 import PracticeMetrics from "./PracticeMetrics";
-import { FaClock, FaCheck, FaBullseye } from "react-icons/fa";
+import { FaClock, FaCheck, FaBullseye, FaVolumeUp } from "react-icons/fa";
 import ModeSwitcher, { type PracticeMode } from "./ModeSwitcher";
 import MusicNotation from "./MusicNotation";
 import LearningResult from "./LearningResult";
@@ -195,21 +195,31 @@ export default function TheoryPracticeMode(props: Props) {
     s.reset();
     props.onConfigChange({ ...config, ...change });
   };
+  const exampleOptions = getTheoryOptions({
+    ...config,
+    task: config.mode === "interval" ? "interval" : "quality",
+  }).map((id) =>
+    config.mode === "interval" &&
+    config.difficulty === "beginner" &&
+    id === "P1"
+      ? "P8"
+      : id,
+  );
   const example = () => {
     const settings: TheorySettings = {
       ...config,
       task: config.mode === "interval" ? "interval" : config.task,
     };
-    if (exampleType) {
+    if (config.mode === "interval") {
       settings.difficulty = "custom";
-      if (config.mode === "interval")
-        settings.intervals = [
-          exampleType as NonNullable<TheorySettings["intervals"]>[number],
-        ];
-      else
-        settings.chords = [
-          exampleType as NonNullable<TheorySettings["chords"]>[number],
-        ];
+      settings.intervals = (
+        exampleType ? [exampleType] : exampleOptions
+      ) as TheorySettings["intervals"];
+    } else if (exampleType) {
+      settings.difficulty = "custom";
+      settings.chords = [
+        exampleType as NonNullable<TheorySettings["chords"]>[number],
+      ];
     }
     void play(generateTheoryQuestion(settings));
   };
@@ -243,7 +253,7 @@ export default function TheoryPracticeMode(props: Props) {
             : ["quality", "inversion", "progression"]
           ).map((task) => (
             <option key={task} value={task}>
-              {c[task as "direction"]}
+              {task === "interval" ? c.intervalTask : c[task as "direction"]}
             </option>
           ))}
         </select>
@@ -284,7 +294,7 @@ export default function TheoryPracticeMode(props: Props) {
       {config.difficulty === "custom" && (
         <fieldset className="grid gap-2">
           <legend className={`mb-2 ${settingsLabelClassName}`}>
-            {config.mode === "interval" ? c.interval : c.quality}
+            {config.mode === "interval" ? c.intervalTask : c.quality}
           </legend>
           {(config.mode === "interval"
             ? config.presentation === "audio"
@@ -350,9 +360,14 @@ export default function TheoryPracticeMode(props: Props) {
     ? lastAnswer?.question
     : (s.current ?? s.feedback?.question);
   const feedback = isIdle || isFinished ? null : s.feedback;
-  const stageAnswer = feedback ?? (isFinished ? lastAnswer : null);
   const notation = (q: TheoryQuestion, revealed = true) => (
-    <TheoryNotation question={q} label={c.components} revealed={revealed} />
+    <TheoryNotation
+      question={q}
+      kind={config.kind}
+      task={config.task}
+      label={c.components}
+      revealed={revealed}
+    />
   );
   const resultContent = result ? (
     <LearningResult
@@ -360,9 +375,7 @@ export default function TheoryPracticeMode(props: Props) {
       focusOnMount={false}
       result={result}
       hasMistakes={result.answers.some((a) => !a.correct)}
-      onRestart={() => void start()}
       onReview={() => s.review()}
-      onChange={props.onChangePractice}
     >
       <p className="text-sm text-slate-500">
         {result.kind === "review"
@@ -388,28 +401,38 @@ export default function TheoryPracticeMode(props: Props) {
               </p>
               <button
                 type="button"
-                className={button}
+                className={`${button} inline-flex h-11 w-11 items-center justify-center px-0`}
+                aria-label={c.play}
+                title={c.play}
                 onClick={() => void play(a.question)}
               >
-                {c.play}
+                <FaVolumeUp aria-hidden="true" />
               </button>
             </details>
           ))}
       </div>
     </LearningResult>
   ) : null;
+  // Reserve only the rows this task needs; answer changes must not move the score/input.
+  const promptHeight =
+    config.task === "progression"
+      ? "min-h-36 sm:min-h-24"
+      : "min-h-28 sm:min-h-20";
   const stage = (
     <div
       data-practice-stage
       data-practice-phase={isIdle ? "idle" : isFinished ? "finished" : "active"}
-      className="relative grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3"
+      className="relative grid min-w-0 grid-cols-1 gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3"
     >
-      <div className="flex h-11 items-center gap-3">
-        <div className="relative h-11 min-w-0 flex-1" data-practice-prompt-band>
+      <div className={`flex items-start gap-3 ${promptHeight}`}>
+        <div
+          className={`grid min-w-0 flex-1 items-center ${promptHeight}`}
+          data-practice-prompt-band
+        >
           <h2
             data-practice-prompt
             tabIndex={-1}
-            className={`max-h-10 overflow-auto font-bold leading-5 ${feedback ? "opacity-0" : ""}`}
+            className={`col-start-1 row-start-1 max-h-10 overflow-auto font-bold leading-5 ${feedback ? "opacity-0" : ""}`}
           >
             {c.selectAnswer}
           </h2>
@@ -422,6 +445,20 @@ export default function TheoryPracticeMode(props: Props) {
                 : undefined
             }
             correct={feedback?.correct}
+            details={
+              feedback ? (
+                <>
+                  <p>
+                    {c.yourAnswer}: {theoryLabel(c, feedback.answer)} ·{" "}
+                    {c.answer}: {theoryLabel(c, feedback.question.answer)}
+                  </p>
+                  <p>
+                    {c.components}:{" "}
+                    {feedback.question.notes.map(noteToString).join(" · ")}
+                  </p>
+                </>
+              ) : undefined
+            }
             announcementKey={s.answers.length}
           />
         </div>
@@ -433,11 +470,6 @@ export default function TheoryPracticeMode(props: Props) {
           {s.length === "ten" ? `/${s.limit}` : ""}
         </span>
       </div>
-      {config.task === "progression" && (
-        <p className="h-10 overflow-auto text-sm leading-5 text-slate-600">
-          {c.tonic}
-        </p>
-      )}
       {question && !isIdle ? (
         notation(
           question,
@@ -451,21 +483,18 @@ export default function TheoryPracticeMode(props: Props) {
           task={config.task}
         />
       )}
-      <div className="grid h-16 grid-cols-3 gap-2">
+      <div className="flex h-11 min-w-0 items-stretch gap-2">
         {isIdle ? (
           <>
-            <label className="col-span-2 min-w-0">
+            <label className="min-w-0 flex-1">
               <span className="sr-only">{c.example}</span>
               <select
-                className={`${button} h-16 w-full`}
+                className={`${button} h-11 w-full`}
                 value={exampleType}
                 onChange={(event) => setExampleType(event.target.value)}
               >
                 <option value="">{c.preset}</option>
-                {getTheoryOptions({
-                  ...config,
-                  task: config.mode === "interval" ? "interval" : "quality",
-                }).map((id) => (
+                {exampleOptions.map((id) => (
                   <option key={id} value={id}>
                     {theoryLabel(c, id)}
                   </option>
@@ -474,11 +503,13 @@ export default function TheoryPracticeMode(props: Props) {
             </label>
             <button
               type="button"
-              className={`${button} h-16 overflow-auto leading-4`}
+              className={`${button} inline-flex h-11 w-11 shrink-0 items-center justify-center px-0`}
               onClick={example}
               disabled={busy}
+              aria-label={busy ? c.playingAudio : c.example}
+              title={busy ? c.playingAudio : c.example}
             >
-              {busy ? c.playingAudio : c.example}
+              <FaVolumeUp aria-hidden="true" />
             </button>
           </>
         ) : (
@@ -486,16 +517,18 @@ export default function TheoryPracticeMode(props: Props) {
             <button
               type="button"
               onClick={() => question && void play(question)}
-              className={`${button} h-16 overflow-auto leading-4`}
+              className={`${button} inline-flex h-11 w-11 shrink-0 items-center justify-center px-0`}
               disabled={busy || !question || isFinished}
+              aria-label={busy ? c.playingAudio : c.play}
+              title={busy ? c.playingAudio : c.play}
             >
-              {busy ? c.playingAudio : c.play}
+              <FaVolumeUp aria-hidden="true" />
             </button>
             {config.mode === "chord" && (
               <>
                 <button
                   type="button"
-                  className={`${button} h-16 overflow-auto leading-4`}
+                  className={`${button} h-11 min-w-0 flex-1 overflow-auto !px-1 !py-1 !text-xs leading-4 sm:!px-3 sm:!text-sm`}
                   onClick={() => question && void play(question, "chord")}
                   disabled={busy || !question || isFinished}
                 >
@@ -503,7 +536,7 @@ export default function TheoryPracticeMode(props: Props) {
                 </button>
                 <button
                   type="button"
-                  className={`${button} h-16 overflow-auto leading-4`}
+                  className={`${button} h-11 min-w-0 flex-1 overflow-auto !px-1 !py-1 !text-xs leading-4 sm:!px-3 sm:!text-sm`}
                   onClick={() => question && void play(question, "arpeggio")}
                   disabled={busy || !question || isFinished}
                 >
@@ -514,30 +547,15 @@ export default function TheoryPracticeMode(props: Props) {
           </>
         )}
       </div>
-      <div
-        data-practice-explanation
-        tabIndex={0}
-        className="h-20 overflow-auto text-sm sm:h-24 leading-5 [overflow-wrap:anywhere]"
-      >
-        <p>{help}</p>
-        {!isIdle && stageAnswer && question && (
-          <>
-            <p>
-              {c.yourAnswer}: {theoryLabel(c, stageAnswer.answer)} · {c.answer}:{" "}
-              {theoryLabel(c, question.answer)}
-            </p>
-            <p>
-              {c.components}: {question.notes.map(noteToString).join(" · ")}
-            </p>
-          </>
-        )}
-      </div>
     </div>
   );
   return (
     <PracticeShell
       title={c[config.mode]}
       kicker={c[config.mode]}
+      description={help}
+      onRestart={() => void start()}
+      restartDisabled={busy}
       modeSwitcher={
         <ModeSwitcher mode={props.mode} onChange={props.onModeChange} />
       }
@@ -603,6 +621,7 @@ export default function TheoryPracticeMode(props: Props) {
       input={
         (s.state === "playing" && question) || isFinished ? (
           <TheoryAnswerControls
+            direction={config.task === "direction"}
             options={question?.options ?? getTheoryOptions(config)}
             copy={c}
             disabled={isFinished || !!feedback || busy}
@@ -630,12 +649,25 @@ const TheoryNotation = memo(function TheoryNotation({
   kind?: TheoryQuestion["kind"];
   task?: TheoryQuestion["task"];
 }) {
-  return (question?.task ?? task) === "progression" ? (
+  // The possible task range is fixed before any hidden audio question is revealed.
+  const staffRange = {
+    ledgerLinesAbove:
+      kind === "interval"
+        ? 1
+        : task === "inversion"
+          ? 3
+          : task === "progression"
+            ? 2
+            : 0,
+    ledgerLinesBelow: 5,
+  };
+  return task === "progression" ? (
     <div className="grid grid-cols-2 gap-2" data-practice-progression>
       {(question?.groups.slice(-4) ?? EMPTY_PROGRESSION).map((notes, index) => (
         <MusicNotation
           key={index}
           notes={notes}
+          staffRange={staffRange}
           chord
           compact
           label={`${label} ${index + 1}`}
@@ -646,6 +678,7 @@ const TheoryNotation = memo(function TheoryNotation({
   ) : (
     <MusicNotation
       notes={question?.notes ?? EMPTY_NOTES}
+      staffRange={staffRange}
       chord={(question?.kind ?? kind) === "chord"}
       label={label}
       revealed={revealed}
@@ -655,18 +688,28 @@ const TheoryNotation = memo(function TheoryNotation({
 
 const TheoryAnswerControls = memo(function TheoryAnswerControls({
   options,
+  direction,
   copy,
   disabled,
   onSubmit,
 }: {
   options: string[];
+  direction: boolean;
   copy: LearningTranslations;
   disabled: boolean;
   onSubmit: (answer: string) => boolean;
 }) {
   return (
-    <div className="grid auto-rows-[4rem] grid-cols-2 gap-2">
-      {options.map((answer) => (
+    <div
+      data-practice-answer-options
+      className={`grid auto-rows-[4rem] gap-2 ${direction ? "grid-cols-3" : "grid-cols-2"}`}
+    >
+      {(direction
+        ? ["higher", "same", "lower"].filter((answer) =>
+            options.includes(answer),
+          )
+        : options
+      ).map((answer) => (
         <button
           key={answer}
           type="button"

@@ -475,6 +475,27 @@ describe("first-note audio-clock boundary", () => {
     expect(event.offsetAudioSec! - event.onsetAudioSec).toBeCloseTo(0.205);
     expect(event.pitchSamples![0].audioTimeSec).toBeCloseTo(-0.2);
   });
+  it("keeps late-delivered low input on its measured clock without transposing toward the target", async () => {
+    const { audio, store, start } = await startClockSession();
+    runAudioFrame(audio, start + 2.2);
+    const measured = measuredNote(start + 0.2, start + 1.9);
+    measured.observedMidi = 40;
+    measured.pitchSamples![0].midi = 40;
+    audio.callbacks.onEvent(measured);
+    expect(store.getState().events[0]).toMatchObject({
+      onsetAudioSec: expect.closeTo(0.2),
+      offsetAudioSec: expect.closeTo(1.9),
+      observedMidi: 40,
+      pitchSamples: [
+        {
+          audioTimeSec: expect.closeTo(0.2),
+          midi: 40,
+          cents: 0,
+          confidence: 1,
+        },
+      ],
+    });
+  });
   it("repeats the four-beat approach at the paused target and retains completed input", async () => {
     const { session, audio, store, start, beat } = await startClockSession();
     runAudioFrame(audio, start);

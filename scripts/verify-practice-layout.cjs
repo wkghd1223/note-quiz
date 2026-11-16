@@ -108,11 +108,84 @@ const report = {
     "virtual clock",
     "silent Web Audio",
     "leaderboard responses",
+    "external requests blocked; real ads checked separately",
   ],
   measuredReactRenders: false,
   cases: [],
 };
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function assertListeningPresentation(page, test) {
+  const speakers = page.locator(
+    "[data-practice-stage] button[aria-label][title]",
+  );
+  assert.equal(
+    await speakers.count(),
+    1,
+    "Each stage exposes one named speaker control",
+  );
+  const speaker = speakers.first();
+  assert.equal(
+    await speaker.getAttribute("aria-label"),
+    await speaker.getAttribute("title"),
+  );
+  const box = await speaker.boundingBox();
+  assert.equal(box.width, 44, "Speaker width is 44px");
+  assert.equal(box.height, 44, "Speaker height is 44px");
+  assert.equal(
+    await speaker.locator("svg").count(),
+    1,
+    "Listening uses a speaker icon",
+  );
+  if (test.mode === "interval" || test.mode === "chord") {
+    const help = page.locator("[data-practice-description]");
+    await help.waitFor();
+    assert(
+      !(await page.locator("[data-practice-stage]").innerText()).includes(
+        await help.innerText(),
+      ),
+      "Instruction sits by the game title instead of the answer feedback frame",
+    );
+    const example = page.locator("[data-practice-stage] select");
+    if (await example.count())
+      assert.equal(
+        (await example.boundingBox()).height,
+        44,
+        "Idle example selector is 44px high",
+      );
+  }
+}
+
+async function assertDirectionAnswers(page, locale) {
+  const labels = {
+    en: ["Higher", "Same", "Lower"],
+    ko: ["높다", "같다", "낮다"],
+    ja: ["高い", "同じ", "低い"],
+    es: ["Más agudo", "Igual", "Más grave"],
+    de: ["Höher", "Gleich", "Tiefer"],
+    fr: ["Plus aigu", "Identique", "Plus grave"],
+    zh: ["更高", "相同", "更低"],
+    pt: ["Mais agudo", "Igual", "Mais grave"],
+  };
+  const buttons = page.locator("[data-practice-answer-options] button");
+  assert.deepEqual(
+    await buttons.allTextContents(),
+    labels[locale],
+    "Direction order is higher, same, lower",
+  );
+  const boxes = await buttons.evaluateAll((nodes) =>
+    nodes.map((node) => {
+      const box = node.getBoundingClientRect();
+      return { y: box.y, width: box.width, height: box.height };
+    }),
+  );
+  assert(
+    boxes.every(
+      (box) => box.y === boxes[0].y && box.width >= 44 && box.height >= 44,
+    ),
+    "Direction answers occupy one row with 44px touch targets",
+  );
+}
 
 async function geometry(page) {
   return page.evaluate(() => {
@@ -154,6 +227,18 @@ function sameGeometry(before, after, label) {
     });
   }
 }
+function sameStageFootprint(before, after, label) {
+  // Idle-only instructions now live under the title and leave when practice starts.
+  // Compare the score's geometry relative to its stage for that transition only.
+  const local = (frame) => ({
+    stage: frame.stage.map((box) => ({ ...box, y: 0 })),
+    notation: frame.notation.map((box) => ({
+      ...box,
+      y: box.y - frame.stage[0].y,
+    })),
+  });
+  sameGeometry(local(before), local(after), label);
+}
 async function blankIsSecret(page, count) {
   const state = await page
     .locator("[data-practice-stage]")
@@ -179,9 +264,9 @@ async function blankIsSecret(page, count) {
         blankNotes: surface
           .querySelector("[data-notation-placeholder]")
           .querySelectorAll("ellipse").length,
-        staffLines: surface
+        loadingGlyphs: surface
           .querySelector("[data-notation-placeholder]")
-          .querySelectorAll("line").length,
+          .querySelectorAll("svg").length,
       }));
     });
   assert.equal(state.length, count, "Reserve every staff before response");
@@ -190,7 +275,7 @@ async function blankIsSecret(page, count) {
     assert(
       (surface.blankVisible || surface.nativeEmpty || surface.fallbackEmpty) &&
         surface.blankNotes === 0 &&
-        surface.staffLines >= 5,
+        surface.loadingGlyphs === 0,
       "Unrevealed staff has no noteheads",
     );
     assert(
@@ -296,6 +381,13 @@ async function endEvidence(
 }
 async function resultPopupLifecycle(page) {
   const value = await page.locator("[data-practice-result]").textContent();
+  assert.equal(
+    await page
+      .locator('[data-practice-result] [data-practice-action="restart"]')
+      .count(),
+    0,
+    "Restart belongs outside the result dialog",
+  );
   const position = await scrollState(page);
   await page
     .locator("[data-minimize-results]")
@@ -303,6 +395,23 @@ async function resultPopupLifecycle(page) {
   await page.locator("dialog[open]").waitFor({ state: "hidden" });
   const restore = page.locator('[data-practice-action="view-results"]:visible');
   await restore.waitFor();
+  const restart = page.locator('[data-practice-action="restart"]:visible');
+  await restart.waitFor();
+  for (const action of [restore, restart]) {
+    const size = await action.boundingBox();
+    assert(
+      size.width >= 44 && size.height >= 44,
+      "Finished actions retain 44px touch targets",
+    );
+  }
+  assert(
+    await restore.evaluate(
+      (button) =>
+        button.nextElementSibling?.getAttribute("data-practice-action") ===
+        "restart",
+    ),
+    "Results precede same-settings restart in the finished controller",
+  );
   assert(
     await restore.evaluate((button) => document.activeElement === button),
     "Minimize returns focus to the visible restore action",
@@ -397,14 +506,13 @@ async function finishAndRestart(page, test) {
     scrollBefore,
     `${test.id}/manual-finish`,
   );
+  await page.keyboard.press("Escape");
+  await page.locator("dialog[open]").waitFor({ state: "hidden" });
+  // This case measures application-driven scrolling. A Playwright click scrolls
+  // the sticky controller into view first; real pointer flows run in verify-practice-ui.
   await page
-    .locator("[data-practice-result] button")
-    .filter({ hasText: /./ })
-    .evaluateAll((buttons) =>
-      buttons
-        .find((button) => button.className.includes("bg-[#5b21b6]"))
-        ?.click(),
-    );
+    .locator('[data-practice-action="restart"]:visible')
+    .evaluate((button) => button.click());
   await page.locator('[data-practice-phase="active"]').waitFor();
   await settleAudio(page);
   await notationReady(page);
@@ -448,14 +556,9 @@ async function finishAndRestart(page, test) {
     `${test.id}/automatic-finish`,
   );
   // Also cover an early end with no accepted answers after a fresh restart.
-  await page
-    .locator("[data-practice-result] button")
-    .filter({ hasText: /./ })
-    .evaluateAll((buttons) =>
-      buttons
-        .find((button) => button.className.includes("bg-[#5b21b6]"))
-        ?.click(),
-    );
+  await page.keyboard.press("Escape");
+  await page.locator("dialog[open]").waitFor({ state: "hidden" });
+  await page.locator('[data-practice-action="restart"]:visible').click();
   await page.locator('[data-practice-phase="active"]').waitFor();
   await settleAudio(page);
   await notationReady(page);
@@ -474,14 +577,9 @@ async function finishAndRestart(page, test) {
   );
   const viewportPresentation = await resultViewportTransitions(page);
   // Leave a live question and judgment for the existing mode-exit regression.
-  await page
-    .locator("[data-practice-result] button")
-    .filter({ hasText: /./ })
-    .evaluateAll((buttons) =>
-      buttons
-        .find((button) => button.className.includes("bg-[#5b21b6]"))
-        ?.click(),
-    );
+  await page.keyboard.press("Escape");
+  await page.locator("dialog[open]").waitFor({ state: "hidden" });
+  await page.locator('[data-practice-action="restart"]:visible').click();
   await page.locator('[data-practice-phase="active"]').waitFor();
   await settleAudio(page);
   return {
@@ -593,7 +691,7 @@ async function noteActionStates(page, entryURL, locale, test) {
       `${label}: all translated state labels fit`,
     );
     const frame = await geometry(page);
-    sameGeometry(
+    sameStageFootprint(
       { stage: idleFrame.stage, notation: idleFrame.notation },
       { stage: frame.stage, notation: frame.notation },
       label,
@@ -683,22 +781,29 @@ async function changeIdleSettings(page, card, viewport) {
       stage?.dataset.previewKey === "Bb Major"
     );
   });
-  assert.equal(
-    await page
-      .locator(
-        '[data-practice-stage] [data-notation-placeholder] image[href="/bass-clef.svg"]',
-      )
-      .count(),
-    1,
-  );
-  assert.equal(
-    await page
-      .locator(
-        '[data-practice-stage] [data-notation-placeholder] image[href="/flat-sign.svg"]',
-      )
-      .count(),
-    2,
-  );
+  const nativeBlank = async (clef, flats) => {
+    await page.waitForFunction(
+      ({ clef, flats }) => {
+        const surface = document.querySelector(
+          "[data-practice-stage] [data-practice-notation]",
+        );
+        const rendered = surface?.firstElementChild?.querySelector(
+          '[data-rendered="true"]',
+        );
+        const glyphs =
+          rendered?.querySelector("svg.at-surface-svg")?.textContent ?? "";
+        return (
+          surface?.querySelector("[data-notation-placeholder]")?.hidden &&
+          rendered?.getAttribute("data-event-pitches") === "" &&
+          glyphs.includes(clef) &&
+          [...glyphs].filter((glyph) => glyph === "\uE260").length === flats
+        );
+      },
+      { clef, flats },
+    );
+  };
+  // Assert the actual alphaTab clef/key engraving, never the discarded loading drawing.
+  await nativeBlank("\uE062", 2);
   await key.selectOption("random");
   await page.waitForURL(
     (url) =>
@@ -719,22 +824,7 @@ async function changeIdleSettings(page, card, viewport) {
       stage?.dataset.previewKey === "C Major"
     );
   });
-  assert.equal(
-    await page
-      .locator(
-        '[data-practice-stage] [data-notation-placeholder] image[href="/g-clef.svg"]',
-      )
-      .count(),
-    1,
-  );
-  assert.equal(
-    await page
-      .locator(
-        '[data-practice-stage] [data-notation-placeholder] image[href="/flat-sign.svg"]',
-      )
-      .count(),
-    0,
-  );
+  await nativeBlank("\uE050", 0);
   if (viewport.width < 1024) {
     await settings.locator("button").first().click();
     await page.waitForURL((url) => !url.searchParams.has("settings"));
@@ -775,7 +865,6 @@ async function assertOverlay(page) {
       });
       return {
         pointerEvents: getComputedStyle(overlay).pointerEvents,
-        position: getComputedStyle(overlay).position,
         role: overlay.getAttribute("role"),
         live: overlay.getAttribute("aria-live"),
         inside: rect.top >= parent.top && rect.bottom <= parent.bottom,
@@ -797,7 +886,6 @@ async function assertOverlay(page) {
     });
   assert.deepEqual(state, {
     pointerEvents: "none",
-    position: "absolute",
     role: "status",
     live: "polite",
     inside: true,
@@ -884,6 +972,15 @@ async function notationReady(page) {
         locale: `${locale}-${locale.toUpperCase()}`,
         reducedMotion: "reduce",
       });
+      // Third-party ad requests cannot settle reliably under the virtual clock.
+      // Keep this geometry matrix deterministic; live creatives need their own run.
+      await context.route("**/*", (route) => {
+        const request = route.request();
+        return new URL(request.url()).origin === new URL(baseURL).origin &&
+          ["GET", "HEAD"].includes(request.method())
+          ? route.continue()
+          : route.abort();
+      });
       await context.addInitScript(() => {
         Math.random = () => 0;
         window.__layoutResultScrollCalls = 0;
@@ -964,6 +1061,7 @@ async function notationReady(page) {
         .locator("[data-practice-actions] button:visible")
         .first();
       await idleIsPassive(page, start, locale, test);
+      await assertListeningPresentation(page, test);
       const idleGeometry = await geometry(page);
       const idleActions = await actionGeometry(page);
       assert(
@@ -1025,6 +1123,9 @@ async function notationReady(page) {
       await page.clock.pauseAt(
         new Date(await page.evaluate(() => Date.now() + 100)),
       );
+      await assertListeningPresentation(page, test);
+      if (test.id === "direction-audio")
+        await assertDirectionAnswers(page, locale);
       const before = await geometry(page);
       const activeActions = await actionGeometry(page);
       assert.equal(
@@ -1034,7 +1135,7 @@ async function notationReady(page) {
       );
       assert.deepEqual(activeActions.clipped, [], "Playing action labels fit");
       assert.equal(before.notation.length, test.progression ? 4 : 1);
-      sameGeometry(
+      sameStageFootprint(
         { stage: idleGeometry.stage, notation: idleGeometry.notation },
         { stage: before.stage, notation: before.notation },
         `${test.id}/idle-to-start`,
@@ -1148,6 +1249,17 @@ async function notationReady(page) {
         );
         const text = await page.locator("[data-practice-feedback]").innerText();
         const toast = page.locator("[data-answer-toast]");
+        const message = await toast.locator("span").first().innerText();
+        const details = toast.locator("[data-answer-toast-details]");
+        assert(
+          (await details.innerText()).trim().length > 0,
+          "Every basic mode includes its answer detail inside the toast",
+        );
+        assert.equal(
+          await page.locator("[data-practice-explanation]").count(),
+          0,
+          "No loose answer or instruction block remains below notation",
+        );
         assert.equal(
           await toast.getAttribute("data-correct"),
           String(judgment === "correct"),
@@ -1157,7 +1269,7 @@ async function notationReady(page) {
         if (judgment === "correct") {
           if (previousCorrectSpan) {
             assert.equal(
-              text,
+              message,
               previousCorrectText,
               "Consecutive correct judgments use the same translated text",
             );
@@ -1169,7 +1281,7 @@ async function notationReady(page) {
           previousCorrectSpan = await page
             .locator("[data-answer-toast]")
             .elementHandle();
-          previousCorrectText = text;
+          previousCorrectText = message;
         }
 
         const colors = await toast.evaluate((node) => ({

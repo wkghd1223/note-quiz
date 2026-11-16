@@ -33,8 +33,11 @@ interface UseMicrophonePitchReturn {
   detectedLabel: string;
   signalRef: RefObject<MicrophoneSignal>;
   startListening: () => Promise<void>;
-  stopListening: () => void;
+  stopListening: () => Note | null;
 }
+
+// Scoring may ignore octave; a capture must retain the actual detected pitch.
+const detectedPitchKey = (note: Note) => `${getPitchKey(note)}:${note.octave}`;
 
 export function useMicrophonePitch(): UseMicrophonePitchReturn {
   const [permissionState, setPermissionState] =
@@ -42,6 +45,7 @@ export function useMicrophonePitch(): UseMicrophonePitchReturn {
   const [isListening, setIsListening] = useState(false);
   const [detectedNote, setDetectedNote] = useState<Note | null>(null);
 
+  const detectedNoteRef = useRef<Note | null>(null);
   const requestGeneration = useRef(0);
   const mounted = useRef(true);
 
@@ -56,6 +60,8 @@ export function useMicrophonePitch(): UseMicrophonePitchReturn {
   const signalRef = useRef<MicrophoneSignal>(emptyMicrophoneSignal());
 
   const stopListening = useCallback(() => {
+    const note = detectedNoteRef.current;
+    detectedNoteRef.current = null;
     requestGeneration.current++;
     if (frameRef.current !== null) {
       cancelAnimationFrame(frameRef.current);
@@ -70,7 +76,7 @@ export function useMicrophonePitch(): UseMicrophonePitchReturn {
     });
 
     if (audioContextRef.current) {
-      void audioContextRef.current.close();
+      void audioContextRef.current.close().catch(() => {});
     }
 
     audioContextRef.current = null;
@@ -82,10 +88,16 @@ export function useMicrophonePitch(): UseMicrophonePitchReturn {
     candidateKeyRef.current = null;
     candidateStartRef.current = 0;
 
-    if (mounted.current) setIsListening(false);
+    if (mounted.current) {
+      setIsListening(false);
+      setDetectedNote(null);
+    }
+    return note;
   }, []);
 
   const startListening = useCallback(async () => {
+    stopListening();
+    if (!mounted.current) return;
     if (
       typeof window === "undefined" ||
       !navigator.mediaDevices?.getUserMedia ||
@@ -95,7 +107,6 @@ export function useMicrophonePitch(): UseMicrophonePitchReturn {
       return;
     }
 
-    stopListening();
     const generation = requestGeneration.current;
 
     try {
@@ -115,10 +126,12 @@ export function useMicrophonePitch(): UseMicrophonePitchReturn {
       const audioContext = new window.AudioContext();
       audioContextRef.current = audioContext;
       const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 2048;
+      analyser.fftSize = audioContext.sampleRate >= 88200 ? 4096 : 2048;
       analyser.smoothingTimeConstant = 0.25;
 
+      analyserRef.current = analyser;
       const source = audioContext.createMediaStreamSource(stream);
+      sourceRef.current = source;
       source.connect(analyser);
 
       const buffer = new Float32Array(analyser.fftSize);
@@ -134,6 +147,8 @@ export function useMicrophonePitch(): UseMicrophonePitchReturn {
       setIsListening(true);
 
       const tick = () => {
+        if (!mounted.current || generation !== requestGeneration.current)
+          return;
         const currentAnalyser = analyserRef.current;
         const currentAudioContext = audioContextRef.current;
         const currentBuffer = bufferRef.current;
@@ -169,17 +184,18 @@ export function useMicrophonePitch(): UseMicrophonePitchReturn {
           return;
         }
 
-        const nextKey = getPitchKey(nextNote);
+        const nextKey = detectedPitchKey(nextNote);
         const now = performance.now();
 
         if (candidateKeyRef.current !== nextKey) {
           candidateKeyRef.current = nextKey;
           candidateStartRef.current = now;
         } else if (now - candidateStartRef.current >= 220) {
-          setDetectedNote((previous) => {
-            const previousKey = previous ? getPitchKey(previous) : null;
-            return previousKey === nextKey ? previous : nextNote;
-          });
+          const previous = detectedNoteRef.current;
+          if (!previous || detectedPitchKey(previous) !== nextKey) {
+            detectedNoteRef.current = nextNote;
+            setDetectedNote(nextNote);
+          }
         }
 
         frameRef.current = requestAnimationFrame(tick);

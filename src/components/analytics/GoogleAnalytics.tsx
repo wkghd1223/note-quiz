@@ -1,29 +1,22 @@
-import Script from "next/script";
+"use client";
 
-const GA_TRACKING_ID =
-  process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "G-RHJP137HQZ";
+import { useEffect, useState } from "react";
+import Script from "next/script";
+import { GA_TRACKING_ID, initializeAnalytics } from "@/lib/analytics-runtime";
 
 export default function GoogleAnalytics() {
-  if (process.env.NODE_ENV !== "production" || !GA_TRACKING_ID) {
-    return null;
-  }
+  const [initialized, setInitialized] = useState(false);
+  useEffect(() => {
+    setInitialized(Boolean(initializeAnalytics()));
+  }, []);
+
+  if (!initialized) return null;
 
   return (
-    <>
-      <Script
-        src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
-        strategy="afterInteractive"
-      />
-      <Script id="google-analytics" strategy="afterInteractive">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', '${GA_TRACKING_ID}', {
-            send_page_view: false
-          });
-        `}
-      </Script>
-    </>
+    <Script
+      id="google-analytics"
+      src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
+      strategy="afterInteractive"
+    />
   );
 }

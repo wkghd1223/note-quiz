@@ -35,6 +35,15 @@ interface ApiProbe {
   >;
   destroy: Mock<() => void>;
   renderer: { width: number; resizeRender: Mock<() => void> };
+  boundsLookup: {
+    findMasterBarByIndex: Mock<
+      (index: number) => {
+        lineAlignedBounds: { x: number; y: number; w: number; h: number };
+      } | null
+    >;
+    findBeat: Mock<() => null>;
+    findMasterBar: Mock<() => null>;
+  };
   error: Emitter<Error>;
   renderFinished: Emitter<{ totalWidth: number; totalHeight: number }>;
   postRenderFinished: Emitter<void>;
@@ -100,7 +109,13 @@ vi.mock("@coderline/alphatab", async (importOriginal) => {
       error = emitter<Error>();
       renderFinished = emitter<{ totalWidth: number; totalHeight: number }>();
       postRenderFinished = emitter<void>();
-      boundsLookup = null;
+      boundsLookup = {
+        findMasterBarByIndex: vi.fn(() => ({
+          lineAlignedBounds: { x: 12, y: 44, w: 264, h: 72 },
+        })),
+        findBeat: vi.fn(() => null),
+        findMasterBar: vi.fn(() => null),
+      };
       constructor(
         _element: unknown,
         readonly options: ApiProbe["options"],
@@ -112,6 +127,7 @@ vi.mock("@coderline/alphatab", async (importOriginal) => {
 });
 
 let observedWidth: number;
+let nativeSurface: { style: { overflow: string } };
 let host: {
   style: Record<string, string>;
   dataset: Record<string, string>;
@@ -130,6 +146,7 @@ beforeEach(() => {
     return harness.frames.length;
   });
   observedWidth = 620;
+  nativeSurface = { style: { overflow: "hidden" } };
   host = {
     style: {},
     dataset: {},
@@ -137,7 +154,9 @@ beforeEach(() => {
     closest: vi.fn(() => ({
       getBoundingClientRect: () => ({ width: observedWidth }),
     })),
-    querySelectorAll: vi.fn(() => []),
+    querySelectorAll: vi.fn((selector: string) =>
+      selector === ".at-surface" ? [nativeSurface] : [],
+    ),
   };
   harness.refs[0] = { current: host };
   vi.stubGlobal(
@@ -173,7 +192,15 @@ function render(props: AlphaTabNotationViewProps) {
   AlphaTabNotationView(props);
   for (const effect of harness.pending.splice(0)) effect();
 }
-function finish(api: ApiProbe, totalWidth = 800, totalHeight = 200) {
+function finish(
+  api: ApiProbe,
+  totalWidth = 800,
+  totalHeight = 200,
+  lineTop = 44,
+) {
+  api.boundsLookup.findMasterBarByIndex.mockReturnValue({
+    lineAlignedBounds: { x: 12, y: lineTop, w: totalWidth - 24, h: 72 },
+  });
   api.renderFinished.trigger({ totalWidth, totalHeight });
   api.postRenderFinished.trigger();
 }
@@ -195,16 +222,17 @@ describe("optional renderer lifecycle", () => {
     expect(api.options.display.resources.staffLineColor).toBe("#64748b");
     finish(api);
     expect(host.style.transform).toBe("translate(0px, 52.5px) scale(0.775)");
+    expect(nativeSurface.style.overflow).toBe("hidden");
   });
 
-  it("extends a truly empty basic bar with native model weights and waits for its refit", async () => {
+  it("extends an empty basic bar at its final host width before the first engraving", async () => {
     const input = { ...score(), events: [] },
       onRender = vi.fn();
     render({
       score: input,
       fittedBasic: true,
       width: 299,
-      height: 112,
+      height: 156,
       onRender,
     });
     await vi.waitFor(() => expect(harness.apis).toHaveLength(1));
@@ -215,6 +243,7 @@ describe("optional renderer lifecycle", () => {
       expect(harness.apis[0]?.renderScore).toHaveBeenCalledOnce(),
     );
     const api = harness.apis[0];
+    expect(host.style.width).toBe("288px");
     expect(api.options.display.systemsLayoutMode).toBe(
       SystemsLayoutMode.UseModelLayout,
     );
@@ -222,14 +251,12 @@ describe("optional renderer lifecycle", () => {
       api.renderScore.mock.calls[0][0].tracks[0].staves[0].bars[0].voices[0]
         .beats,
     ).toHaveLength(0);
-    finish(api, 299, 144);
-    expect(api.renderer.width).toBe(332);
-    expect(api.renderer.resizeRender).toHaveBeenCalledOnce();
-    expect(onRender).not.toHaveBeenCalled();
     expect(host.dataset.rendered).toBe("false");
-    finish(api, 332, 144);
+    expect(host.style.visibility).toBe("hidden");
+    finish(api, 288, 172);
+    expect(api.renderer.resizeRender).not.toHaveBeenCalled();
     expect(onRender).toHaveBeenCalledOnce();
-    expect(host.style.transform).toContain(`scale(${112 / 144})`);
+    expect(host.style.transform).toContain(`scale(${156 / 172})`);
     expect(host.dataset.rendered).toBe("true");
     expect(host.dataset.eventPitches).toBe("");
     expect(api.renderScore).toHaveBeenCalledOnce();
@@ -250,9 +277,9 @@ describe("optional renderer lifecycle", () => {
       expect(harness.apis[0]?.renderScore).toHaveBeenCalledOnce(),
     );
     const api = harness.apis[0];
-    finish(api, 708, 172);
-    expect(api.renderer.width).toBe(584);
+    expect(host.style.width).toBe("584px");
     finish(api, 584, 172);
+    expect(api.renderer.resizeRender).not.toHaveBeenCalled();
     expect(host.style.transform).toBe("translate(62px, 6px) scale(1)");
     expect(onRender).toHaveBeenCalledOnce();
   });
@@ -279,10 +306,58 @@ describe("optional renderer lifecycle", () => {
       finish(api);
       expect(api.renderer.resizeRender).not.toHaveBeenCalled();
       expect(host.dataset.rendered).toBe("true");
+      expect(nativeSurface.style.overflow).toBe("hidden");
     },
   );
 
-  it("uses existing error recovery if native basic refitting fails", async () => {
+  it("reveals native content beyond its minimum-width canvas only inside basic fitting", async () => {
+    const input = score();
+    input.keySignature = -7;
+    input.events[0].notes = [
+      writtenNote({ name: "B", octave: 6, accidental: "flat" }),
+    ];
+    const onRender = vi.fn(() => {
+      expect(nativeSurface.style.overflow).toBe("visible");
+      expect(host.style.visibility).toBe("visible");
+    });
+    render({
+      score: input,
+      fittedBasic: true,
+      width: 229,
+      height: 156,
+      onRender,
+    });
+    await vi.waitFor(() => expect(harness.apis).toHaveLength(1));
+    for (const callback of harness.frames.splice(0)) callback(0);
+    const api = harness.apis[0];
+    expect(host.style.width).toBe("226px");
+    expect(nativeSurface.style.overflow).toBe("hidden");
+    // Reproduced Cb/320px case: native lines and note ink exceed the 226px
+    // canvas, while remaining within the outer 229px practice frame.
+    api.renderFinished.trigger({ totalWidth: 226, totalHeight: 246 });
+    api.boundsLookup.findMasterBarByIndex.mockReturnValue({
+      lineAlignedBounds: { x: 12, y: 118, w: 230.376, h: 72 },
+    });
+    api.postRenderFinished.trigger();
+    expect(onRender).toHaveBeenCalledOnce();
+    expect(host.style.width).toBe("226px");
+    expect(host.style.transform).toContain(`scale(${156 / 172})`);
+    expect(api.renderer.resizeRender).not.toHaveBeenCalled();
+    // Apply the same bounded override if native DOM is reset for a new score.
+    nativeSurface.style.overflow = "hidden";
+    render({
+      score: { ...input },
+      fittedBasic: true,
+      width: 229,
+      height: 156,
+      onRender,
+    });
+    finish(api, 226, 246, 118);
+    expect(onRender).toHaveBeenCalledTimes(2);
+    expect(api.renderScore).toHaveBeenCalledTimes(2);
+  });
+
+  it("uses existing error recovery if native staff bounds are missing", async () => {
     const onError = vi.fn(),
       onRender = vi.fn();
     render({
@@ -299,13 +374,53 @@ describe("optional renderer lifecycle", () => {
       expect(harness.apis[0]?.renderScore).toHaveBeenCalledOnce(),
     );
     const api = harness.apis[0];
-    api.renderer.resizeRender.mockImplementation(() => {
-      throw new Error("Native resize failed");
-    });
-    finish(api, 299, 172);
+    api.renderFinished.trigger({ totalWidth: 299, totalHeight: 172 });
+    api.boundsLookup.findMasterBarByIndex.mockReturnValue(null);
+    api.postRenderFinished.trigger();
     expect(onError).toHaveBeenCalledOnce();
     expect(api.destroy).toHaveBeenCalledOnce();
     expect(onRender).not.toHaveBeenCalled();
+  });
+
+  it("keeps staff scale and anchor through ledger revisions without a second render", async () => {
+    const onRender = vi.fn();
+    render({
+      score: score(),
+      fittedBasic: true,
+      width: 299,
+      height: 156,
+      onRender,
+    });
+    await vi.waitFor(() => expect(harness.apis).toHaveLength(1));
+    for (const callback of harness.frames.splice(0)) callback(0);
+    const api = harness.apis[0];
+    for (const [index, lineTop, contentHeight] of [
+      [0, 44, 172],
+      [1, 126, 254],
+      [2, 46, 296],
+    ]) {
+      if (index > 0)
+        render({
+          score: score(),
+          fittedBasic: true,
+          width: 299,
+          height: 156,
+          onRender,
+        });
+      expect(host.style.visibility).toBe("hidden");
+      finish(api, 288, contentHeight, lineTop);
+      expect(host.style.transform).toContain(`scale(${156 / 172})`);
+      expect(api.renderScore).toHaveBeenCalledTimes(index + 1);
+      expect(api.renderer.resizeRender).not.toHaveBeenCalled();
+      expect(host.style.visibility).toBe("visible");
+      const [, dy] = /translate\([^,]+, ([^)]+)px\)/.exec(
+        host.style.transform,
+      )!;
+      expect(Number(dy) + (lineTop + 36) * (156 / 172)).toBeCloseTo(
+        156 / 2 - 6 * (156 / 172),
+      );
+    }
+    expect(onRender).toHaveBeenCalledTimes(3);
   });
 
   it("queues latest native colors on the same API and retains them on resize", async () => {

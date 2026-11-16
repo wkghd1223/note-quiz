@@ -7,6 +7,7 @@ import AlphaTabNotationView from "@/components/notation/AlphaTabNotationView";
 import PracticeStaffFallback from "./PracticeStaffFallback";
 import { KEY_SIGNATURES } from "@/lib/music/constants";
 import StableNotationSurface from "./StableNotationSurface";
+import type { BasicStaffRange } from "@/lib/notation/basic-staff";
 
 const EMPTY_NOTES: Note[] = [];
 
@@ -16,12 +17,14 @@ function MusicNotation({
   label,
   revealed = true,
   compact = false,
+  staffRange,
 }: {
   notes: Note[];
   chord?: boolean;
   label: string;
   revealed?: boolean;
   compact?: boolean;
+  staffRange?: BasicStaffRange;
 }) {
   const [failed, setFailed] = useState(false);
   // Unrevealed answers never enter the renderer or its SVG/accessibility tree.
@@ -35,15 +38,8 @@ function MusicNotation({
     <StableNotationSurface
       revision={score}
       concealed={!revealed}
+      staffRange={staffRange}
       className={compact ? "h-[112px] sm:h-[160px]" : undefined}
-      placeholder={({ width, height }) => (
-        <PracticeStaffFallback
-          width={width}
-          height={height}
-          keySignature={KEY_SIGNATURES.C}
-          notes={EMPTY_NOTES}
-        />
-      )}
     >
       {({ width, height, onReady }) =>
         legacy ? (

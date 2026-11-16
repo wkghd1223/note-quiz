@@ -16,6 +16,9 @@ interface PracticeShellProps {
   headerActions?: React.ReactNode;
   title: string;
   kicker: string;
+  description?: React.ReactNode;
+  onRestart?: () => void;
+  restartDisabled?: boolean;
   status: React.ReactNode;
   stage: React.ReactNode;
   input: React.ReactNode;
@@ -37,6 +40,9 @@ export default function PracticeShell({
   headerActions,
   title,
   kicker,
+  description,
+  onRestart,
+  restartDisabled = false,
   status,
   stage,
   input,
@@ -69,7 +75,7 @@ export default function PracticeShell({
     <div className="grid w-full min-w-0 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_320px]">
       <section className="min-w-0 rounded-xl border border-slate-200 bg-white shadow-[0_14px_36px_rgba(15,23,42,0.06)]">
         <div className="border-b border-slate-200 p-3 sm:p-4">
-          <div className="grid min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_minmax(260px,360px)] md:items-center">
+          <div className="grid min-w-0 gap-3 [container-type:inline-size]">
             <div className="min-w-0">
               <p className="hidden text-xs font-black text-[#5b21b6] sm:block">
                 {kicker}
@@ -84,6 +90,14 @@ export default function PracticeShell({
                 </h1>
                 {headerActions}
               </div>
+              {description && (
+                <p
+                  data-practice-description
+                  className="mt-2 text-sm leading-5 text-slate-600"
+                >
+                  {description}
+                </p>
+              )}
             </div>
             {modeSwitcher}
           </div>
@@ -112,6 +126,16 @@ export default function PracticeShell({
                               tone: "primary",
                               buttonRef: restoreButton,
                             },
+                            ...(onRestart
+                              ? [
+                                  {
+                                    id: "restart",
+                                    label: t.learning.restart,
+                                    onClick: onRestart,
+                                    disabled: restartDisabled,
+                                  },
+                                ]
+                              : []),
                           ],
                         }}
                       />

@@ -14,9 +14,7 @@ export interface LearningResultData {
 
 export interface LearningResultProps {
   result: LearningResultData;
-  onRestart: () => void;
   onReview: () => void;
-  onChange: () => void;
   hasMistakes: boolean;
   children?: React.ReactNode;
   preserveScroll?: boolean;
@@ -25,9 +23,7 @@ export interface LearningResultProps {
 
 export default function LearningResult({
   result,
-  onRestart,
   onReview,
-  onChange,
   hasMistakes,
   children,
   preserveScroll = false,
@@ -89,14 +85,7 @@ export default function LearningResult({
           <p className="mt-4 text-sm text-slate-600">{t.learning.noMistakes}</p>
         )
       )}
-      <div className="mt-5 grid gap-2 sm:grid-cols-3">
-        <button
-          type="button"
-          onClick={onRestart}
-          className="min-h-11 rounded-lg bg-[#5b21b6] px-3 py-2 text-sm font-bold text-white"
-        >
-          {t.learning.restart}
-        </button>
+      <div className="mt-5">
         <button
           type="button"
           onClick={onReview}
@@ -104,13 +93,6 @@ export default function LearningResult({
           className="min-h-11 rounded-lg border border-[#ded6f7] bg-white px-3 py-2 text-sm font-bold text-[#5b21b6] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {t.learning.review}
-        </button>
-        <button
-          type="button"
-          onClick={onChange}
-          className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700"
-        >
-          {t.learning.changePractice}
         </button>
       </div>
     </section>

@@ -2,6 +2,7 @@
 import { useTranslation } from "@/hooks/useTranslation";
 import type { TrainingMode } from "@/lib/practice/types";
 import SegmentedControl from "@/components/ui/SegmentedControl";
+import styles from "./ModeSwitcher.module.css";
 export type PracticeMode = TrainingMode;
 export default function ModeSwitcher({
   mode,
@@ -14,6 +15,7 @@ export default function ModeSwitcher({
   return (
     <SegmentedControl
       data-practice-mode
+      className={styles.switcher}
       label={t.learning.chooseMode}
       value={mode}
       onChange={onChange}

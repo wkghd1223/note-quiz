@@ -138,7 +138,7 @@ const ko: HomeCopy = {
         "마이크 소리는 브라우저에서 분석하며 녹음하거나 업로드하지 않습니다. 브라우저가 권한을 물으면 마이크 사용을 허용해 주세요.",
     },
   ],
-  metaTitle: "Note Quiz | 독보·청음·멜로디 연습",
+  metaTitle: "Note Quiz | 음표 읽기·소리 맞히기·멜로디 연습",
   metaDescription:
     "음표, 음정, 화음을 익히고 마이크로 8마디 멜로디를 연습하세요. 피아노 예시와 메트로놈을 제공하며, 가입 없이 무료로 이용할 수 있습니다.",
 };
@@ -491,7 +491,8 @@ const basicHomeTranslations: Record<Language, BasicHomeCopy> = {
     steps: [
       {
         ...ko.steps[0],
-        description: "음표 읽기, 청음, 음정, 화음 중 연습할 내용을 고르세요.",
+        description:
+          "음표 읽기, 소리 맞히기, 두 음 비교, 화음 맞히기 중에서 고르세요.",
       },
       {
         ...ko.steps[1],
@@ -510,7 +511,7 @@ const basicHomeTranslations: Record<Language, BasicHomeCopy> = {
       },
       ko.faq[3],
     ],
-    metaTitle: "Note Quiz | 독보·청음·음정·화음 연습",
+    metaTitle: "Note Quiz | 음표 읽기·소리 맞히기·두 음 비교·화음 맞히기",
     metaDescription:
       "음표, 음정, 화음을 읽고 듣는 연습을 해 보세요. 화면의 건반이나 보기로 답할 수 있으며, 가입 없이 무료로 이용할 수 있습니다.",
   },

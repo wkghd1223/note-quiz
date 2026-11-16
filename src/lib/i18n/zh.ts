@@ -7,7 +7,16 @@ export const chineseLearning = {
   note: "识谱",
   ear: "单音听辨",
   interval: "音程",
+  intervalTask: "音程名称",
   chord: "和弦",
+  noteDescription:
+    "看五线谱，认出音符。选择谱号、调号和音域，无需注册即可练习识谱。",
+  earDescription:
+    "听一个音，用屏幕键盘或唱名作答。选择音域，无需注册即可练习听音辨音。",
+  intervalDescription:
+    "听音或看谱比较两个音。从辨别高、低、相同开始，逐步练习音程名称，无需注册。",
+  chordDescription:
+    "听音或看谱辨认和弦。练习大、小和弦、转位与和弦进行，无需注册。",
   sessionType: "练习方式",
   ten: "10题 · 推荐",
   free: "自由练习",
@@ -60,7 +69,7 @@ export const chineseLearning = {
   tonic: "调性提示：先听主和弦，再辨认和弦进行。",
   semitones: "半音",
   inversionHelp: "先播放参考根音，再播放和弦。请根据低音的位置辨认转位。",
-  directionHelp: "依次听两个音。第二个音更高、更低，还是相同？",
+  directionHelp: "第二个音比第一个音更高、相同，还是更低？",
   intervalAudioHelp:
     "辨认两个音之间的距离。听辨中的三全音只有一个答案，不区分记谱方式。",
   intervalHelp: "看谱辨认音程时，需要同时考虑音名拼写和半音距离。",
@@ -162,9 +171,10 @@ export const chineseTranslations = {
     signal: "麦克风信号",
     signalQuiet: "等待声音",
     signalActive: "已检测到声音",
-    description: "唱出或演奏一个稳定的音，再提交检测到的音符。",
-    startListening: "开始收音",
-    stopListening: "停止收音",
+    description:
+      "按住按钮并发出一个音。松开或移开焦点即可提交，也可按住空格或回车键。",
+    startListening: "按住识别",
+    stopListening: "松开提交",
     listening: "正在收音",
     ready: "准备就绪",
     detectedNote: "检测到的音符",

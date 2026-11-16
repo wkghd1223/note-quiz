@@ -38,7 +38,6 @@ const en = {
   earStart: "Start practice",
   restart: "Same settings again",
   review: "Review mistakes",
-  change: "Change practice or difficulty",
   dailyDone: "Completed in this browser",
   noHistory: "Complete a practice to see recent results.",
 };
@@ -506,8 +505,9 @@ const resetHistory = (page) =>
               "Review never resubmits country points",
             );
             await s.shot(`${size}-${mode}-review-result`);
+            await minimizeResult(page);
             await s
-              .result()
+              .card()
               .getByRole("button", { name: en.restart, exact: true })
               .click();
             await eventually(
@@ -523,17 +523,31 @@ const resetHistory = (page) =>
                 .isDisabled(),
               "No-answer sessions have no review",
             );
-            await s
-              .result()
-              .getByRole("button", { name: en.change, exact: true })
-              .click();
-            await eventually(
-              () =>
-                page
-                  .locator("[data-practice-mode] input:checked")
-                  .evaluate((element) => element === document.activeElement),
-              "Change practice returns focus to mode selector",
+            assert.equal(
+              await s
+                .result()
+                .getByRole("button", { name: en.restart, exact: true })
+                .count(),
+              0,
+              "Result details do not include restart",
             );
+            await minimizeResult(page);
+            const settingsRail = page.locator("[data-practice-settings]");
+            if (size === "mobile") {
+              await s
+                .card()
+                .getByRole("button", { name: "Settings", exact: true })
+                .click();
+              await page
+                .getByRole("dialog")
+                .getByRole("combobox", { name: "Difficulty", exact: true })
+                .waitFor();
+              await page.keyboard.press("Escape");
+            } else {
+              await settingsRail
+                .getByRole("combobox", { name: "Difficulty", exact: true })
+                .waitFor();
+            }
           }
           assert(
             (await withHistory(page, (panel) =>
@@ -868,6 +882,15 @@ const resetHistory = (page) =>
                 ),
               "A visible live adhesion wrapper must reserve its actual bottom height",
             );
+          const resultDialog = await page.getByRole("dialog").boundingBox();
+          assert(resultDialog, "Finished session exposes its result dialog");
+          assert(
+            resultDialog.y + resultDialog.height <=
+              viewport.height - adhesionHeight,
+            "Live bottom creative leaves the result dialog controls reachable",
+          );
+          await s.shot(`${size}-live-house-ad-result`);
+          await minimizeResult(page);
           const samples = [];
           for (const top of [0, 300, 600, 900, 1200]) {
             await page.evaluate(
@@ -1145,8 +1168,9 @@ const resetHistory = (page) =>
           await s.resultHeading().waitFor();
           await s.result().getByText("Completed", { exact: true }).waitFor();
         }
+        await minimizeResult(page);
         await s
-          .result()
+          .card()
           .getByRole("button", { name: en.restart, exact: true })
           .click();
         await eventually(
@@ -1172,8 +1196,9 @@ const resetHistory = (page) =>
           () => Promise.resolve(s.api.pending.length === 1),
           "Eligible score fixture is pending",
         );
+        await minimizeResult(page);
         await s
-          .result()
+          .card()
           .getByRole("button", { name: en.restart, exact: true })
           .click();
         await s.finishEarly("note");

@@ -1,4 +1,7 @@
-import { navigationTranslations, type NavigationTranslations } from "./navigation";
+import {
+  navigationTranslations,
+  type NavigationTranslations,
+} from "./navigation";
 import { learningTranslations, type LearningTranslations } from "./learning";
 import { chineseTranslations } from "./zh";
 import { portugueseTranslations } from "./pt";
@@ -426,9 +429,10 @@ export const translations: Record<Language, Translations> = {
       signal: "Microphone signal",
       signalQuiet: "Waiting for sound",
       signalActive: "Sound detected",
-      description: "Sing or play a steady note, then submit the detected note.",
-      startListening: "Start Listening",
-      stopListening: "Stop Listening",
+      description:
+        "Hold the button and play one note; release or move focus away to submit. You can also hold Space or Enter.",
+      startListening: "Hold to detect",
+      stopListening: "Release to submit",
       listening: "Listening",
       ready: "Ready",
       detectedNote: "Detected Note",
@@ -748,7 +752,7 @@ export const translations: Record<Language, Translations> = {
     navigation: navigationTranslations.ko,
     learning: learningTranslations.ko,
     gameTitle: "계이름 맞추기 게임",
-    gameNavTitle: "독보 연습",
+    gameNavTitle: "음표 읽기",
     brandDescription: "오선 위의 음을 더 빠르게 읽어보세요",
     startGame: "연습 시작",
     practiceUi: { minimizeResults: "결과 접기", viewResults: "결과 보기" },
@@ -797,9 +801,10 @@ export const translations: Record<Language, Translations> = {
       signal: "마이크 신호",
       signalQuiet: "소리를 기다리는 중",
       signalActive: "소리 감지됨",
-      description: "한 음을 안정적으로 소리낸 뒤, 감지된 음을 제출하세요.",
-      startListening: "듣기 시작",
-      stopListening: "듣기 중지",
+      description:
+        "버튼을 누른 채 한 음을 내세요. 손을 떼거나 다른 곳으로 포커스를 옮기면 답을 제출합니다. Space나 Enter 키로도 누를 수 있어요.",
+      startListening: "누르고 소리 내기",
+      stopListening: "손을 떼면 답 제출",
       listening: "듣는 중",
       ready: "준비됨",
       detectedNote: "감지된 음",
@@ -1078,9 +1083,9 @@ export const translations: Record<Language, Translations> = {
       },
     },
     earTraining: {
-      title: "청음 훈련",
-      subtitle: "절대음감 연습",
-      description: "재생된 음을 듣고 가능한 한 빠르게 맞혀보세요.",
+      title: "소리 맞히기",
+      subtitle: "한 음 듣고 맞히기",
+      description: "한 음을 듣고 어떤 음인지 맞혀 보세요.",
       settings: "설정",
       replay: "다시 듣기",
       start: "세션 시작",
@@ -1163,9 +1168,10 @@ export const translations: Record<Language, Translations> = {
       signal: "マイク信号",
       signalQuiet: "音声を待っています",
       signalActive: "音声を検出しました",
-      description: "安定した単音を出して、検出された音を送信してください。",
-      startListening: "聴き取り開始",
-      stopListening: "聴き取り停止",
+      description:
+        "ボタンを押したまま一つの音を出してください。離すかフォーカスを移すと送信します。Space・Enterキーでも操作できます。",
+      startListening: "押して音を入力",
+      stopListening: "離して回答",
       listening: "聴き取り中",
       ready: "準備完了",
       detectedNote: "検出された音",
@@ -1534,9 +1540,9 @@ export const translations: Record<Language, Translations> = {
       signalQuiet: "Esperando sonido",
       signalActive: "Sonido detectado",
       description:
-        "Canta o toca una nota sostenida y luego envía la nota detectada.",
-      startListening: "Comenzar a escuchar",
-      stopListening: "Detener escucha",
+        "Mantén pulsado el botón y toca una nota. Suelta o mueve el foco para responder. También puedes mantener Espacio o Intro.",
+      startListening: "Mantén para detectar",
+      stopListening: "Suelta para responder",
       listening: "Escuchando",
       ready: "Listo",
       detectedNote: "Nota detectada",
@@ -1914,9 +1920,9 @@ export const translations: Record<Language, Translations> = {
       signalQuiet: "Warte auf Ton",
       signalActive: "Ton erkannt",
       description:
-        "Singen oder spielen Sie einen stabilen Ton und senden Sie dann den erkannten Ton.",
-      startListening: "Aufnahme starten",
-      stopListening: "Aufnahme stoppen",
+        "Halte die Taste gedrückt und spiele einen Ton. Loslassen oder Fokuswechsel sendet die Antwort. Auch mit Leertaste oder Enter.",
+      startListening: "Zum Erkennen halten",
+      stopListening: "Loslassen zum Antworten",
       listening: "Hört zu",
       ready: "Bereit",
       detectedNote: "Erkannter Ton",
@@ -2295,9 +2301,9 @@ export const translations: Record<Language, Translations> = {
       signalQuiet: "En attente de son",
       signalActive: "Son détecté",
       description:
-        "Chantez ou jouez une note stable, puis envoyez la note détectée.",
-      startListening: "Commencer l'écoute",
-      stopListening: "Arrêter l'écoute",
+        "Maintiens le bouton et joue une note. Relâche ou déplace le focus pour répondre. Espace et Entrée fonctionnent aussi.",
+      startListening: "Maintenir pour détecter",
+      stopListening: "Relâcher pour répondre",
       listening: "Écoute en cours",
       ready: "Prêt",
       detectedNote: "Note détectée",

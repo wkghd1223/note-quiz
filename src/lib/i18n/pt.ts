@@ -3,10 +3,19 @@ import type { LearningTranslations } from "./learning";
 import type { Translations } from "./translations";
 
 export const portugueseLearning = {
+  noteDescription:
+    "Identifique as notas na pauta. Escolha a clave, a tonalidade e a extensão para praticar leitura musical sem criar uma conta.",
+  earDescription:
+    "Ouça uma nota e responda com o teclado na tela ou o nome da nota. Escolha a extensão e treine o ouvido sem criar uma conta.",
+  intervalDescription:
+    "Compare duas notas pelo som ou pela pauta. Comece com mais aguda, igual ou mais grave e pratique intervalos sem criar uma conta.",
+  chordDescription:
+    "Reconheça acordes pelo som ou pela pauta. Pratique acordes maiores e menores, inversões e progressões sem criar uma conta.",
   chooseMode: "Tipo de exercício",
   note: "Leitura musical",
   ear: "Percepção de notas",
   interval: "Intervalos",
+  intervalTask: "Nomes dos intervalos",
   chord: "Acordes",
   sessionType: "Tipo de sessão",
   ten: "10 questões · Recomendado",
@@ -66,7 +75,7 @@ export const portugueseLearning = {
   inversionHelp:
     "Você ouvirá a fundamental de referência e depois o acorde. Identifique a inversão pela nota mais grave.",
   directionHelp:
-    "Ouça duas notas em sequência. A segunda é mais aguda, mais grave ou igual?",
+    "A segunda nota é mais aguda, igual ou mais grave que a primeira?",
   intervalAudioHelp:
     "Identifique a distância entre as notas. Na prática auditiva, o trítono tem uma única resposta, independentemente da grafia musical.",
   intervalHelp:
@@ -184,9 +193,10 @@ export const portugueseTranslations = {
     signal: "Sinal do microfone",
     signalQuiet: "Aguardando som",
     signalActive: "Som detectado",
-    description: "Cante ou toque uma nota estável e envie a nota detectada.",
-    startListening: "Ativar microfone",
-    stopListening: "Desativar microfone",
+    description:
+      "Mantenha o botão pressionado e toque uma nota. Solte ou mova o foco para responder. Também funciona com Espaço ou Enter.",
+    startListening: "Segure para detectar",
+    stopListening: "Solte para responder",
     listening: "Captando áudio",
     ready: "Pronto",
     detectedNote: "Nota detectada",

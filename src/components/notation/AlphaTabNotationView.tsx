@@ -2,6 +2,10 @@
 
 import React, { useEffect, useRef } from "react";
 import type { AlphaTabApi } from "@coderline/alphatab";
+import {
+  basicStaffTransform,
+  basicStaffViewport,
+} from "@/lib/notation/basic-staff";
 import type {
   NotationEventColors,
   NotationLayout,
@@ -85,6 +89,11 @@ export default function AlphaTabNotationView({
     let resizeTimer: ReturnType<typeof setTimeout> | undefined;
     let renderTimer: ReturnType<typeof setTimeout> | undefined;
     const element = host.current!;
+    // AlphaTabApi.render takes its renderer width from the host container.
+    // Set this before API construction, so its first engraving already has
+    // the intended physical staff length and needs no post-render refit.
+    if (basicFit)
+      element.style.width = `${basicStaffViewport(width, viewport.current.height).engravingWidth}px`;
     const fail = (error: unknown) => {
       if (destroyed || failed) return;
       failed = true;
@@ -251,33 +260,41 @@ export default function AlphaTabNotationView({
             return;
           }
           const viewportHeight = viewport.current.height;
-          if (basicFit) {
-            // Refit native spacing, not glyphs. Height controls the existing
-            // physical glyph scale; a wider native canvas adds breathing room.
-            // The 24px is this view's left/right native display padding above.
-            const glyphScale = Math.min(1, viewportHeight / totalHeight);
-            const staffWidth = Math.min(width * 0.8, 560);
-            const engravingWidth = Math.round(staffWidth / glyphScale + 24);
-            if (Math.abs(totalWidth - engravingWidth) > 1) {
-              busy = true;
-              armRenderTimeout();
-              try {
-                api.renderer.width = engravingWidth;
-                api.renderer.resizeRender();
-              } catch (error) {
-                fail(error);
-              }
-              return;
-            }
+          const lines = basicFit
+            ? api.boundsLookup?.findMasterBarByIndex(0)?.lineAlignedBounds
+            : undefined;
+          if (basicFit && !lines) {
+            fail(new Error("Native staff bounds unavailable"));
+            return;
           }
-          const scale = Math.min(
-            layout === "horizontal" || basicFit ? 1 : width / totalWidth,
+          const fittedScale = Math.min(
+            layout === "horizontal" ? 1 : width / totalWidth,
             viewportHeight / totalHeight,
           );
-          const dx =
-            layout === "horizontal" ? 0 : (width - totalWidth * scale) / 2;
-          const dy = (viewportHeight - totalHeight * scale) / 2;
+          const { scale, dx, dy } = lines
+            ? basicStaffTransform(
+                lines,
+                basicStaffViewport(width, viewportHeight),
+              )
+            : {
+                scale: fittedScale,
+                dx:
+                  layout === "horizontal"
+                    ? 0
+                    : (width - totalWidth * fittedScale) / 2,
+                dy: (viewportHeight - totalHeight * fittedScale) / 2,
+              };
           element.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
+          if (basicFit) {
+            // Native minimum-width engraving may extend past its canvas width.
+            // Let that ink reach the existing practice frame; that outer frame
+            // owns horizontal clipping and configured vertical clearance.
+            element
+              .querySelectorAll<HTMLElement>(".at-surface")
+              .forEach((surface) => {
+                surface.style.overflow = "visible";
+              });
+          }
           element.style.visibility = "visible";
           // Forced spelling does not force a courtesy glyph in alphaTab 1.9.
           // Preserve legacy explicit #/b when the same alteration is in the key.
@@ -340,7 +357,7 @@ export default function AlphaTabNotationView({
           );
         });
         // AlphaTab attaches its DOM-partial reset handlers on its first frame.
-        // Basic refitting can render synchronously when workers are unavailable.
+        // Basic engraving can render synchronously when workers are unavailable.
         if (basicFit) requestAnimationFrame(render);
         else render();
       })
@@ -366,17 +383,23 @@ export default function AlphaTabNotationView({
       width={width}
       viewBox={responsive ? viewBox : undefined}
       className={className}
-      style={style}
+      style={basicFit ? { ...style, overflow: "visible" } : style}
       data-notation-renderer="alphaTab"
     >
-      <foreignObject x={0} y={top} width={width} height={boxHeight}>
+      <foreignObject
+        x={0}
+        y={top}
+        width={width}
+        height={boxHeight}
+        style={basicFit ? { overflow: "visible" } : undefined}
+      >
         <div
           aria-hidden="true"
           style={{
             position: "relative",
             width,
             height: boxHeight,
-            overflow: "hidden",
+            overflow: basicFit ? "visible" : "hidden",
             display: "flex",
             alignItems: "center",
           }}

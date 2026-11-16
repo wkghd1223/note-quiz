@@ -92,6 +92,44 @@ describe("challenge pitch analysis, synthetic PCM (not physical microphones)", (
     expect(estimatePitch(noise, NaN).hz).toBeNull();
   });
   it.each([44100, 48000, 96000])(
+    "preserves lower voice fundamentals and rejects out-of-range low tones at %sHz",
+    (rate) => {
+      for (const hz of [65.406391, 82.406889, 98, 110]) {
+        for (const amplitudes of [
+          [1],
+          [1, 0.45, 0.25],
+          [0.08, 1],
+          [0.05, 0, 1, 0.2],
+        ]) {
+          const pcm = Float32Array.from(
+            { length: rate > 48000 ? 4096 : 2048 },
+            (_, i) =>
+              amplitudes.reduce(
+                (sum, amplitude, harmonic) =>
+                  sum +
+                  0.1 *
+                    amplitude *
+                    Math.sin((2 * Math.PI * hz * (harmonic + 1) * i) / rate),
+                0,
+              ),
+          );
+          const estimate = estimatePitch(pcm, rate);
+          expect(estimate.hz, `${rate}/${hz}/${amplitudes}`).not.toBeNull();
+          expect(Math.abs(1200 * Math.log2(estimate.hz! / hz))).toBeLessThan(
+            12,
+          );
+        }
+      }
+      for (const hz of [40, 50, 60, 63]) {
+        const pcm = Float32Array.from(
+          { length: rate > 48000 ? 4096 : 2048 },
+          (_, i) => 0.1 * Math.sin((2 * Math.PI * hz * i) / rate),
+        );
+        expect(estimatePitch(pcm, rate).hz, `${rate}/${hz}`).toBeNull();
+      }
+    },
+  );
+  it.each([44100, 48000, 96000])(
     "does not fold high out-of-range tones down into the voice band at %sHz",
     (rate) => {
       for (const hz of [1200, 2000, 2500, 3000]) {
@@ -137,11 +175,10 @@ describe("challenge pitch analysis, synthetic PCM (not physical microphones)", (
     expect(frequencyPitch(261.625565)?.midi).toBe(60);
     expect(frequencyPitch(523.251131)?.midi).toBe(72);
     expect(frequencyPitch(Infinity)).toBeNull();
-    // Baseline detector returns null for this low-amplitude sine (its first
-    // short-lag peak is out of range). Keep legacy behavior unchanged; Stage
-    // uses its separate detector. This is not real-instrument evidence.
+    // Basic and melody input now share pure pitch analysis. Their session
+    // scoring and note acceptance remain separate. Synthetic PCM only.
     const pcm = sine(261.625565);
-    expect(detectPitch(pcm, 48000)).toBeNull();
+    expect(detectPitch(pcm, 48000)).toBe(estimatePitch(pcm, 48000).hz);
     expect(estimatePitch(pcm, 48000).confidence).toBeGreaterThan(0.9);
   });
 });

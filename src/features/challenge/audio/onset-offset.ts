@@ -4,6 +4,7 @@ import { frequencyPitch } from "./pitch";
 interface ActiveSound {
   onset: number;
   lastVoiced: number;
+  energySince: number;
   quietSince: number | null;
   pitchChangeSince: number | null;
   changedMidi: number | null;
@@ -69,6 +70,10 @@ export class NoteEventDetector {
     const sound = this.active;
     if (frame.rms < exit) {
       sound.quietSince ??= frame.audioTimeSec;
+      // A partial hop at the edge of silence can look like a deep volume dip.
+      // Let silence hysteresis handle it instead of inventing a reattack when
+      // a brief dropout returns.
+      sound.dipSince = null;
       // Hysteresis may join a brief dropout to the held note. Keep that
       // unvoiced time in its pitch denominator; otherwise intermittent sound
       // can look like a perfect continuous hold. close() trims release silence.
@@ -84,12 +89,15 @@ export class NoteEventDetector {
       }
       return result;
     }
-    // A return of energy can be the first frame after the full quiet interval.
-    // Check its elapsed silence before clearing it, too; otherwise an 80ms
-    // physical gap may be joined merely because no hop landed after 60ms.
+    // A renewed attack after a continuous note can confirm a shorter quiet
+    // interval than release alone. A hop may straddle both edges of a real
+    // articulation gap. Brief/intermittent energy must retain hysteresis.
     if (
       sound.quietSince !== null &&
-      frame.audioTimeSec - sound.quietSince >= 0.06
+      (frame.audioTimeSec - sound.quietSince >= 0.06 ||
+        (frame.audioTimeSec - sound.quietSince >= 0.05 &&
+          sound.quietSince - sound.energySince >= 0.06 &&
+          frame.rms >= enter))
     ) {
       const event = this.close(sound.quietSince);
       if (event) result.push(event);
@@ -97,6 +105,7 @@ export class NoteEventDetector {
       this.active.samples.push(sample);
       return result;
     }
+    if (sound.quietSince !== null) sound.energySince = frame.audioTimeSec;
     sound.quietSince = null;
     sound.lastVoiced = frame.audioTimeSec;
     // A dip + a renewed attack distinguishes repeated notes from a long hold.
@@ -180,6 +189,7 @@ export class NoteEventDetector {
     return {
       onset: frame.audioTimeSec,
       lastVoiced: frame.audioTimeSec,
+      energySince: frame.audioTimeSec,
       quietSince: null,
       pitchChangeSince: null,
       changedMidi: null,

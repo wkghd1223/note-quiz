@@ -11,7 +11,6 @@ import { melodyCopy } from "../i18n";
 import {
   defaultMelodySettings,
   melodyTimeSignatures,
-  maxMelodyBpm,
   validateMelodySettings,
   type MelodySettings,
 } from "../domain/settings";
@@ -34,7 +33,6 @@ export default function MelodySettingsPanel({
     id = useId();
   const validation = validateMelodySettings(value);
   const valid = validation.valid;
-  const tempoLimit = maxMelodyBpm(value);
   return (
     <fieldset
       disabled={disabled}
@@ -123,9 +121,7 @@ export default function MelodySettingsPanel({
           id={`${id}-tempo-hint`}
           className="text-xs font-normal leading-5 text-slate-500"
         >
-          {c.bpmHint}{" "}
-          {tempoLimit >= 40 &&
-            c.tempoLimit.replace("{max}", String(tempoLimit))}
+          {c.bpmHint}
         </span>
       </div>
       <fieldset>
@@ -208,10 +204,7 @@ export default function MelodySettingsPanel({
       </div>
       {!valid && (
         <p id={`${id}-error`} role="alert" className="text-sm text-red-700">
-          {!validation.valid &&
-          validation.errors.includes("tooFastForMicrophone")
-            ? c.tempoLimit.replace("{max}", String(tempoLimit))
-            : c.invalid}
+          {c.invalid}
         </p>
       )}
       <div className="grid grid-cols-2 gap-2">

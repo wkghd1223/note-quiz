@@ -372,10 +372,13 @@ async function clean(p) {
         const scoreViewport = p.locator("[data-score-viewport]");
         assert.equal(
           await scoreViewport.evaluate((e) => getComputedStyle(e).overflowX),
-          "clip",
+          "auto",
         );
         await scoreViewport.evaluate((e) => (e.scrollLeft = 500));
-        assert.equal(await scoreViewport.evaluate((e) => e.scrollLeft), 0);
+        assert(
+          (await scoreViewport.evaluate((e) => e.scrollLeft)) > 0,
+          "Ready melody permits manual score review",
+        );
         await p.screenshot({ path: `${out}/${size}-melody-settings.png` });
         for (const old of [
           "/challenge",
@@ -413,7 +416,7 @@ async function clean(p) {
       }
     });
   }
-  await test("meters, dotted notes, triplets and microphone tempo limits", async () => {
+  await test("meters, dotted notes, triplets and full tempo range", async () => {
     const evidence = [];
     const { c, p } = await context(browser, { width: 390, height: 844 });
     try {
@@ -432,15 +435,16 @@ async function clean(p) {
           name: "Tempo (BPM)",
           exact: true,
         });
-        await tempo.fill("72");
+        await tempo.fill("181");
         assert.equal(
           await scope
             .getByRole("button", { name: "Apply", exact: true })
             .isEnabled(),
           false,
         );
-        await scope.getByRole("alert").filter({ hasText: "40 BPM" }).waitFor();
-        await tempo.fill("40");
+        await scope.getByRole("alert").waitFor();
+        await tempo.fill("72");
+        assert.equal(await scope.getByRole("alert").count(), 0);
         await scope.getByRole("button", { name: "Apply", exact: true }).click();
         await until(
           () => button(p, "Start practice").isEnabled(),
@@ -453,12 +457,12 @@ async function clean(p) {
         assert.deepEqual(saved.timeSignature, meter.split("/").map(Number));
         assert.equal(saved.dotted, true);
         assert.equal(saved.triplets, true);
-        assert.equal(saved.bpm, 40);
+        assert.equal(saved.bpm, 72);
         const before = await p.evaluate(() => window.__mic.cues.length);
         await button(p, "Start practice").click();
         await phase(p, "countIn");
         const count = meter === "6/8" ? 2 : Number(meter[0]),
-          gap = meter === "6/8" ? 2.25 : 1.5;
+          gap = (60 / 72) * (meter === "6/8" ? 1.5 : 1);
         await until(
           () =>
             p
@@ -746,6 +750,7 @@ async function clean(p) {
     const { c, p } = await context(browser, { width: 390, height: 844 });
     try {
       await open(p);
+      const reviewReady = await reviewScore(p, true);
       const notation = p.locator('[data-score-rail] [role="img"]'),
         original = await notation.getAttribute("aria-label");
       await p.evaluate(() => {
@@ -863,22 +868,37 @@ async function clean(p) {
         "Silence and completed notes clear provisional feedback",
       );
       const answerToasts = await p.evaluate(() => window.__answerToasts);
-      assert.ok(answerToasts.some((t) => t.correct === "true"));
-      assert.ok(answerToasts.some((t) => t.correct === "false"));
-      assert.ok(
-        answerToasts.every((t) => t.outsideScore),
-        "Judgment toast stays outside music viewport",
+      assert.deepEqual(
+        answerToasts,
+        [],
+        "Melody uses note colors without transient answer toasts",
       );
+      assert.equal(await p.locator("[data-answer-toast]").count(), 0);
       const dialog = p.getByRole("dialog");
       await dialog.waitFor();
       assert.equal(await dialog.getAttribute("aria-modal"), "true");
-      const nextBox = await button(p, "New melody").boundingBox();
-      const retryBox = await button(p, "Repeat this melody").boundingBox();
-      assert.equal(nextBox.y, retryBox.y, "Result actions share a mobile row");
+      assert.equal(
+        await dialog
+          .getByRole("button", { name: "New melody", exact: true })
+          .count(),
+        0,
+      );
+      assert.equal(
+        await dialog
+          .getByRole("button", { name: "Repeat this melody", exact: true })
+          .count(),
+        0,
+      );
       await p.screenshot({ path: out + "/voice-result.png" });
       await p.locator("[data-minimize-results]").click();
       await until(() => dialog.isVisible().then((v) => !v), "Minimize results");
       const reopen = p.locator('[data-practice-action="results"]:visible');
+      const retry = p.locator('[data-practice-action="retry"]:visible');
+      assert.equal(
+        (await reopen.boundingBox()).y,
+        (await retry.boundingBox()).y,
+        "Result and retry are outside the dialog in one mobile row",
+      );
       assert.equal(
         await reopen.evaluate((e) => document.activeElement === e),
         true,
@@ -910,7 +930,12 @@ async function clean(p) {
       await dialog.waitFor();
       await p.setViewportSize({ width: 390, height: 844 });
       await dialog.waitFor();
-      await button(p, "Repeat this melody").click();
+      await p.keyboard.press("Escape");
+      await until(
+        () => dialog.isVisible().then((v) => !v),
+        "Close results before retry",
+      );
+      await retry.click();
       await phase(p, "countIn");
       assert.equal(
         await p
@@ -924,8 +949,15 @@ async function clean(p) {
       await button(p, "Pause").click();
       await phase(p, "paused");
       assert.equal(await clean(p), true);
+      const reviewPaused = await reviewScore(p, true);
       await button(p, "Resume from this note").click();
       await phase(p, "countIn");
+      assert.equal(
+        await p
+          .locator("[data-score-viewport]")
+          .evaluate((node) => node.scrollLeft),
+        0,
+      );
       await button(p, "End Game").click();
       await phase(p, "landing");
       assert.equal(await clean(p), true);
@@ -952,7 +984,11 @@ async function clean(p) {
         measuredPitch,
         pitchStates,
         answerToasts,
-        reviewScroll: [reviewMobile, reviewDesktop],
+        reviewScroll: {
+          ready: reviewReady,
+          paused: reviewPaused,
+          result: [reviewMobile, reviewDesktop],
+        },
         resultMinimizeReopenResize: true,
         fourClicks: tones,
         prerollX: [x1, x2],
@@ -1028,7 +1064,7 @@ async function clean(p) {
       await c.close();
     }
   });
-  await test("seven locale melody routes and SEO alternatives", async () => {
+  await test("eight locale melody routes and SEO alternatives", async () => {
     const { c, p } = await context(browser, { width: 390, height: 844 });
     try {
       const titles = {};
@@ -1047,7 +1083,7 @@ async function clean(p) {
           true,
         );
       }
-      assert.equal(new Set(Object.values(titles)).size, 7);
+      assert.equal(new Set(Object.values(titles)).size, 8);
       return titles;
     } finally {
       await c.close();

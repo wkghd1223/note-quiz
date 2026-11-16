@@ -144,7 +144,7 @@ describe("real capture worklet source → PCM YIN → event segmentation → sco
         messages.every(
           (message) =>
             message.pitchAudioTimeSec ===
-            (message.streamSampleIndex - 1024) / rate,
+            (message.streamSampleIndex - (rate > 48000 ? 2048 : 1024)) / rate,
         ),
       ).toBe(true);
       const stage = getStage("w1-s1")!;
@@ -244,6 +244,154 @@ const spectra = [
   { name: "dominant-second", amplitudes: [0.08, 1, 0, 0] },
   { name: "dominant-third", amplitudes: [0.05, 0, 1, 0.2] },
 ];
+
+describe("fast microphone phrases (synthetic PCM, no target-pitch correction)", () => {
+  it.each([44100, 48000, 96000])(
+    "reports lower vocal fundamentals instead of waiting despite RMS at %sHz",
+    (rate) => {
+      for (const midi of [36, 40, 43, 45, 47]) {
+        const { events, frames } = captureFixture(
+          rate,
+          (t) => (t >= 0.2 && t < 1 ? midiHz(midi) : null),
+          1.2,
+          true,
+          () => 0.1,
+          (t, phase) =>
+            t >= 0.2 && t < 1
+              ? 0.1 *
+                (Math.sin(phase) +
+                  0.45 * Math.sin(2 * phase) +
+                  0.25 * Math.sin(3 * phase))
+              : 0,
+        );
+        expect(
+          frames.some((f) => f.isVoiced),
+          `${rate}/${midi}`,
+        ).toBe(true);
+        expect(events).toHaveLength(1);
+        expect(events[0].observedMidi, `${rate}/${midi}`).toBe(midi);
+      }
+    },
+  );
+  it.each([44100, 48000, 96000])(
+    "separates 180 BPM triplets and eighths with legato pitch changes at %sHz",
+    (rate) => {
+      for (const interval of [1 / 9, 1 / 6, 1 / 4]) {
+        const pitches = [60, 62, 64, 65, 64, 62];
+        const start = 0.2,
+          end = start + interval * pitches.length;
+        const { events } = captureFixture(
+          rate,
+          (t) => {
+            const index = Math.floor((t - start) / interval);
+            return t >= start && t < end ? midiHz(pitches[index]) : null;
+          },
+          end + 0.2,
+        );
+        expect(
+          events.map((e) => e.observedMidi),
+          `${rate}/${interval}`,
+        ).toEqual(pitches);
+        for (const [index, event] of events.entries()) {
+          // Analysis-window pitch and hop energy have different centers; this
+          // budget is below the shortest phrase's matching window (50ms).
+          expect(
+            Math.abs(event.onsetAudioSec - (start + index * interval)),
+          ).toBeLessThan(0.035);
+          expect(event.attackConfidence).toBe(index ? 0 : 1);
+        }
+      }
+    },
+  );
+  it.each([44100, 48000, 96000])(
+    "separates fast same-pitch syllables with 75ms silence at %sHz",
+    (rate) => {
+      const start = 0.2,
+        interval = 1 / 6,
+        count = 6;
+      const { events, frames } = captureFixture(
+        rate,
+        (t) => {
+          const relative = t - start,
+            index = Math.floor(relative / interval);
+          return index >= 0 &&
+            index < count &&
+            relative % interval < interval - 0.075
+            ? midiHz(60)
+            : null;
+        },
+        start + count * interval + 0.2,
+      );
+      voiceMeasurements.push({
+        type: "fast-repeat",
+        rate,
+        events: events.map(eventSummary),
+        frames,
+      });
+      expect(events.map((e) => e.observedMidi)).toEqual(Array(count).fill(60));
+      for (const [index, event] of events.entries()) {
+        expect(
+          Math.abs(event.onsetAudioSec - (start + index * interval)),
+        ).toBeLessThan(0.02);
+        expect(event.attackConfidence).toBe(1);
+      }
+    },
+  );
+  it.each([44100, 48000, 96000])(
+    "retains changing pitches through short noisy syllable attacks at %sHz",
+    (rate) => {
+      const pitches = [60, 62, 64, 65, 64, 62];
+      const start = 0.2,
+        interval = 1 / 6,
+        end = start + pitches.length * interval;
+      let seed = 81;
+      const { events } = captureFixture(
+        rate,
+        (t) => {
+          const index = Math.floor((t - start) / interval);
+          return t >= start && t < end ? midiHz(pitches[index]) : null;
+        },
+        end + 0.2,
+        true,
+        () => 0.1,
+        (t, phase) => {
+          seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+          if (t < start || t >= end) return 0;
+          if ((t - start) % interval < 0.025)
+            return (seed / 0xffffffff - 0.5) * 0.08;
+          return 0.1 * (Math.sin(phase) + 0.4 * Math.sin(2 * phase));
+        },
+      );
+      expect(events.map((event) => event.observedMidi)).toEqual(pitches);
+      expect(events[0].onsetAudioSec).toBeCloseTo(start, 1);
+      expect(Math.abs(events.at(-1)!.offsetAudioSec! - end)).toBeLessThan(0.02);
+    },
+  );
+  it.each([44100, 48000, 96000])(
+    "keeps 30ms dropouts inside one held note across hop phases at %sHz",
+    (rate) => {
+      for (const shift of [0, 0.003, 0.006, 0.009]) {
+        const { events, frames } = captureFixture(
+          rate,
+          (t) =>
+            t >= 0.2 && t < 0.9 && !(t >= 0.5 + shift && t < 0.53 + shift)
+              ? midiHz(60)
+              : null,
+          1.1,
+        );
+        voiceMeasurements.push({
+          type: "dropout-phase",
+          rate,
+          shift,
+          events: events.map(eventSummary),
+          frames,
+        });
+        expect(events).toHaveLength(1);
+        expect(events[0].observedMidi).toBe(60);
+      }
+    },
+  );
+});
 
 describe("vocal-like PCM through the actual worklet (not physical voice evidence)", () => {
   it.each([44100, 48000, 96000])(

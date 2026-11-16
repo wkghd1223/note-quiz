@@ -38,7 +38,7 @@ describe("static locale metadata", () => {
         "x-default": "https://note-quiz.com/practice/note",
       });
       expect(metadata.description).toBe(
-        getTranslation(locale).learning.entryDescription,
+        getTranslation(locale).learning.noteDescription,
       );
       expect(metadata.twitter).toMatchObject({
         description: metadata.description,
@@ -88,7 +88,7 @@ describe("static locale metadata", () => {
         const canonical = `https://note-quiz.com${prefix}${path}`;
         const expected = {
           title: `${t.learning[mode]} | Note Quiz`,
-          description: t.learning.entryDescription,
+          description: t.learning[`${mode}Description`],
         };
         const metadata = practiceModeMetadata(mode, locale);
         expect(metadata.title).toEqual({ absolute: expected.title });

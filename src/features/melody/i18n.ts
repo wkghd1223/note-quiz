@@ -111,16 +111,6 @@ const rows = {
     "Desvio em cents em relação à nota mais próxima; 0 indica afinação exata.",
   ],
 
-  tempoLimit: [
-    "For these note lengths, use at most {max} BPM so the microphone can separate notes.",
-    "마이크가 각 음을 구분할 수 있도록 이 리듬은 {max} BPM 이하로 연습하세요.",
-    "マイクが音を区別できるよう、このリズムは{max} BPM以下で練習してください。",
-    "Usa un máximo de {max} BPM para que el micrófono distinga estas notas.",
-    "Übe diese Notenwerte mit höchstens {max} BPM, damit das Mikrofon die Töne trennen kann.",
-    "Utilise au maximum {max} BPM pour que le micro puisse distinguer ces notes.",
-    "为使麦克风能区分各音，请使用不超过{max} BPM的速度练习此节奏。",
-    "Para estas durações, use no máximo {max} BPM para que o microfone consiga distinguir as notas.",
-  ],
   scoreReady: [
     "The score moves automatically during practice.",
     "연습을 시작하면 악보가 자동으로 흐릅니다.",

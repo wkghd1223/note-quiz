@@ -9,8 +9,11 @@ import {
 import { notationRenderer } from "@/lib/notation/score";
 import AlphaTabNotationView from "@/components/notation/AlphaTabNotationView";
 import LegacyStaff from "@/components/notation/legacy/Staff";
-import StableNotationSurface from "@/components/practice/StableNotationSurface";
+import StableNotationSurface, {
+  practiceNotationFrameClassName,
+} from "@/components/practice/StableNotationSurface";
 import PracticeStaffFallback from "@/components/practice/PracticeStaffFallback";
+import type { BasicStaffRange } from "@/lib/notation/basic-staff";
 
 interface StaffProps extends LegacyStaffInput {
   width?: number;
@@ -18,6 +21,7 @@ interface StaffProps extends LegacyStaffInput {
   className?: string;
   responsive?: boolean;
   stable?: boolean;
+  staffRange?: BasicStaffRange;
 }
 
 function Staff(props: StaffProps) {
@@ -31,6 +35,7 @@ function Staff(props: StaffProps) {
     className = "",
     responsive = false,
     stable = false,
+    staffRange,
   } = props;
   const [failed, setFailed] = useState(false);
   const score = useMemo(
@@ -43,16 +48,8 @@ function Staff(props: StaffProps) {
       <StableNotationSurface
         revision={score}
         concealed={!note}
-        className={`h-[112px] sm:h-[184px] ${className}`}
-        placeholder={({ width, height }) => (
-          <PracticeStaffFallback
-            width={width}
-            height={height}
-            clef={clef}
-            keySignature={keySignature}
-            notes={[]}
-          />
-        )}
+        staffRange={staffRange}
+        className={`${practiceNotationFrameClassName} ${className}`}
       >
         {({ width: frameWidth, height: frameHeight, onReady }) =>
           legacy ? (

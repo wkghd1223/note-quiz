@@ -78,29 +78,6 @@ export type MelodySettingsValidation =
   | { valid: true; settings: MelodySettings }
   | { valid: false; errors: string[] };
 
-/** Conservative 500ms shortest-note interval measured with the current
- * microphone worklet/YIN pipeline at 44.1/48/96kHz, including repeated notes.
- * This is a tested fixture bound, not a claim about every acoustic instrument.
- */
-export function maxMelodyBpm(
-  settings: Pick<MelodySettings, "durations" | "triplets" | "timeSignature">,
-): number {
-  let barBeats: number;
-  try {
-    barBeats = beatsPerMeasure(settings);
-  } catch {
-    return 0;
-  }
-  const candidates = settings.durations.filter(
-    (duration) =>
-      [0.25, 0.5, 1, 2, 4].includes(duration) && duration <= barBeats,
-  );
-  if (settings.triplets) candidates.push(1 / 3);
-  return candidates.length
-    ? Math.min(180, Math.floor(120 * Math.min(...candidates) + 1e-9))
-    : 0;
-}
-
 /** Validate untrusted settings before generation or localStorage restoration. */
 export function validateMelodySettings(
   value: unknown,
@@ -188,8 +165,6 @@ export function validateMelodySettings(
     )
   )
     return { valid: false, errors: ["noFittingNotes"] };
-  if (settings.bpm > maxMelodyBpm(settings))
-    return { valid: false, errors: ["tooFastForMicrophone"] };
   return { valid: true, settings };
 }
 

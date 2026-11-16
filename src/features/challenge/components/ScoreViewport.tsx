@@ -58,6 +58,7 @@ export default function ScoreViewport({
   scorePreRoll = null,
   active,
   finished,
+  reviewable = finished,
   reducedMotion,
   result,
   c,
@@ -75,6 +76,8 @@ export default function ScoreViewport({
   scorePreRoll?: ScorePreRoll | null;
   active: boolean;
   finished: boolean;
+  /** Caller permits manual reading while the transport is stopped. */
+  reviewable?: boolean;
   reducedMotion: boolean;
   result: AttemptResult | null;
   c: ChallengeCopy;
@@ -90,7 +93,7 @@ export default function ScoreViewport({
   const [width, setWidth] = useState(320);
   const [render, setRender] = useState<NotationRenderResult | null>(null);
   const [systemReducedMotion, setSystemReducedMotion] = useState(false);
-  const reviewing = finished && !active;
+  const reviewing = reviewable && !active;
   useLayoutEffect(() => {
     // A review offset must never displace the fixed playhead on the next attempt.
     if (!reviewing && viewport.current) viewport.current.scrollLeft = 0;

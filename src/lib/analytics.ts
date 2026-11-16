@@ -1,33 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-declare global {
-  interface Window {
-    gtag: (
-      command: "config" | "event" | "js",
-      targetId: string | Date,
-      config?: Record<string, any>,
-    ) => void;
-  }
-}
-
-function canTrackAnalytics() {
-  return (
-    typeof window !== "undefined" &&
-    process.env.NODE_ENV === "production" &&
-    typeof window.gtag === "function"
-  );
-}
-
-function emitAnalyticsEvent(
-  eventName: string,
-  payload: Record<string, string | number | boolean | null | undefined>,
-) {
-  if (!canTrackAnalytics()) {
-    return;
-  }
-
-  window.gtag("event", eventName, payload);
-}
+import {
+  emitAnalyticsEvent,
+  type AnalyticsPageContext,
+} from "./analytics-runtime";
 
 export const trackGameStart = (settings: {
   clef: string;
@@ -173,31 +147,50 @@ export type LearningEvent =
   | "completed"
   | "review_started"
   | "result_restarted";
+export interface LearningEventDetails {
+  mode: string;
+  difficulty: string;
+  presentation?: string;
+  sessionType?: string;
+  kind?: string;
+  completed?: boolean;
+  total?: number;
+  correct?: number;
+  entryStart?: boolean;
+  hasMistakes?: boolean;
+  elapsedMs?: number;
+}
 export function trackLearningEvent(
   event: LearningEvent,
-  details: {
-    mode: string;
-    difficulty: string;
-    presentation?: string;
-    sessionType?: string;
-    kind?: string;
-    completed?: boolean;
-    total?: number;
-    correct?: number;
-    entryStart?: boolean;
-    hasMistakes?: boolean;
-  },
+  details: LearningEventDetails,
+  origin?: AnalyticsPageContext,
 ) {
-  emitAnalyticsEvent(`practice_${event}`, {
-    training_mode: details.mode,
-    difficulty: details.difficulty,
-    presentation: details.presentation,
-    session_type: details.sessionType,
-    session_kind: details.kind,
-    completed: details.completed,
-    entry_start: details.entryStart,
-    had_mistakes: details.hasMistakes,
-    total_questions: details.total,
-    correct_answers: details.correct,
+  emitAnalyticsEvent(
+    `practice_${event}`,
+    {
+      training_mode: details.mode,
+      difficulty: details.difficulty,
+      presentation: details.presentation,
+      session_type: details.sessionType,
+      session_kind: details.kind,
+      completed: details.completed,
+      entry_start: details.entryStart,
+      had_mistakes: details.hasMistakes,
+      total_questions: details.total,
+      correct_answers: details.correct,
+      ...(details.elapsedMs !== undefined
+        ? { elapsed_time_ms: details.elapsedMs }
+        : {}),
+    },
+    origin,
+  );
+}
+
+export function trackMelodyPreviewStarted() {
+  emitAnalyticsEvent("practice_preview_started", {
+    training_mode: "melody",
+    difficulty: "custom",
+    presentation: "visual",
+    session_type: "exercise",
   });
 }

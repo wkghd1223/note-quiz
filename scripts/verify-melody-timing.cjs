@@ -5,6 +5,7 @@
 // Usage: UI_BASE_URL=http://localhost:3013 TIMING_SECONDS=20 node scripts/verify-melody-timing.cjs
 // TIMING_TRANSPORT=playwright uses an existing PLAYWRIGHT_MODULE installation for a separate Chromium cadence comparison.
 // Optional TIMING_SETTINGS_JSON temporarily supplies settings; exact prior origin storage is restored.
+// TIMING_INPUT_MIDI=40 supplies E2 regardless of score pitch, to check low-voice capture without octave correction.
 const fs = require("node:fs");
 const { execFileSync } = require("node:child_process");
 const cli =
@@ -17,6 +18,15 @@ const seconds = Number(process.env.TIMING_SECONDS || 20);
 if (!Number.isFinite(seconds) || seconds < 5 || seconds > 50)
   throw Error("TIMING_SECONDS must be 5..50");
 const transport = process.env.TIMING_TRANSPORT || "orca";
+const inputMidi =
+  process.env.TIMING_INPUT_MIDI === undefined
+    ? null
+    : Number(process.env.TIMING_INPUT_MIDI);
+if (
+  inputMidi !== null &&
+  (!Number.isInteger(inputMidi) || inputMidi < 36 || inputMidi > 84)
+)
+  throw Error("TIMING_INPUT_MIDI must be 36..84");
 let browser, browserContext, browserPage;
 async function orca(...args) {
   if (transport === "playwright") {
@@ -200,7 +210,7 @@ function readActualView() {
         focus: document.hasFocus(),
       };
     });
-    const installed = await evaluate(() => {
+    const installed = await evaluate((inputMidi) => {
       const Native = window.AudioContext;
       const state = (window.__nativeMelodyTiming = {
         contexts: [],
@@ -241,6 +251,7 @@ function readActualView() {
           ?.getBoundingClientRect();
         if (view && c && line && view.props.active) {
           const { props, host, attempt, bounds } = view;
+          state.events = attempt?.events;
           const meter = props.stage.timeSignature;
           const pulses = meter[0] === 6 && meter[1] === 8 ? 2 : meter[0];
           const pulse = ((meter[1] === 8 ? 1.5 : 1) * 60) / props.stage.bpm;
@@ -262,7 +273,8 @@ function readActualView() {
               const gain = c.createGain();
               gain.gain.value = 0.2;
               osc.frequency.value =
-                440 * 2 ** ((target.targetConcertMidi - 69) / 12);
+                440 *
+                2 ** (((inputMidi ?? target.targetConcertMidi) - 69) / 12);
               osc.connect(gain);
               gain.connect(state.source.sink);
               const start = state.start + target.startAudioSec;
@@ -304,6 +316,8 @@ function readActualView() {
             colors: host.dataset.scoreColors,
             viewport: [innerWidth, innerHeight],
             currentLabel: document.querySelector("dl")?.textContent,
+            pitchLabel: document.querySelector("[data-pitch-feedback]")
+              ?.textContent,
             heads: nodes.map((node, i) => {
               const rect = node.getBoundingClientRect();
               return {
@@ -359,7 +373,7 @@ function readActualView() {
         reduced: matchMedia("(prefers-reduced-motion: reduce)").matches,
         viewport: [innerWidth, innerHeight],
       };
-    });
+    }, inputMidi);
     snapshot = await orca("snapshot", "--page", page, "--interactive");
     const entry = Object.entries(snapshot.refs || {}).find(
       ([, value]) => value.role === "button" && /^Start\s/.test(value.name),
@@ -382,6 +396,10 @@ function readActualView() {
         frames: s.frames,
         commits: s.commits,
         renders: s.renders,
+        events: (s.events || []).map((event) => ({
+          ...event,
+          pitchSamples: undefined,
+        })),
         baseLatency: context?.baseLatency,
         outputLatency: context?.outputLatency,
         sampleRate: context?.sampleRate,
@@ -502,6 +520,13 @@ function readActualView() {
       pixelsPerSecond: [minVelocity, maxVelocity],
       velocityRatio: maxVelocity / minVelocity,
       colorsChanged,
+      inputMidi,
+      measuredInputPitches: [
+        ...new Set((collected.events || []).map((event) => event.observedMidi)),
+      ],
+      observedPitchLabels: [
+        ...new Set(rafFrames.map((frame) => frame.pitchLabel).filter(Boolean)),
+      ],
       hiddenGlyphFrameCount: frames.filter((f) => f.hiddenGlyphs).length,
       maxLocalAnchorErrorPx: maxAnchorError,
       maxAnchorShiftAtColorChangePx: maxRerenderAnchorShift,
@@ -527,7 +552,8 @@ function readActualView() {
       hiddenSpansMs.length === 0 &&
       crossings.every(
         (c) => Math.abs(c.interpolatedErrorMs) <= temporalErrorBudgetMs,
-      );
+      ) &&
+      (inputMidi === null || summary.measuredInputPitches.includes(inputMidi));
     // Healthy cadence alone must never pass a visually wrong crossing.
     if (!summary.diagnosticPassed) process.exitCode = 1;
     fs.writeFileSync(

@@ -2,13 +2,15 @@
 class ChallengeCapture extends AudioWorkletProcessor {
   constructor() {
     super();
-    this.ring = new Float32Array(2048);
+    // Retain at least ~43ms at high sample rates for low vocal fundamentals.
+    const windowSize = sampleRate > 48000 ? 4096 : 2048;
+    this.ring = new Float32Array(windowSize);
     this.position = 0;
     this.count = 0;
     this.hop = 0;
     this.energy = 0;
     this.droppedHops = 0;
-    this.pool = Array.from({ length: 8 }, () => new Float32Array(2048));
+    this.pool = Array.from({ length: 8 }, () => new Float32Array(windowSize));
     this.running = true;
     this.port.onmessage = ({ data }) => {
       if (data.type === "release")
@@ -40,7 +42,7 @@ class ChallengeCapture extends AudioWorkletProcessor {
               buffer: buffer.buffer,
               streamSampleIndex: frame,
               // Energy timestamps use the 512-sample hop center; pitch uses
-              // the longer 2048-sample window. Neither includes device latency.
+              // the longer analysis window. Neither includes device latency.
               audioTimeSec: (frame - 256) / sampleRate,
               pitchAudioTimeSec: (frame - this.ring.length / 2) / sampleRate,
               sampleRate,

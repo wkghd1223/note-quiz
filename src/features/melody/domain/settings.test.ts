@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   defaultMelodySettings,
   getMelodyPitches,
-  maxMelodyBpm,
   sanitizeMelodySettings,
   validateMelodySettings,
 } from "./settings";
@@ -158,7 +157,7 @@ describe("melody settings validation and restoration", () => {
       expect(result).toEqual({ valid: false, errors: ["noFittingNotes"] });
     },
   );
-  it("allows BPM limits for fitting notes and independent triplet groups at their tested cap", () => {
+  it("allows BPM limits for fitting notes and independent triplet groups throughout the supported range", () => {
     for (const bpm of [40, 180])
       expect(
         validateMelodySettings({
@@ -179,35 +178,22 @@ describe("melody settings validation and restoration", () => {
       }).valid,
     ).toBe(true);
   });
-  it("caps quarter/eighth/triplet rhythm rates at their measured capture floor", () => {
-    for (const [durations, triplets, cap] of [
-      [[1, 2], false, 120],
-      [[0.5], false, 60],
-      [[1], true, 40],
-      [[0.25], false, 30],
-    ] as [number[], boolean, number][]) {
-      const settings = { ...defaultMelodySettings, durations, triplets };
-      expect(maxMelodyBpm(settings)).toBe(cap);
-      const result = validateMelodySettings({
-        ...settings,
-        bpm: Math.max(40, cap + 1),
-      });
-      expect(result).toEqual({
-        valid: false,
-        errors: ["tooFastForMicrophone"],
-      });
-      if (cap >= 40)
-        expect(validateMelodySettings({ ...settings, bpm: cap }).valid).toBe(
-          true,
-        );
-    }
-    expect(
-      validateMelodySettings({
-        ...defaultMelodySettings,
-        durations: [0.5],
-        bpm: 72,
-      }),
-    ).toEqual({ valid: false, errors: ["tooFastForMicrophone"] });
+  it("allows every supported rhythm throughout the 40–180 BPM range", () => {
+    for (const durations of [[1, 2], [0.5], [0.25]])
+      for (const triplets of [false, true])
+        for (const bpm of [40, 60, 72, 120, 180]) {
+          const settings = {
+            ...defaultMelodySettings,
+            durations,
+            triplets,
+            bpm,
+          };
+          expect(validateMelodySettings(settings)).toEqual({
+            valid: true,
+            settings,
+          });
+          expect(sanitizeMelodySettings(settings)).toEqual(settings);
+        }
   });
   it.each([
     [3, 4],

@@ -19,6 +19,7 @@ import {
   stopAllNotes,
 } from "@/lib/music/audio";
 import { noteToString } from "@/lib/music/utils";
+import { trebleStaffRange } from "@/lib/notation/basic-staff";
 import { useShallow } from "zustand/react/shallow";
 import PracticeFeedback from "./PracticeFeedback";
 import MusicNotation from "./MusicNotation";
@@ -54,7 +55,6 @@ export default function EarPracticeMode({
   onSettingsClose,
   runOptions,
   onComplete,
-  onChangePractice,
 }: EarPracticeModeProps) {
   const { t } = useTranslation();
   const store = useEarTrainingStore(
@@ -200,17 +200,10 @@ export default function EarPracticeMode({
       if (isCurrent()) setAudioError(true);
     }
   };
-  const changePractice = () => {
-    audioAttempt.current++;
-    stopAllNotes();
-    store.resetSession();
-    if (onChangePractice) onChangePractice();
-    else onSettingsOpen();
-  };
   const lastAnswer = answers[answers.length - 1];
   const isFinished = sessionState === "finished";
   const feedback =
-    sessionState !== "idle" && !isFinished && isAdvancingQuestion && lastAnswer
+    sessionState === "playing" && isAdvancingQuestion && lastAnswer
       ? lastAnswer
       : null;
   const notationNotes = useMemo(
@@ -225,6 +218,11 @@ export default function EarPracticeMode({
   const mistakes =
     result?.answers.filter((entry) => !entry.isCorrect && entry.question) ?? [];
   const activeSettings = sessionState === "idle" ? settings : sessionSettings;
+  // Reserve the configured pitch pool even before an audio answer is revealed.
+  const notationRange = useMemo(
+    () => trebleStaffRange(activeSettings.octaveRange),
+    [activeSettings.octaveRange],
+  );
   const summary = [
     settings.questionLimit
       ? t.learning.ten
@@ -242,14 +240,12 @@ export default function EarPracticeMode({
         focusOnMount={false}
         result={result}
         hasMistakes={mistakes.length > 0}
-        onRestart={() => void start()}
         onReview={() =>
           void start({
             kind: "review",
             questions: mistakes.map((entry) => entry.question!),
           })
         }
-        onChange={changePractice}
       >
         <p className="text-sm text-slate-600">
           {t.earTraining.result.replayCount}: {result.replayCount}
@@ -276,9 +272,11 @@ export default function EarPracticeMode({
                   <button
                     type="button"
                     onClick={() => void replay(entry.correctNote)}
-                    className="mt-2 min-h-11 rounded-lg border border-slate-200 px-3 text-sm font-bold"
+                    aria-label={t.earTraining.replay}
+                    title={t.earTraining.replay}
+                    className="mt-2 inline-flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200"
                   >
-                    {t.earTraining.replay}
+                    <FaVolumeUp aria-hidden="true" />
                   </button>
                 </li>
               ))}
@@ -295,12 +293,15 @@ export default function EarPracticeMode({
       }
       className="relative rounded-lg border border-slate-200 bg-slate-50 p-3"
     >
-      <div className="mb-2 flex h-11 items-center justify-between gap-3">
-        <div className="relative h-11 min-w-0 flex-1" data-practice-prompt-band>
+      <div className="mb-2 flex min-h-24 items-start justify-between gap-3 sm:min-h-20">
+        <div
+          className="grid min-h-24 min-w-0 flex-1 items-center sm:min-h-20"
+          data-practice-prompt-band
+        >
           <h2
             data-practice-prompt
             tabIndex={-1}
-            className={`max-h-10 min-w-0 overflow-auto text-sm font-bold leading-5 text-slate-600 ${feedback ? "opacity-0" : ""}`}
+            className={`col-start-1 row-start-1 max-h-10 min-w-0 overflow-auto text-sm font-bold leading-5 text-slate-600 ${feedback ? "opacity-0" : ""}`}
           >
             {t.earTraining.listenPrompt}
           </h2>
@@ -313,6 +314,19 @@ export default function EarPracticeMode({
                 : undefined
             }
             correct={feedback?.isCorrect}
+            details={
+              feedback ? (
+                <>
+                  <p>
+                    {t.messages.yourAnswer}: {noteToString(feedback.note)}
+                  </p>
+                  <p>
+                    {t.messages.correctAnswer}:{" "}
+                    {noteToString(feedback.correctNote)}
+                  </p>
+                </>
+              ) : undefined
+            }
             announcementKey={answers.length}
           />
         </div>
@@ -322,10 +336,11 @@ export default function EarPracticeMode({
             currentQuestion && void replay(currentQuestion.targetNote, true)
           }
           disabled={sessionState !== "playing" || !currentQuestion}
-          className="inline-flex h-11 max-w-[50%] shrink-0 items-center justify-center gap-2 overflow-auto rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold leading-5 text-[#5b21b6] hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7c3aed] focus-visible:ring-offset-2 disabled:opacity-50"
+          aria-label={t.earTraining.replay}
+          title={t.earTraining.replay}
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-[#5b21b6] hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7c3aed] focus-visible:ring-offset-2 disabled:opacity-50"
         >
           <FaVolumeUp aria-hidden="true" className="shrink-0" />
-          {t.earTraining.replay}
         </button>
         <p className="shrink-0 text-sm font-bold tabular-nums text-slate-600">
           {answers.length}
@@ -333,29 +348,11 @@ export default function EarPracticeMode({
         </p>
       </div>
       <MusicNotation
-        compact
         notes={notationNotes}
+        staffRange={notationRange}
         label={t.messages.correctAnswer}
         revealed={!!feedback || (isFinished && !!lastAnswer)}
       />
-      <div
-        data-practice-explanation
-        tabIndex={
-          sessionState === "idle" || feedback || isFinished ? 0 : undefined
-        }
-        className="mt-1 h-8 overflow-auto text-xs leading-4 text-slate-600 [overflow-wrap:anywhere]"
-      >
-        {sessionState === "idle" ? (
-          <p>{t.earTraining.description}</p>
-        ) : (
-          (feedback || (isFinished && lastAnswer)) && (
-            <p>
-              {t.messages.correctAnswer}: {noteToString(lastAnswer.correctNote)}{" "}
-              / {t.messages.yourAnswer}: {noteToString(lastAnswer.note)}
-            </p>
-          )
-        )}
-      </div>
     </div>
   );
   const input =
@@ -415,6 +412,7 @@ export default function EarPracticeMode({
   );
   return (
     <PracticeShell
+      description={t.earTraining.description}
       modeSwitcher={<ModeSwitcher mode={mode} onChange={onModeChange} />}
       title={t.earTraining.title}
       kicker={t.earTraining.subtitle}
@@ -457,6 +455,8 @@ export default function EarPracticeMode({
       settingsSummary={summary}
       isIdle={sessionState === "idle"}
       isFinished={isFinished}
+      onRestart={() => void start()}
+      restartDisabled={starting}
       result={resultContent}
       resultKey={result?.sessionId ?? null}
       settingsOpen={settingsOpen}

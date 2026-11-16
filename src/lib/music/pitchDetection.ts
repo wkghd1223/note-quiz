@@ -1,5 +1,9 @@
+import { estimatePitch } from "./estimatePitch";
+
 const MIN_DETECTABLE_FREQUENCY = 65;
-const MAX_DETECTABLE_FREQUENCY = 1047;
+// C6 is the top supported note. Include its upper half-semitone so a small
+// estimation error does not reject C6 before nearest-note conversion.
+const MAX_DETECTABLE_FREQUENCY = 1046.502261 * 2 ** (50 / 1200);
 const MIN_SIGNAL_RMS = 0.015;
 
 const CHROMATIC_NOTES = [
@@ -19,59 +23,15 @@ const CHROMATIC_NOTES = [
 
 export function detectPitch(
   buffer: Float32Array,
-  sampleRate: number
+  sampleRate: number,
 ): number | null {
-  let rms = 0;
-
-  for (let i = 0; i < buffer.length; i += 1) {
-    rms += buffer[i] * buffer[i];
-  }
-
-  rms = Math.sqrt(rms / buffer.length);
-
-  if (rms < MIN_SIGNAL_RMS) {
-    return null;
-  }
-
-  let bestOffset = -1;
-  let bestCorrelation = 0;
-  let foundGoodCorrelation = false;
-
-  const maxSamples = Math.floor(buffer.length / 2);
-
-  for (let offset = 8; offset < maxSamples; offset += 1) {
-    let correlation = 0;
-
-    for (let i = 0; i < maxSamples; i += 1) {
-      correlation += Math.abs(buffer[i] - buffer[i + offset]);
-    }
-
-    correlation = 1 - correlation / maxSamples;
-
-    if (correlation > 0.9 && correlation > bestCorrelation) {
-      foundGoodCorrelation = true;
-      bestCorrelation = correlation;
-      bestOffset = offset;
-    } else if (foundGoodCorrelation) {
-      break;
-    }
-  }
-
-  if (bestOffset === -1) {
-    return null;
-  }
-
-  const frequency = sampleRate / bestOffset;
-
-  if (
-    Number.isNaN(frequency) ||
-    frequency < MIN_DETECTABLE_FREQUENCY ||
-    frequency > MAX_DETECTABLE_FREQUENCY
-  ) {
-    return null;
-  }
-
-  return frequency;
+  const { hz, rms } = estimatePitch(buffer, sampleRate);
+  return hz !== null &&
+    rms >= MIN_SIGNAL_RMS &&
+    hz >= MIN_DETECTABLE_FREQUENCY &&
+    hz <= MAX_DETECTABLE_FREQUENCY
+    ? hz
+    : null;
 }
 
 export function frequencyToNote(frequency: number): Note | null {

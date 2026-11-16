@@ -38,9 +38,7 @@ describe("meter-aware generated rhythms", () => {
               };
               const valid = validateMelodySettings(settings);
               if (!valid.valid) {
-                if (durations.includes(0.25))
-                  expect(valid.errors).toEqual(["tooFastForMicrophone"]);
-                else if (durations.every((duration) => duration === 4)) {
+                if (durations.every((duration) => duration === 4)) {
                   expect(n / d).toBeLessThan(1);
                   expect(triplets).toBe(false);
                   expect(valid.errors).toEqual(["noFittingNotes"]);

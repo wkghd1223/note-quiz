@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import LearningResult from "./LearningResult";
 import NoteSessionResult from "./NoteSessionResult";
+import { getTranslation } from "@/lib/i18n/translations";
 
 const { effects, heading } = vi.hoisted(() => ({
   effects: [] as { run: () => void; dependencies?: readonly unknown[] }[],
@@ -40,9 +41,7 @@ it.each([false, true])(
       <LearningResult
         result={result}
         hasMistakes={false}
-        onRestart={noop}
         onReview={noop}
-        onChange={noop}
         preserveScroll={preserveScroll}
       />,
     );
@@ -58,13 +57,7 @@ it.each([false, true])(
 );
 it("keeps the legacy default scroll behavior for callers without the option", () => {
   renderToStaticMarkup(
-    <LearningResult
-      result={result}
-      hasMistakes={false}
-      onRestart={noop}
-      onReview={noop}
-      onChange={noop}
-    />,
+    <LearningResult result={result} hasMistakes={false} onReview={noop} />,
   );
   effects[0].run();
   expect(heading.scrollIntoView).toHaveBeenCalledWith({
@@ -78,9 +71,7 @@ it("does not take focus from an open dialog", () => {
     <LearningResult
       result={result}
       hasMistakes={false}
-      onRestart={noop}
       onReview={noop}
-      onChange={noop}
       preserveScroll
     />,
   );
@@ -114,9 +105,7 @@ it("lets the result surface own focus when focusOnMount is false", () => {
     <LearningResult
       result={result}
       hasMistakes={false}
-      onRestart={noop}
       onReview={noop}
-      onChange={noop}
       preserveScroll
       focusOnMount={false}
     />,
@@ -125,3 +114,24 @@ it("lets the result surface own focus when focusOnMount is false", () => {
   expect(heading.focus).not.toHaveBeenCalled();
   expect(heading.scrollIntoView).not.toHaveBeenCalled();
 });
+
+it.each([false, true])(
+  "keeps review and detailed feedback without result navigation, mistakes=%s",
+  (hasMistakes) => {
+    const t = getTranslation("en");
+    const markup = renderToStaticMarkup(
+      <LearningResult result={result} hasMistakes={hasMistakes} onReview={noop}>
+        <p>Detailed feedback</p>
+      </LearningResult>,
+    );
+    const buttons = [
+      ...markup.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g),
+    ];
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0][2]).toBe(t.learning.review);
+    expect(/\sdisabled(?:=|\s|$)/.test(buttons[0][1])).toBe(!hasMistakes);
+    expect(markup).toContain("Detailed feedback");
+    expect(markup).not.toContain(t.learning.restart);
+    expect(markup).not.toContain(t.learning.changePractice);
+  },
+);

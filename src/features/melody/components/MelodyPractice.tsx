@@ -2,7 +2,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FaListOl, FaMicrophone, FaMusic } from "react-icons/fa";
 import PracticeController from "@/components/practice/PracticeController";
-import PracticeAnswerToast from "@/components/practice/PracticeAnswerToast";
 import PracticeMetrics from "@/components/practice/PracticeMetrics";
 import PracticeResultSurface, {
   usePracticeResultSurface,
@@ -25,12 +24,10 @@ import {
   getScoringProfile,
 } from "@/features/challenge/domain/instrument-profile";
 import { useLiveResult } from "../hooks/useLiveResult";
+import { useMelodyAnalytics } from "../hooks/useMelodyAnalytics";
 import { challengeCopy } from "@/features/challenge/i18n";
 import ScoreViewport from "@/features/challenge/components/ScoreViewport";
-import {
-  primaryButton,
-  secondaryButton,
-} from "@/features/challenge/components/ChallengeShell";
+import { secondaryButton } from "@/features/challenge/components/ChallengeShell";
 import { generateMelody } from "../domain/generator";
 import {
   defaultMelodySettings,
@@ -65,6 +62,7 @@ export default function MelodyPractice() {
   );
   const session = useChallengeSession(exercise, settings),
     s = session.state;
+  useMelodyAnalytics(hydrated, exercise, session);
   const resultButton = useRef<HTMLButtonElement>(null);
   const results = usePracticeResultSurface(
     s.phase === "result",
@@ -141,43 +139,6 @@ export default function MelodyPractice() {
     session.elapsed,
     session.heldDuration,
   );
-  // scoreAttempt.notes contains pitched targets only, in playback order.
-  const finalNote = liveResult?.notes.at(-1);
-  const finalKey = finalNote
-    ? `${s.attemptToken}:${finalNote.stageEventId}:${finalNote.status}`
-    : null;
-  const lastAnnounced = useRef<string | null>(null);
-  const [answerNotice, setAnswerNotice] = useState<{
-    key: string;
-    correct: boolean;
-    at: number;
-  } | null>(null);
-  useEffect(() => {
-    if (s.phase !== "playing" || session.previewing) {
-      lastAnnounced.current = finalKey;
-      setAnswerNotice(null);
-      return;
-    }
-    if (finalKey && finalKey !== lastAnnounced.current) {
-      lastAnnounced.current = finalKey;
-      setAnswerNotice({
-        key: finalKey,
-        correct: finalNote?.status === "passed",
-        at: session.elapsed,
-      });
-    }
-  }, [
-    finalKey,
-    finalNote?.status,
-    s.phase,
-    session.previewing,
-    session.elapsed,
-  ]);
-  const showAnswerNotice =
-    s.phase === "playing" &&
-    !!answerNotice &&
-    session.elapsed >= answerNotice.at &&
-    session.elapsed - answerNotice.at < 0.85;
   useEffect(() => {
     try {
       const restored = sanitizeMelodySettings(
@@ -349,7 +310,14 @@ export default function MelodyPractice() {
                       id: "results",
                       label: t.practiceUi.viewResults,
                       onClick: () => results.setOpen(true),
+                      tone: "primary",
                       buttonRef: resultButton,
+                    },
+                    {
+                      id: "retry",
+                      label: m.retry,
+                      onClick: begin,
+                      disabled: !hydrated || !notationReady || session.busy,
                     },
                   ],
                 }}
@@ -423,34 +391,19 @@ export default function MelodyPractice() {
                 timeSpacing
                 provisionalFeedback={pitchFeedback.feedback}
                 footerFeedback={
-                  <>
-                    {(s.phase === "countIn" || s.phase === "paused") && (
-                      <p
-                        role="status"
-                        className="absolute inset-0 flex items-center justify-center px-3 text-sm font-semibold text-violet-900"
-                      >
-                        {s.phase === "countIn"
-                          ? `${c.countIn} ${session.count ?? "…"}`
-                          : c.paused}
-                      </p>
-                    )}
-                    <PracticeAnswerToast
-                      message={
-                        showAnswerNotice
-                          ? answerNotice!.correct
-                            ? t.messages.correct
-                            : t.messages.incorrect
-                          : undefined
-                      }
-                      correct={answerNotice?.correct}
-                      announcementKey={answerNotice?.key ?? "none"}
-                    />
-                  </>
+                  (s.phase === "countIn" || s.phase === "paused") && (
+                    <p
+                      role="status"
+                      className="absolute inset-0 flex items-center justify-center px-3 text-sm font-semibold text-violet-900"
+                    >
+                      {s.phase === "countIn"
+                        ? `${c.countIn} ${session.count ?? "…"}`
+                        : c.paused}
+                    </p>
+                  )
                 }
                 footerFeedbackVisible={
-                  showAnswerNotice ||
-                  s.phase === "countIn" ||
-                  s.phase === "paused"
+                  s.phase === "countIn" || s.phase === "paused"
                 }
                 key={`${exercise.id}-${revision}`}
                 stage={exercise}
@@ -461,16 +414,17 @@ export default function MelodyPractice() {
                 active={
                   session.previewing ||
                   (active &&
+                    s.phase !== "paused" &&
                     (s.phase !== "countIn" || session.scorePreRoll !== null))
                 }
                 finished={s.phase === "result"}
+                reviewable={
+                  !session.previewing &&
+                  ["landing", "preview", "paused", "result"].includes(s.phase)
+                }
                 reducedMotion={false}
                 result={session.previewing ? null : (s.result ?? liveResult)}
-                c={{
-                  ...c,
-                  scrollReview:
-                    s.phase === "result" ? c.scrollReview : m.scoreReady,
-                }}
+                c={c}
                 onReady={onReady}
                 onError={onError}
               />
@@ -566,18 +520,10 @@ export default function MelodyPractice() {
                       </div>
                     ))}
                   </dl>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button onClick={next} className={primaryButton}>
-                      {m.next}
-                    </button>
-                    <button onClick={begin} className={secondaryButton}>
-                      {m.retry}
-                    </button>
-                  </div>
                 </section>
               </PracticeResultSurface>
             )}
-            {!active && s.phase !== "result" && (
+            {!active && (
               <button
                 type="button"
                 onClick={next}

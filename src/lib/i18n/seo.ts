@@ -66,7 +66,9 @@ export function localeMetadata(
             title: mode
               ? `${t.learning[mode]} | Note Quiz`
               : `${t.learning.note} · ${t.learning.ear} | Note Quiz`,
-            description: t.learning.entryDescription,
+            description: mode
+              ? t.learning[`${mode}Description`]
+              : t.learning.entryDescription,
           }
         : {
             title: `${challenge.title} | Note Quiz`,
@@ -120,7 +122,7 @@ export function practiceModeMetadata(
   const path = `/practice/${mode}`;
   const copy = {
     title: `${t.learning[mode]} | Note Quiz`,
-    description: t.learning.entryDescription,
+    description: t.learning[`${mode}Description`],
   };
   return locale
     ? localeMetadata(locale, path, copy)

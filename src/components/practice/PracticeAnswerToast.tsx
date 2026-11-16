@@ -1,34 +1,25 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { FaCheck, FaTimes } from "react-icons/fa";
 import styles from "./PracticeAnswerToast.module.css";
 
 export interface PracticeAnswerToastProps {
   message?: string;
   correct?: boolean;
+  details?: React.ReactNode;
   announcementKey: string | number;
 }
 
-/** Presentation only. The caller owns the judgment and its visible lifetime. */
+/** Presentation only. Each mode owns the answer details and their visible lifetime. */
 export default function PracticeAnswerToast({
   message,
   correct,
+  details,
   announcementKey,
 }: PracticeAnswerToastProps) {
-  const [content, setContent] = useState({ message, correct, announcementKey });
-  // Retain the last text only for the CSS exit transition. No answer timer,
-  // focus change or scoring event is introduced by this presentation component.
-  if (
-    message &&
-    (content.message !== message ||
-      content.correct !== correct ||
-      content.announcementKey !== announcementKey)
-  ) {
-    setContent({ message, correct, announcementKey });
-  }
   const visible = !!message;
-  const Icon = content.correct ? FaCheck : FaTimes;
+  const Icon = correct ? FaCheck : FaTimes;
   return (
     <div
       role="status"
@@ -39,15 +30,26 @@ export default function PracticeAnswerToast({
       className={styles.anchor}
     >
       <div
-        key={content.announcementKey}
+        key={announcementKey}
         aria-hidden={!visible}
         data-answer-toast
         data-visible={visible}
-        data-correct={!!content.correct}
+        data-correct={!!correct}
         className={styles.toast}
       >
-        <Icon aria-hidden="true" className={styles.icon} />
-        <span className={styles.message}>{content.message}</span>
+        {visible && (
+          <>
+            <div className={styles.heading}>
+              <Icon aria-hidden="true" className={styles.icon} />
+              <span className={styles.message}>{message}</span>
+            </div>
+            {details && (
+              <div data-answer-toast-details className={styles.details}>
+                {details}
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

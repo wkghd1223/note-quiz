@@ -21,9 +21,7 @@ interface NoteSessionResultProps {
   result: GameResult;
   sessionPoints: number;
   submissionStatus: SessionSubmissionUiStatus;
-  onRestart?: () => void;
   onReview?: () => void;
-  onChange?: () => void;
   children?: React.ReactNode;
   preserveScroll?: boolean;
   focusOnMount?: boolean;
@@ -32,9 +30,7 @@ export default function NoteSessionResult({
   result,
   sessionPoints,
   submissionStatus,
-  onRestart = () => {},
   onReview = () => {},
-  onChange = () => {},
   children,
   preserveScroll = false,
   focusOnMount = true,
@@ -45,9 +41,7 @@ export default function NoteSessionResult({
       preserveScroll={preserveScroll}
       focusOnMount={focusOnMount}
       result={result}
-      onRestart={onRestart}
       onReview={onReview}
-      onChange={onChange}
       hasMistakes={result.answers.some(
         (answer) => !answer.isCorrect && answer.question,
       )}
