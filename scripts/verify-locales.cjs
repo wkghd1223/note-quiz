@@ -5,7 +5,19 @@ const fs = require("node:fs");
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
 const baseURL = process.env.UI_BASE_URL || "http://localhost:3013";
 const output = process.env.UI_ARTIFACT_DIR || "/tmp/note-quiz-locales";
-const locales = ["en", "ko", "ja", "es", "de", "fr", "zh"];
+const locales = [
+  "en",
+  "ko",
+  "ja",
+  "es",
+  "de",
+  "fr",
+  "zh",
+  "pt",
+  "ru",
+  "ka",
+  "eo",
+];
 const siteURL = "https://note-quiz.com";
 const fixture = {
   viewerCountry: { countryCode: "KR", countryName: "South Korea", flag: "🇰🇷" },
@@ -76,7 +88,7 @@ const fixture = {
         assert.equal(response.status(), 200, url);
         assert.equal(
           await page.locator("html").getAttribute("lang"),
-          locale === "zh" ? "zh-Hans" : locale,
+          locale === "zh" ? "zh-Hans" : locale === "pt" ? "pt-BR" : locale,
           `${url} SSR html language`,
         );
         assert.equal(
@@ -85,13 +97,13 @@ const fixture = {
         );
         assert.equal(
           await page.locator('link[rel="alternate"][hreflang]').count(),
-          8,
+          locales.length + 1,
         );
         for (const alternate of locales)
           assert.equal(
             await page
               .locator(
-                `link[rel="alternate"][hreflang="${alternate === "zh" ? "zh-Hans" : alternate}"]`,
+                `link[rel="alternate"][hreflang="${alternate === "zh" ? "zh-Hans" : alternate === "pt" ? "pt-BR" : alternate}"]`,
               )
               .getAttribute("href"),
             `${siteURL}/${alternate}${path}`,
@@ -191,11 +203,13 @@ const fixture = {
     );
     const query = "?share=1&mode=note&length=ten&clef=bass&input=piano&sound=0";
     await active.goto(`${baseURL}/zh/practice${query}#history`);
-    const selector = active.locator("header select").first();
+    const selector = active.locator(
+      ".language-selector button[aria-haspopup=dialog]",
+    );
     await selector.waitFor();
     await active.locator("[data-practice-mode]").waitFor();
     assert.equal(
-      await selector.inputValue(),
+      await selector.getAttribute("data-value"),
       "zh",
       "URL overrides persisted German",
     );
@@ -211,10 +225,13 @@ const fixture = {
       ),
     );
     await active.screenshot({ path: `${output}/zh-practice-390.png` });
-    await selector.selectOption("ko");
+    await selector.click();
+    await active
+      .getByRole("menuitemradio", { name: "한국어", exact: true })
+      .click();
     await active.waitForURL(`${baseURL}/ko/practice${query}#history`);
     await active.waitForFunction(() => document.documentElement.lang === "ko");
-    assert.equal(await selector.inputValue(), "ko");
+    assert.equal(await selector.getAttribute("data-value"), "ko");
     assert.equal(
       await active.evaluate(
         () =>
@@ -234,7 +251,10 @@ const fixture = {
     }
     await active.goto(`${baseURL}/practice${query}`);
     await selector.waitFor();
-    await selector.selectOption("zh");
+    await selector.click();
+    await active
+      .getByRole("menuitemradio", { name: "简体中文", exact: true })
+      .click();
     await active.waitForFunction(
       () => document.documentElement.lang === "zh-Hans",
     );
@@ -243,7 +263,7 @@ const fixture = {
       `${baseURL}/practice${query}`,
       "Unprefixed selector does not navigate",
     );
-    assert.equal(await selector.inputValue(), "zh");
+    assert.equal(await selector.getAttribute("data-value"), "zh");
     assert.equal(
       await active.evaluate(
         () =>

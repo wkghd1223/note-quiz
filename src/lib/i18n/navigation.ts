@@ -1,3 +1,6 @@
+import { georgianNavigation } from "./ka";
+import { esperantoNavigation } from "./eo";
+
 export interface NavigationTranslations {
   label: string;
   home: string;
@@ -6,6 +9,8 @@ export interface NavigationTranslations {
 }
 export const navigationTranslations: Record<Language, NavigationTranslations> =
   {
+    ka: georgianNavigation,
+    eo: esperantoNavigation,
     en: {
       label: "Main navigation",
       home: "Home",
@@ -47,6 +52,12 @@ export const navigationTranslations: Record<Language, NavigationTranslations> =
       home: "Início",
       practice: "Prática básica",
       melody: "Prática de melodias",
+    },
+    ru: {
+      label: "Главная навигация",
+      home: "Главная",
+      practice: "Базовая практика",
+      melody: "Практика мелодий",
     },
     zh: {
       label: "主导航",

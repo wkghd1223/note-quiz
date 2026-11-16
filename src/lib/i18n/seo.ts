@@ -74,7 +74,7 @@ export function localeMetadata(
             title: `${challenge.title} | Note Quiz`,
             description: challenge.intro,
           });
-  const ogLocales: Record<Language, string> = {
+  const ogLocales: Record<Language, string | null> = {
     en: "en_US",
     ko: "ko_KR",
     ja: "ja_JP",
@@ -83,6 +83,10 @@ export function localeMetadata(
     fr: "fr_FR",
     zh: "zh_CN",
     pt: "pt_BR",
+    ru: "ru_RU",
+    ka: "ka_GE",
+    // og:locale is optional and requires a territory; Esperanto has no target region.
+    eo: null,
   };
   return {
     title: { absolute: page.title },
@@ -92,7 +96,7 @@ export function localeMetadata(
       title: page.title,
       description: page.description,
       url: absolute(localizedHref(path, locale)),
-      locale: ogLocales[locale],
+      ...(ogLocales[locale] ? { locale: ogLocales[locale] } : {}),
       siteName: "Note Quiz",
       type: "website",
       images: [

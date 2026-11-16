@@ -3,7 +3,7 @@
  * Geometry regression against an ALREADY RUNNING isolated server. Never starts or
  * restarts a server, touches build output, or attaches to an existing browser.
  * UI_BASE_URL is required; PLAYWRIGHT_MODULE/BROWSER_PATH select existing tools.
- * Idle checks default to all eight locales; feedback checks default to en,de.
+ * Idle checks default to all eleven locales; feedback checks default to en,de.
  * UI_LAYOUT_IDLE_ONLY=1 runs only idle/preview/settings coverage.
  * UI_LAYOUT_LOCALES and UI_LAYOUT_IDLE_LOCALES can narrow their respective matrix.
  * Synthetic Math.random/audio/clock and leaderboard fixtures are labelled below.
@@ -16,7 +16,7 @@ assert(baseURL, "Pass UI_BASE_URL for the coordinator's isolated server");
 const output = process.env.UI_ARTIFACT_DIR || "/tmp/note-quiz-layout-qa";
 const locales = (process.env.UI_LAYOUT_LOCALES || "en,de").split(",");
 const idleLocales = (
-  process.env.UI_LAYOUT_IDLE_LOCALES || "en,ko,ja,es,de,fr,zh,pt"
+  process.env.UI_LAYOUT_IDLE_LOCALES || "en,ko,ja,es,de,fr,zh,pt,ru,ka,eo"
 ).split(",");
 const startLabels = {
   en: "Start practice",
@@ -27,6 +27,9 @@ const startLabels = {
   fr: "Commencer",
   zh: "开始练习",
   pt: "Iniciar prática",
+  ru: "Начать практику",
+  ka: "ვარჯიშის დაწყება",
+  eo: "Komenci ekzercadon",
 };
 const viewports = [
   { width: 390, height: 844 },
@@ -166,6 +169,9 @@ async function assertDirectionAnswers(page, locale) {
     fr: ["Plus aigu", "Identique", "Plus grave"],
     zh: ["更高", "相同", "更低"],
     pt: ["Mais agudo", "Igual", "Mais grave"],
+    ru: ["Выше", "Та же высота", "Ниже"],
+    ka: ["უფრო მაღალი", "იმავე სიმაღლის", "უფრო დაბალი"],
+    eo: ["Pli alta", "Samalta", "Pli malalta"],
   };
   const buttons = page.locator("[data-practice-answer-options] button");
   assert.deepEqual(

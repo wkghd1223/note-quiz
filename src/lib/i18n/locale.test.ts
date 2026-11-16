@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   htmlLanguage,
   isLanguage,
@@ -10,7 +10,27 @@ import {
   SUPPORTED_LOCALES,
 } from "./locale";
 
+// Static route parameters do not need the document's Next font transform.
+vi.mock("@/components/layouts/RootDocument", () => ({ default: () => null }));
+
 describe("localized URL contract", () => {
+  it.each(["ka", "eo"] as const)(
+    "preserves shared settings and fragments when switching to %s",
+    (locale) => {
+      expect(htmlLanguage(locale)).toBe(locale);
+      expect(
+        languageSwitchHref(
+          "/ru/practice/chord",
+          "?key=F%23&sound=1&sound=0",
+          "#history",
+          locale,
+        ),
+      ).toBe(`/${locale}/practice/chord?key=F%23&sound=1&sound=0#history`);
+      expect(
+        languageSwitchHref("/practice/chord", "?key=F%23", "#history", locale),
+      ).toBeNull();
+    },
+  );
   it.each(SUPPORTED_LOCALES)(
     "recognizes only complete %s path segments",
     (locale) => {
@@ -118,9 +138,49 @@ describe("localized URL contract", () => {
       isInitialized: true,
     });
   });
+  it("uses short Russian URL and HTML tags while preserving settings and fragments", () => {
+    expect(htmlLanguage("ru")).toBe("ru");
+    expect(localeFromPathname("/ru/practice/note")).toBe("ru");
+    expect(isLanguage("ru-RU")).toBe(false);
+    expect(
+      languageSwitchHref(
+        "/pt/practice/interval",
+        "?share=1&key=F%23&sound=1&sound=0",
+        "#history",
+        "ru",
+      ),
+    ).toBe("/ru/practice/interval?share=1&key=F%23&sound=1&sound=0#history");
+    expect(
+      languageSwitchHref("/practice/note", "?share=1", "#history", "ru"),
+    ).toBeNull();
+    expect(localizedHref("/ru/melody?tempo=80#score", "en")).toBe(
+      "/en/melody?tempo=80#score",
+    );
+    expect(resolveLanguage("/ru/practice/ear", "ko", false)).toEqual({
+      locale: "ru",
+      language: "ru",
+      isInitialized: true,
+    });
+    for (const href of [
+      "/about",
+      "/contact",
+      "/privacy-policy",
+      "/terms-of-service",
+    ]) {
+      expect(localizedHref(href, "ru")).toBe(href);
+    }
+  });
 });
 
 it("keeps the melody route localized when linking and changing language", () => {
   expect(localizedHref("/melody", "ko")).toBe("/ko/melody");
   expect(languageSwitchHref("/ko/melody", "", "", "de")).toBe("/de/melody");
+});
+
+it("pre-renders Russian alongside the existing supported locale layouts", async () => {
+  const { generateStaticParams } = await import("@/app/[locale]/layout");
+  const params = generateStaticParams();
+  expect(params).toContainEqual({ locale: "ru" });
+  expect(params).toHaveLength(SUPPORTED_LOCALES.length);
+  expect(new Set(params.map(({ locale }) => locale)).size).toBe(params.length);
 });

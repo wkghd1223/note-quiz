@@ -1,3 +1,6 @@
+import { russianTranslations } from "./ru";
+import { georgianTranslations } from "./ka";
+import { esperantoTranslations } from "./eo";
 import {
   navigationTranslations,
   type NavigationTranslations,
@@ -373,6 +376,9 @@ export interface Translations {
 export const translations: Record<Language, Translations> = {
   zh: chineseTranslations,
   pt: portugueseTranslations,
+  ru: russianTranslations,
+  ka: georgianTranslations,
+  eo: esperantoTranslations,
   en: {
     navigation: navigationTranslations.en,
     learning: learningTranslations.en,

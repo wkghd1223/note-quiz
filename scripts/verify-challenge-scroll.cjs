@@ -888,7 +888,19 @@ async function isolated(browser, options) {
       assert.ok(/b91c1c|185, 28, 28/i.test(g.heads[0].fill));
       return { result: end.result, g };
     });
-    for (const locale of ["en", "ko", "ja", "es", "de", "fr", "zh"])
+    for (const locale of [
+      "en",
+      "ko",
+      "ja",
+      "es",
+      "de",
+      "fr",
+      "zh",
+      "pt",
+      "ru",
+      "ka",
+      "eo",
+    ])
       await test(
         `${locale} 360px single rail labels and touch controls have no page overflow`,
         async (p) => {

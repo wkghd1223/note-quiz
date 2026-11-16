@@ -1,4 +1,8 @@
-// Keep every product label in all eight supported languages, in locale order.
+import { russianMelody } from "./i18n-ru";
+import { georgianMelody } from "./i18n-ka";
+import { esperantoMelody } from "./i18n-eo";
+
+// The original eight row dictionaries retain their order; newer packs are explicit.
 const rows = {
   livePitchHint: [
     "The line shows pitch only: ✓ in tune, × off pitch. Timing and duration are judged after each note.",
@@ -458,6 +462,9 @@ const rows = {
 export type MelodyCopy = { [K in keyof typeof rows]: string };
 const locales: Language[] = ["en", "ko", "ja", "es", "de", "fr", "zh", "pt"];
 export function melodyCopy(language: Language): MelodyCopy {
+  if (language === "ru") return russianMelody;
+  if (language === "ka") return georgianMelody;
+  if (language === "eo") return esperantoMelody;
   return Object.fromEntries(
     Object.entries(rows).map(([key, values]) => [
       key,

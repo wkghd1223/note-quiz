@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   languageAlternates,
   localeMetadata,
@@ -10,6 +10,52 @@ import sitemap from "@/app/sitemap";
 import { melodyCopy } from "@/features/melody/i18n";
 
 describe("static locale metadata", () => {
+  it("uses Georgian regional metadata without inventing an Esperanto territory", () => {
+    expect(localeMetadata("ka", "/melody").openGraph).toMatchObject({
+      locale: "ka_GE",
+      url: "https://note-quiz.com/ka/melody",
+    });
+    const metadata = localeMetadata("eo", "/practice/note?share=1#history");
+    expect(metadata.openGraph).not.toHaveProperty("locale");
+    expect(metadata.openGraph).toMatchObject({
+      title: `${getTranslation("eo").learning.note} | Note Quiz`,
+      url: "https://note-quiz.com/eo/practice/note",
+    });
+    expect(metadata.alternates?.languages).toMatchObject({
+      ka: "https://note-quiz.com/ka/practice/note",
+      eo: "https://note-quiz.com/eo/practice/note",
+    });
+  });
+  it("publishes Russian social metadata and canonical leaf URLs without settings", () => {
+    const metadata = localeMetadata(
+      "ru",
+      "/ru/practice?mode=ear&share=1#history",
+    );
+    expect(metadata.title).toEqual({
+      absolute: "Определение звука на слух | Note Quiz",
+    });
+    expect(metadata.alternates?.canonical).toBe(
+      "https://note-quiz.com/ru/practice/ear",
+    );
+    expect(metadata.alternates?.languages).toMatchObject({
+      ru: "https://note-quiz.com/ru/practice/ear",
+      "x-default": "https://note-quiz.com/practice/ear",
+    });
+    expect(metadata.openGraph).toMatchObject({
+      locale: "ru_RU",
+      url: "https://note-quiz.com/ru/practice/ear",
+      title: "Определение звука на слух | Note Quiz",
+    });
+    expect(metadata.twitter).toMatchObject({
+      description: getTranslation("ru").learning.earDescription,
+    });
+    const melody = localeMetadata("ru", "/melody");
+    expect(melody.title).toEqual({ absolute: "Практика мелодий | Note Quiz" });
+    expect(melody.openGraph).toMatchObject({
+      locale: "ru_RU",
+      url: "https://note-quiz.com/ru/melody",
+    });
+  });
   it("publishes Brazilian Portuguese social metadata", () => {
     expect(localeMetadata("pt", "/practice/note").openGraph).toMatchObject({
       locale: "pt_BR",
@@ -35,6 +81,9 @@ describe("static locale metadata", () => {
         fr: "https://note-quiz.com/fr/practice/note",
         "zh-Hans": "https://note-quiz.com/zh/practice/note",
         "pt-BR": "https://note-quiz.com/pt/practice/note",
+        ru: "https://note-quiz.com/ru/practice/note",
+        ka: "https://note-quiz.com/ka/practice/note",
+        eo: "https://note-quiz.com/eo/practice/note",
         "x-default": "https://note-quiz.com/practice/note",
       });
       expect(metadata.description).toBe(
@@ -134,6 +183,41 @@ describe("static locale metadata", () => {
 });
 
 describe("indexable route sitemap", () => {
+  it.each([true, false])(
+    "includes Russian canonicals according to the melody feature flag (%s)",
+    async (enabled) => {
+      vi.resetModules();
+      vi.stubEnv("NEXT_PUBLIC_CHALLENGE_ENABLED", String(enabled));
+      try {
+        const { default: flaggedSitemap } = await import("@/app/sitemap");
+        const pages = flaggedSitemap();
+        const urls = pages.map(({ url }) => url);
+        expect(urls).toHaveLength(
+          (enabled ? 6 : 5) * (SUPPORTED_LOCALES.length + 1) + 4,
+        );
+        expect(urls).toContain("https://note-quiz.com/ru");
+        expect(urls.includes("https://note-quiz.com/ru/melody")).toBe(enabled);
+        for (const mode of ["note", "ear", "interval", "chord"]) {
+          const url = `https://note-quiz.com/ru/practice/${mode}`;
+          expect(urls).toContain(url);
+          expect(
+            pages.find((page) => page.url === url)?.alternates?.languages,
+          ).toMatchObject({ ru: url });
+        }
+        expect(urls).not.toContain("https://note-quiz.com/ru/practice");
+        expect(
+          urls.some((url) =>
+            /^https:\/\/note-quiz.com\/ru\/(about|contact|privacy-policy|terms-of-service)$/.test(
+              url,
+            ),
+          ),
+        ).toBe(false);
+      } finally {
+        vi.unstubAllEnvs();
+        vi.resetModules();
+      }
+    },
+  );
   it.each([null, ...SUPPORTED_LOCALES])(
     "lists only final practice canonical URLs in sitemap for %s",
     (locale) => {

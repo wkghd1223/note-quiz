@@ -688,7 +688,7 @@ async function clean(p) {
     }
     return evidence;
   });
-  await test("compact melody controls in eight locales", async () => {
+  await test("compact melody controls in nine locales", async () => {
     const evidence = [];
     for (const width of [390, 1440]) {
       const { c, p } = await context(browser, {
@@ -696,7 +696,19 @@ async function clean(p) {
         height: width === 390 ? 844 : 900,
       });
       try {
-        for (const locale of ["en", "ko", "ja", "es", "de", "fr", "zh", "pt"]) {
+        for (const locale of [
+          "en",
+          "ko",
+          "ja",
+          "es",
+          "de",
+          "fr",
+          "zh",
+          "pt",
+          "ru",
+          "ka",
+          "eo",
+        ]) {
           await p.goto(`${base}/${locale}/melody`);
           const controls = await p
             .locator(
@@ -1064,11 +1076,23 @@ async function clean(p) {
       await c.close();
     }
   });
-  await test("eight locale melody routes and SEO alternatives", async () => {
+  await test("eleven locale melody routes and SEO alternatives", async () => {
     const { c, p } = await context(browser, { width: 390, height: 844 });
     try {
       const titles = {};
-      for (const locale of ["en", "ko", "ja", "es", "de", "fr", "zh", "pt"]) {
+      for (const locale of [
+        "en",
+        "ko",
+        "ja",
+        "es",
+        "de",
+        "fr",
+        "zh",
+        "pt",
+        "ru",
+        "ka",
+        "eo",
+      ]) {
         await p.goto(`${base}/${locale}/melody`);
         await p.locator("[data-melody-scroll]").waitFor();
         titles[locale] = await p.locator("h1").textContent();
@@ -1083,7 +1107,7 @@ async function clean(p) {
           true,
         );
       }
-      assert.equal(new Set(Object.values(titles)).size, 8);
+      assert.equal(new Set(Object.values(titles)).size, 11);
       return titles;
     } finally {
       await c.close();

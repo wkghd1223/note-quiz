@@ -162,6 +162,9 @@ const startLabels: Record<Language, string> = {
   fr: "Commencer",
   zh: "开始练习",
   pt: "Iniciar prática",
+  ru: "Начать практику",
+  ka: "ვარჯიშის დაწყება",
+  eo: "Komenci ekzercadon",
 };
 const noop = () => {};
 const common = {

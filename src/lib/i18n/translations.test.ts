@@ -6,6 +6,15 @@ import { SUPPORTED_LOCALES } from "./locale";
 import { portugueseLearning, portugueseTranslations } from "./pt";
 import { challengeCopy } from "@/features/challenge/i18n";
 import { melodyCopy } from "@/features/melody/i18n";
+import { russianLearning, russianTranslations } from "./ru";
+import { russianMelody } from "@/features/melody/i18n-ru";
+import { russianChallenge } from "@/features/challenge/i18n-ru";
+import { georgianLearning, georgianTranslations } from "./ka";
+import { esperantoLearning, esperantoTranslations } from "./eo";
+import { georgianMelody } from "@/features/melody/i18n-ka";
+import { esperantoMelody } from "@/features/melody/i18n-eo";
+import { georgianChallenge } from "@/features/challenge/i18n-ka";
+import { esperantoChallenge } from "@/features/challenge/i18n-eo";
 
 function leaves(value: object, prefix = ""): Record<string, string> {
   return Object.fromEntries(
@@ -19,6 +28,30 @@ function leaves(value: object, prefix = ""): Record<string, string> {
 }
 
 describe("complete supported-language dictionaries", () => {
+  it.each([
+    {
+      language: "ka" as const,
+      practice: georgianTranslations,
+      learning: georgianLearning,
+      melody: georgianMelody,
+      challenge: georgianChallenge,
+    },
+    {
+      language: "eo" as const,
+      practice: esperantoTranslations,
+      learning: esperantoLearning,
+      melody: esperantoMelody,
+      challenge: esperantoChallenge,
+    },
+  ])(
+    "uses the explicit $language dictionaries on every practice surface",
+    ({ language, practice, learning, melody, challenge }) => {
+      expect(getTranslation(language)).toBe(practice);
+      expect(learningTranslations[language]).toBe(learning);
+      expect(melodyCopy(language)).toBe(melody);
+      expect(challengeCopy(language)).toBe(challenge);
+    },
+  );
   it.each(SUPPORTED_LOCALES)(
     "provides every existing key in %s without blank values",
     (language) => {
@@ -52,6 +85,29 @@ describe("complete supported-language dictionaries", () => {
     expect(getTranslation("pt")).toBe(portugueseTranslations);
     expect(learningTranslations.pt).toBe(portugueseLearning);
     expect(getTranslation("pt").settingsLabels.language).toBe("Idioma");
+  });
+  it("registers complete Russian dictionaries with translated human labels", () => {
+    expect(getTranslation("ru")).toBe(russianTranslations);
+    expect(learningTranslations.ru).toBe(russianLearning);
+    expect(melodyCopy("ru")).toBe(russianMelody);
+    expect(challengeCopy("ru")).toBe(russianChallenge);
+    for (const dictionary of [
+      russianTranslations,
+      russianMelody,
+      russianChallenge,
+    ]) {
+      for (const [key, value] of Object.entries(leaves(dictionary))) {
+        if (key === "gameTitle" || key === "home.hero.title") continue;
+        expect(value, key).toMatch(/[А-Яа-яЁё]/);
+      }
+    }
+    // Pitch, rhythmic onset and note duration are different judgments.
+    expect(russianChallenge.pitch).toBe("Высота звука");
+    expect(russianChallenge.onset).toBe("Момент начала");
+    expect(russianChallenge.duration).toBe("Длительность");
+    expect(russianTranslations.solfege.notes.B).toBe("Си");
+    expect(russianLearning.interval_TT).toBe("Тритон");
+    expect(russianMelody.livePitchHint).toContain("после каждой ноты");
   });
   it.each(SUPPORTED_LOCALES)(
     "provides complete melody and challenge copy in %s",

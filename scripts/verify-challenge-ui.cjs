@@ -156,7 +156,6 @@ const report = {
   errors: [],
   leaderboardPosts: 0,
 };
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 (async () => {
   fs.mkdirSync(output, { recursive: true });
   const browser = await chromium.launch({
@@ -379,12 +378,24 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
         },
       );
     }
-    for (const locale of ["en", "ko", "ja", "es", "de", "fr", "zh"]) {
+    for (const locale of [
+      "en",
+      "ko",
+      "ja",
+      "es",
+      "de",
+      "fr",
+      "zh",
+      "pt",
+      "ru",
+      "ka",
+      "eo",
+    ]) {
       await caseRun(`localized challenge ${locale}`, async () => {
         await page.goto(`${baseURL}/${locale}/challenge`);
         assert.equal(
           await page.locator("html").getAttribute("lang"),
-          locale === "zh" ? "zh-Hans" : locale,
+          locale === "zh" ? "zh-Hans" : locale === "pt" ? "pt-BR" : locale,
         );
         await fits();
         assert.ok(

@@ -16,7 +16,19 @@ assert(
 );
 const output = process.env.UI_ARTIFACT_DIR || "/tmp/note-quiz-practice-routes";
 const modes = ["note", "ear", "interval", "chord"];
-const locales = ["en", "ko", "ja", "es", "de", "fr", "zh", "pt"];
+const locales = [
+  "en",
+  "ko",
+  "ja",
+  "es",
+  "de",
+  "fr",
+  "zh",
+  "pt",
+  "ru",
+  "ka",
+  "eo",
+];
 const report = {
   baseURL,
   routes: [],
@@ -316,7 +328,12 @@ const waitFor = async (predicate, message) => {
     await go(
       "/en/practice/chord?share=1&mode=chord&view=visual&level=basic#history",
     );
-    await page.locator("header select").selectOption("ko");
+    await page
+      .locator(".language-selector button[aria-haspopup=dialog]")
+      .click();
+    await page
+      .getByRole("menuitemradio", { name: "한국어", exact: true })
+      .click();
     await page.waitForURL((url) => url.pathname === "/ko/practice/chord");
     assert.equal(new URL(page.url()).hash, "#history");
     assert.equal(new URL(page.url()).searchParams.get("level"), "basic");
@@ -326,7 +343,12 @@ const waitFor = async (predicate, message) => {
     );
     // Unprefixed routes retain the stored locale. Restore English before the
     // following English-label interaction cases without resetting user state.
-    await page.locator("header select").selectOption("en");
+    await page
+      .locator(".language-selector button[aria-haspopup=dialog]")
+      .click();
+    await page
+      .getByRole("menuitemradio", { name: "English", exact: true })
+      .click();
     await page.waitForURL((url) => url.pathname === "/en/practice/chord");
 
     const openSettings = async () => {

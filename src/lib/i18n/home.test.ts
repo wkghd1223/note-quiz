@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SUPPORTED_LOCALES } from "./locale";
 import { homeCopy } from "./home";
+import { russianHome, russianBasicHome } from "./home-ru";
 
 const { currentPath } = vi.hoisted(() => ({ currentPath: vi.fn(() => "/") }));
 vi.mock("next/navigation", async (importOriginal) => ({
@@ -20,6 +21,9 @@ const melodyTerms: Record<Language, RegExp> = {
   fr: /mélodie|huit mesures|métronome|exemple au piano/i,
   zh: /旋律|八小节|节拍器|钢琴示范/,
   pt: /melodia|oito compassos|metrônomo|exemplo no piano/i,
+  ru: /мелоди|восьми тактов|метроном|пример на фортепиано/i,
+  ka: /მელოდი|მეტრონომ|ფორტეპიანო/,
+  eo: /melodi|metronom|pian/i,
 };
 
 function escaped(text: string) {
@@ -30,6 +34,30 @@ afterEach(() => {
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
   currentPath.mockReturnValue("/");
+});
+
+it("registers full Russian home copy and a complete basic-only variant", () => {
+  expect(homeCopy("ru")).toBe(russianHome);
+  expect(homeCopy("ru", false)).toEqual({
+    ...russianHome,
+    ...russianBasicHome,
+  });
+  const check = (english: unknown, russian: unknown, path = "home") => {
+    if (typeof english === "string") {
+      expect(russian, path).toEqual(expect.stringMatching(/[А-Яа-яЁё]/));
+      return;
+    }
+    expect(Object.keys(russian as object).sort(), path).toEqual(
+      Object.keys(english as object).sort(),
+    );
+    for (const [key, value] of Object.entries(english as object)) {
+      check(value, (russian as Record<string, unknown>)[key], `${path}.${key}`);
+    }
+  };
+  check(homeCopy("en"), homeCopy("ru"));
+  check(homeCopy("en", false), homeCopy("ru", false));
+  expect(russianHome.faq[3].answer).toContain("не записывается");
+  expect(russianHome.faq[3].answer).toContain("не загружается");
 });
 
 describe.each([true, false])("home with melody enabled=%s", (enabled) => {

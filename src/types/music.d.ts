@@ -35,7 +35,18 @@ type EarTrainingNoteSet = "natural" | "chromatic";
 type EarTrainingSessionType = "practice" | "timed";
 
 // 언어 설정
-type Language = "en" | "ko" | "ja" | "es" | "de" | "fr" | "zh" | "pt";
+type Language =
+  | "en"
+  | "ko"
+  | "ja"
+  | "es"
+  | "de"
+  | "fr"
+  | "zh"
+  | "pt"
+  | "ru"
+  | "ka"
+  | "eo";
 
 // 게임 설정
 interface GameSettings {

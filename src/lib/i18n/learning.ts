@@ -1,3 +1,6 @@
+import { russianLearning } from "./ru";
+import { georgianLearning } from "./ka";
+import { esperantoLearning } from "./eo";
 import { chineseLearning } from "./zh";
 import { portugueseLearning } from "./pt";
 
@@ -883,4 +886,7 @@ export const learningTranslations: Record<Language, LearningTranslations> = {
   fr: language(5),
   zh: chineseLearning,
   pt: portugueseLearning,
+  ru: russianLearning,
+  ka: georgianLearning,
+  eo: esperantoLearning,
 };

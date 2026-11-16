@@ -1,3 +1,6 @@
+import { russianBasicHome, russianHome } from "./home-ru";
+import { georgianBasicHome, georgianHome } from "./home-ka";
+import { esperantoBasicHome, esperantoHome } from "./home-eo";
 import { portugueseBasicHome, portugueseHome } from "./home-pt";
 import type { TrainingMode } from "@/lib/practice/types";
 
@@ -447,6 +450,9 @@ const zh: HomeCopy = {
 
 const homeTranslations: Record<Language, HomeCopy> = {
   pt: portugueseHome,
+  ru: russianHome,
+  ka: georgianHome,
+  eo: esperantoHome,
   en,
   ko,
   ja,
@@ -652,6 +658,9 @@ const basicHomeTranslations: Record<Language, BasicHomeCopy> = {
       "通过看谱和听音练习音符、音程与和弦，使用屏幕上的琴键或选项作答。无需注册，免费使用。",
   },
   pt: portugueseBasicHome,
+  ru: russianBasicHome,
+  ka: georgianBasicHome,
+  eo: esperantoBasicHome,
 };
 
 export function homeCopy(language: Language, melodyEnabled = true): HomeCopy {

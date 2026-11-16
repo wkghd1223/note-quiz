@@ -1699,7 +1699,7 @@ const resetHistory = (page) =>
     const locales = await session(),
       l = locales.page;
     await run(
-      "six-language small-screen settings and German desktop layout",
+      "eleven-language small-screen settings and German desktop layout",
       async () => {
         const settingsNames = {
           en: "Settings",
@@ -1708,10 +1708,36 @@ const resetHistory = (page) =>
           es: "Configuración",
           de: "Einstellungen",
           fr: "Paramètres",
+          zh: "设置",
+          pt: "Configurações",
+          ru: "Настройки",
+          ka: "პარამეტრები",
+          eo: "Agordoj",
+        };
+        const nativeNames = {
+          en: "English",
+          ko: "한국어",
+          ja: "日本語",
+          es: "Español",
+          de: "Deutsch",
+          fr: "Français",
+          zh: "简体中文",
+          pt: "Português (Brasil)",
+          ru: "Русский",
+          ka: "ქართული",
+          eo: "Esperanto",
         };
         for (const locale of Object.keys(settingsNames)) {
           await locales.go(mainPaths.chord);
-          await l.locator("header select").first().selectOption(locale);
+          await l
+            .locator(".language-selector button[aria-haspopup=dialog]")
+            .click();
+          await l
+            .getByRole("menuitemradio", {
+              name: nativeNames[locale],
+              exact: true,
+            })
+            .click();
           const setting = locales
             .card()
             .getByRole("button", { name: settingsNames[locale], exact: true });
@@ -1744,7 +1770,12 @@ const resetHistory = (page) =>
           await l.keyboard.press("Escape");
           await locales.noDialog();
         }
-        await l.locator("header select").first().selectOption("de");
+        await l
+          .locator(".language-selector button[aria-haspopup=dialog]")
+          .click();
+        await l
+          .getByRole("menuitemradio", { name: "Deutsch", exact: true })
+          .click();
         await l.setViewportSize({ width: 1440, height: 900 });
         await locales.go(mainPaths.interval);
         assert(

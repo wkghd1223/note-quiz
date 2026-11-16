@@ -46,7 +46,19 @@ const report = {
       });
       const page = await context.newPage();
       page.on("pageerror", (error) => report.errors.push(error.message));
-      for (const locale of ["en", "ko", "ja", "es", "de", "fr", "zh", "pt"]) {
+      for (const locale of [
+        "en",
+        "ko",
+        "ja",
+        "es",
+        "de",
+        "fr",
+        "zh",
+        "pt",
+        "ru",
+        "ka",
+        "eo",
+      ]) {
         const response = await page.goto(`${base}/${locale}`);
         assert.equal(response.status(), 200);
         if (report.build)

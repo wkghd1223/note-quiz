@@ -366,10 +366,11 @@ async function ready(page) {
         const unprefixedUrl = page.url();
         assert.equal(new URL(unprefixedUrl).pathname, "/practice/ear");
         assert.equal((await events(page, "page_view")).length, 4);
-        await page.locator(".language-selector select").selectOption("ko");
+        await page.locator(".language-selector button[aria-haspopup=dialog]").click();
+        await page.getByRole("menuitemradio", { name: "한국어", exact: true }).click();
         await page.waitForFunction(() =>
           document.documentElement.lang === "ko" &&
-          document.querySelector(".language-selector select")?.value === "ko",
+          document.querySelector(".language-selector button[aria-haspopup=dialog]")?.dataset.value === "ko",
         );
         await button(page, "연습 시작").waitFor();
         // Readiness above is semantic; this bounded window only checks absence.
@@ -409,15 +410,16 @@ async function ready(page) {
         const sourceTimeOrigin = await page.evaluate(
           () => performance.timeOrigin,
         );
-        const selector = page.locator(".language-selector select");
+        const selector = page.locator(".language-selector button[aria-haspopup=dialog]");
         await selector.waitFor({ state: "visible" });
-        assert.equal(await selector.inputValue(), "en");
+        assert.equal(await selector.getAttribute("data-value"), "en");
         // Use the real router action, including any root-layout document reload.
-        await selector.selectOption("ko");
+        await selector.click();
+        await page.getByRole("menuitemradio", { name: "한국어", exact: true }).click();
         await page.waitForURL(`${base.origin}${target}${suffix}`);
         await page.waitForFunction(() =>
           document.documentElement.lang === "ko" &&
-          document.querySelector(".language-selector select")?.value === "ko",
+          document.querySelector(".language-selector button[aria-haspopup=dialog]")?.dataset.value === "ko",
         );
         await button(page, "연습 시작").waitFor();
         await page.waitForFunction(() =>

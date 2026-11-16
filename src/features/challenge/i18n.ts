@@ -1,3 +1,7 @@
+import { russianChallenge } from "./i18n-ru";
+import { georgianChallenge } from "./i18n-ka";
+import { esperantoChallenge } from "./i18n-eo";
+
 // English, Korean, Japanese, Spanish, German, French, Simplified Chinese, Brazilian Portuguese.
 const rows = {
   sheetMusic: [
@@ -1228,6 +1232,9 @@ export type ChallengeCopy = { [K in keyof typeof rows]: string } & {
   stagesById: Record<string, { title: string; objective: string }>;
 };
 export function challengeCopy(language: string): ChallengeCopy {
+  if (language === "ru") return russianChallenge;
+  if (language === "ka") return georgianChallenge;
+  if (language === "eo") return esperantoChallenge;
   const index = Math.max(
     0,
     ["en", "ko", "ja", "es", "de", "fr", "zh", "pt"].indexOf(language),

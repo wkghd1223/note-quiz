@@ -7,6 +7,9 @@ export const SUPPORTED_LOCALES = [
   "fr",
   "zh",
   "pt",
+  "ru",
+  "ka",
+  "eo",
 ] as const satisfies readonly Language[];
 
 export function isLanguage(value: unknown): value is Language {
