@@ -1,8 +1,13 @@
 import { generateMelody } from "@/features/melody/domain/generator";
 import { defaultMelodySettings } from "@/features/melody/domain/settings";
 import { exerciseScore } from "@/features/melody/domain/notation";
+import { getInstrumentProfile } from "@/features/challenge/domain/instrument-profile";
+import { buildPlaybackTimeline } from "@/features/challenge/domain/score-timeline";
+import { scoreCursorPosition } from "@/features/challenge/components/score-scroll";
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import {
+  EngravingSettings,
   LayoutMode,
   Settings,
   StaveProfile,
@@ -10,7 +15,10 @@ import {
   rendering,
 } from "@coderline/alphatab";
 import { timeSpacingInset } from "./time-spacing";
-import { melodyQuarterWidth } from "@/features/challenge/components/ScoreViewport";
+import {
+  melodyQuarterWidth,
+  melodyQuarterWidthFor,
+} from "@/features/melody/domain/score-layout";
 import { getMelodyPitches } from "@/features/melody/domain/settings";
 import { KEY_SIGNATURES } from "@/lib/music/constants";
 import { legacyToScore } from "./legacy-to-score";
@@ -39,6 +47,56 @@ const fixture = (): NotationScore => ({
     { id: "last", duration: 1, barIndex: 1, notes: [writtenNote(note("C"))] },
   ],
 });
+
+// Read the shipped font's advance widths as well as SMuFL ink boxes. In SVG,
+// text-anchor="middle" centers the advance, which need not equal the ink width.
+const fontSvg = readFileSync("public/alphatab/font/Bravura.svg", "utf8");
+const fontUnits = Number(fontSvg.match(/units-per-em="(\d+)"/)![1]);
+const glyphAdvances = new Map(
+  [
+    ...fontSvg.matchAll(
+      /<glyph[^>]*unicode="&#x([\da-f]+);"[^>]*horiz-adv-x="(\d+)"/g,
+    ),
+  ].map((match) => [parseInt(match[1], 16), Number(match[2])] as const),
+);
+
+function nativeSvgInk(svg: string) {
+  const boxes = EngravingSettings.bravuraMetadata.glyphBBoxes!;
+  const fontSize = EngravingSettings.bravuraDefaults.musicFontSize;
+  return [
+    ...svg.matchAll(
+      /<g transform="translate\(([-\d.e]+) ([-\d.e]+)\)" class="at" ><text([^>]*)>(.*?)<\/text><\/g>/g,
+    ),
+  ].flatMap((match) => {
+    const scale =
+      Number(match[3].match(/font-size: ([\d.]+)%/)?.[1] ?? 100) / 100;
+    const symbols = [...match[4].matchAll(/&#(\d+);/g)].map((value) =>
+      Number(value[1]),
+    );
+    const advance = (symbol: number) =>
+      (glyphAdvances.get(symbol)! / fontUnits) * fontSize * scale;
+    let x =
+      Number(match[1]) -
+      (match[3].includes('text-anchor="middle"')
+        ? symbols.reduce((sum, symbol) => sum + advance(symbol), 0) / 2
+        : 0);
+    return symbols.map((symbol) => {
+      const name = model.MusicFontSymbol[symbol];
+      const box = boxes[name[0].toLowerCase() + name.slice(1)];
+      const unit = (fontSize / 4) * scale;
+      const ink = {
+        symbol,
+        x: x + box.bBoxSW[0] * unit,
+        y: Number(match[2]) - box.bBoxNE[1] * unit,
+        width: (box.bBoxNE[0] - box.bBoxSW[0]) * unit,
+        height: (box.bBoxNE[1] - box.bBoxSW[1]) * unit,
+        scale,
+      };
+      x += advance(symbol);
+      return ink;
+    });
+  });
+}
 
 function render(
   input: NotationScore,
@@ -268,6 +326,37 @@ describe("native per-event colors and actual onset anchors", () => {
 });
 
 describe("melody native time spacing", () => {
+  it("leaves non-time-spaced legacy and theory engraving unchanged", () => {
+    const inputs = [
+      legacyToScore({
+        clef: "treble",
+        keySignature: KEY_SIGNATURES.C,
+        note: note("C"),
+        originalNote: note("C"),
+      }),
+      theoryToScore([note("C"), note("E"), note("G")], true),
+    ];
+    for (const input of inputs) {
+      const before = render(input);
+      const compact = render({
+        ...fixture(),
+        timeSpacing: { quarterWidth: melodyQuarterWidth },
+      });
+      const after = render(input);
+      try {
+        // alphaTab assigns new process-global beat group IDs to every model.
+        const engraving = (svg: string) =>
+          svg.replace(/class="b\d+"/g, 'class="beat"');
+        expect(engraving(after.svg)).toBe(engraving(before.svg));
+        expect(after.built.timeSpacing).toBeUndefined();
+      } finally {
+        before.renderer.destroy();
+        compact.renderer.destroy();
+        after.renderer.destroy();
+      }
+    }
+  });
+
   it.each([1, 2])(
     "keeps native noteheads on a linear clock at scale %i, including full-bar notes",
     (scale) => {
@@ -398,6 +487,60 @@ it("keeps native timing and bar widths across clefs, keys, rests, dots and tripl
           stage.measures * expectedWidth,
           4,
         );
+        const timeline = buildPlaybackTimeline(
+          stage,
+          getInstrumentProfile("voice")!,
+          0,
+        );
+        const targets = timeline.targets.map((target, index) => ({
+          ...target,
+          sourceEventId: target.stageEventId,
+          sourceBarIndex: Math.floor(
+            stage.events[index].startBeat /
+              ((timeSignature[0] * 4) / timeSignature[1]),
+          ),
+          visit: 1,
+        }));
+        for (const [index, target] of targets.entries()) {
+          expect(
+            scoreCursorPosition(
+              targets,
+              timeline.transitions,
+              result,
+              target.startAudioSec,
+            ).x,
+          ).toBeCloseTo(result.events[index].anchorX!, 4);
+          expect(
+            scoreCursorPosition(
+              targets,
+              timeline.transitions,
+              result,
+              (target.startAudioSec + target.endAudioSec) / 2,
+            ).x,
+          ).toBeCloseTo(
+            origin +
+              (stage.events[index].startBeat +
+                stage.events[index].durationBeats / 2) *
+                melodyQuarterWidth,
+            4,
+          );
+        }
+        for (const reducedMotion of [false, true]) {
+          expect(
+            scoreCursorPosition(
+              targets,
+              timeline.transitions,
+              result,
+              0,
+              reducedMotion,
+              {
+                remainingSec: 60 / stage.bpm,
+                durationSec: 240 / stage.bpm,
+                baseElapsedSec: 0,
+              },
+            ).x,
+          ).toBeCloseTo(origin - melodyQuarterWidth, 4);
+        }
       } finally {
         renderer.destroy();
       }
@@ -472,6 +615,16 @@ describe("compact melody geometry at supported pitch extrema", () => {
           // Notation-only fixture: does not add sixteenths to melody generation.
           for (let i = 0; i < (tripletEnding ? 12 : 16); i++)
             add(6, tripletEnding ? 8 : 16, i % 3 === 1, 0, tripletEnding);
+          const quarterWidth = melodyQuarterWidthFor({
+            events: events.map((event) => ({
+              noteValue: event.duration,
+              durationBeats:
+                (4 / event.duration) *
+                (event.dots ? 1.5 : 1) *
+                (event.tuplet ? 2 / 3 : 1),
+            })),
+          });
+          expect(quarterWidth).toBe(tripletEnding ? 74 : 92);
           const input: NotationScore = {
             clef,
             keySignature:
@@ -480,7 +633,7 @@ describe("compact melody geometry at supported pitch extrema", () => {
             showTimeSignature: true,
             timeSignature: { numerator: 4, denominator: 4 },
             events,
-            timeSpacing: { quarterWidth: melodyQuarterWidth },
+            timeSpacing: { quarterWidth },
           };
           const { built, renderer, svg, symbols } = render(
             input,
@@ -489,7 +642,7 @@ describe("compact melody geometry at supported pitch extrema", () => {
             scale,
           );
           const baseline = render(
-            { ...input, timeSpacing: { quarterWidth: 96 } },
+            { ...input, timeSpacing: { quarterWidth: 92 } },
             undefined,
             6000,
             scale,
@@ -506,7 +659,7 @@ describe("compact melody geometry at supported pitch extrema", () => {
               const label = `${clef}/${keySignature}/${scale}/bar${beat.voice.bar.index}/beat${beat.index}`;
               expect(bounds.onNotesX - origin, label).toBeCloseTo(
                 (beat.voice.bar.index * 4 + beat.playbackStart / 960) *
-                  melodyQuarterWidth *
+                  quarterWidth *
                   scale,
                 4,
               );
@@ -572,7 +725,7 @@ describe("compact melody geometry at supported pitch extrema", () => {
             for (const bar of built.score.masterBars.slice(1))
               expect(
                 renderer.boundsLookup!.findMasterBar(bar)!.realBounds.w,
-              ).toBeCloseTo(4 * melodyQuarterWidth * scale, 5);
+              ).toBeCloseTo(4 * quarterWidth * scale, 5);
             expect(
               symbols.map(({ symbol, width, scale }) => [symbol, width, scale]),
             ).toEqual(
@@ -581,6 +734,103 @@ describe("compact melody geometry at supported pitch extrema", () => {
                 width,
                 scale,
               ]),
+            );
+            const ink = nativeSvgInk(svg);
+            expect(
+              ink.filter(
+                ({ symbol }) =>
+                  symbol >= model.MusicFontSymbol.NoteheadWhole &&
+                  symbol <= model.MusicFontSymbol.NoteheadBlack,
+              ),
+            ).toHaveLength(
+              input.events.filter((event) => event.notes.length).length,
+            );
+            expect(
+              ink.filter(
+                ({ symbol }) =>
+                  symbol >= model.MusicFontSymbol.RestWhole &&
+                  symbol <= model.MusicFontSymbol.Rest16th,
+              ),
+            ).toHaveLength(
+              input.events.filter((event) => !event.notes.length).length,
+            );
+            expect(
+              ink.map(({ symbol, width, height, scale }) => [
+                symbol,
+                width,
+                height,
+                scale,
+              ]),
+            ).toEqual(
+              nativeSvgInk(baseline.svg).map(
+                ({ symbol, width, height, scale }) => [
+                  symbol,
+                  width,
+                  height,
+                  scale,
+                ],
+              ),
+            );
+            // Include multi-symbol SVG runs (the tuplet number), actual font
+            // side bearings and centered rest advances, beyond engine hit boxes.
+            expect(
+              ink.some(
+                ({ symbol }) => symbol === model.MusicFontSymbol.Tuplet3,
+              ),
+            ).toBe(true);
+            for (const glyph of ink.filter(({ symbol }) =>
+              [
+                model.MusicFontSymbol.NoteheadWhole,
+                model.MusicFontSymbol.NoteheadHalf,
+                model.MusicFontSymbol.NoteheadBlack,
+                model.MusicFontSymbol.RestWhole,
+                model.MusicFontSymbol.RestQuarter,
+                model.MusicFontSymbol.Rest8th,
+                model.MusicFontSymbol.Rest16th,
+                model.MusicFontSymbol.Tuplet3,
+              ].includes(symbol),
+            )) {
+              const bar = built.score.masterBars
+                .map((bar) => renderer.boundsLookup!.findMasterBar(bar)!)
+                .find(
+                  ({ realBounds: bounds }) =>
+                    glyph.x + glyph.width / 2 >= bounds.x &&
+                    glyph.x + glyph.width / 2 < bounds.x + bounds.w,
+                )!;
+              const label = `${clef}/${keySignature}/${scale}/symbol${glyph.symbol}`;
+              expect(bar, label).toBeDefined();
+              expect(glyph.x, label).toBeGreaterThanOrEqual(bar.realBounds.x);
+              expect(glyph.x + glyph.width, label).toBeLessThanOrEqual(
+                bar.realBounds.x +
+                  bar.realBounds.w -
+                  (bar.index === 6 ? 9.54 : 1.44) * scale,
+              );
+            }
+            const finalBar = renderer.boundsLookup!.findMasterBar(
+              built.score.masterBars[6],
+            )!.realBounds;
+            const rectangles = [
+              ...svg.matchAll(
+                /<rect x="([\d.e-]+)" y="([\d.e-]+)" width="([\d.e-]+)" height="([\d.e-]+)"/g,
+              ),
+            ].map((match) => ({
+              x: Number(match[1]),
+              width: Number(match[3]),
+              height: Number(match[4]),
+            }));
+            const finalLines = rectangles.filter(
+              (rect) =>
+                rect.x >= finalBar.x + finalBar.w - 10 * scale &&
+                rect.height >= 36 * scale,
+            );
+            expect(finalLines).toHaveLength(2);
+            expect(finalLines.map((line) => line.width)).toEqual([
+              1.44 * scale,
+              4.5 * scale,
+            ]);
+            expect(finalLines[0].x).toBeCloseTo(
+              finalBar.x + finalBar.w - 9.54 * scale,
+              5,
             );
             expect(svg).toContain("<path");
             // Filled closed paths are native beams; shortening spacing must not

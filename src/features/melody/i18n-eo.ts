@@ -47,7 +47,7 @@ export const esperantoMelody: MelodyCopy = {
   invalid:
     "Kontrolu la amplekson, tempon kaj notdaŭrojn. Almenaŭ unu elektita daŭro devas eniĝi en takton de la elektita taktospeco.",
   settingsHint:
-    "Apliki agordojn kreas novan melodion. La agordoj konserviĝas en ĉi tiu retumilo.",
+    "Ŝanĝoj konserviĝas aŭtomate kaj aplikiĝas al la sekva ekzerco.",
   privacy:
     "La sono analiziĝas loke en ĉi tiu aparato. Ĝi ne estas registrata, konservata aŭ alŝutata.",
   denied: "Permesu aliron al la mikrofono en la retumilaj agordoj kaj reprovu.",

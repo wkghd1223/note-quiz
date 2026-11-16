@@ -177,7 +177,10 @@ async function context(browser, viewport, init) {
   });
   await c.addInitScript(
     ({ key, settings }) => {
-      localStorage.setItem(key, JSON.stringify(settings));
+      // Seed a fresh browser context once; reloads must exercise the app's
+      // persisted edits rather than overwrite them with the test fixture.
+      if (localStorage.getItem(key) === null)
+        localStorage.setItem(key, JSON.stringify(settings));
       window.__mic = {
         streams: [],
         contexts: [],
@@ -325,7 +328,20 @@ async function clean(p) {
           .check();
         // A newly selected eighth-note palette must not silently change the BPM.
         await scope.getByRole("spinbutton", { name: "Tempo (BPM)" }).fill("60");
-        await scope.getByRole("button", { name: "Apply", exact: true }).click();
+        assert.equal(
+          await scope
+            .getByRole("button", { name: "Apply", exact: true })
+            .count(),
+          0,
+        );
+        if (size === "mobile") {
+          assert.equal(
+            await p.getByRole("dialog").isVisible(),
+            true,
+            "Settings stay open after changes",
+          );
+          await p.keyboard.press("Escape");
+        }
         await until(
           () => button(p, "Start practice").isEnabled(),
           "Applied score ready",
@@ -416,6 +432,160 @@ async function clean(p) {
       }
     });
   }
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 1440, height: 900 },
+  ]) {
+    await test(`${viewport.width} automatic settings persist, validate and stay open`, async () => {
+      const { c, p } = await context(browser, viewport);
+      try {
+        await open(p);
+        if (viewport.width < 1024) await button(p, "Settings").click();
+        const panel =
+          viewport.width < 1024
+            ? p.getByRole("dialog")
+            : p.locator("[data-practice-settings]");
+        assert.equal(
+          await panel
+            .getByRole("button", { name: "Apply", exact: true })
+            .count(),
+          0,
+        );
+        const saved = () => p.evaluate((key) => localStorage.getItem(key), key);
+        const initial = await saved();
+        const tempo = panel.getByRole("spinbutton", {
+          name: "Tempo (BPM)",
+          exact: true,
+        });
+        await tempo.fill("");
+        await panel.getByRole("alert").waitFor();
+        assert.equal(
+          await saved(),
+          initial,
+          "Blank input does not overwrite saved settings",
+        );
+        assert.equal(
+          await p.locator('[data-practice-action="start"]:visible').isEnabled(),
+          false,
+        );
+        await tempo.fill("96");
+        assert.equal(
+          JSON.parse(await saved()).bpm,
+          96,
+          "Valid changes save without Apply",
+        );
+        assert.equal(await panel.getByRole("alert").count(), 0);
+        const lowest = panel.getByRole("combobox", {
+          name: "Lowest note",
+          exact: true,
+        });
+        const highest = panel.getByRole("combobox", {
+          name: "Highest note",
+          exact: true,
+        });
+        const priorRange = await saved();
+        await lowest.selectOption("72");
+        await panel.getByRole("alert").waitFor();
+        assert.equal(
+          await saved(),
+          priorRange,
+          "Reversed range stays an uncommitted edit",
+        );
+        await highest.selectOption("74");
+        assert.equal(JSON.parse(await saved()).minMidi, 72);
+        assert.equal(JSON.parse(await saved()).maxMidi, 74);
+        const quarter = panel.getByRole("checkbox", {
+          name: "Quarter",
+          exact: true,
+        });
+        await quarter.uncheck();
+        await panel.getByRole("alert").waitFor();
+        assert.deepEqual(JSON.parse(await saved()).durations, [1]);
+        await panel
+          .getByRole("checkbox", { name: "Half", exact: true })
+          .check();
+        assert.deepEqual(JSON.parse(await saved()).durations, [2]);
+        await panel
+          .getByRole("button", { name: "Reset to Default", exact: true })
+          .click();
+        assert.equal(await panel.getByRole("alert").count(), 0);
+        assert.equal(JSON.parse(await saved()).bpm, 72);
+        assert.deepEqual(JSON.parse(await saved()).durations, [1, 2]);
+        if (viewport.width < 1024)
+          assert.equal(await p.getByRole("dialog").isVisible(), true);
+        await tempo.fill("96");
+        if (viewport.width < 1024) await p.keyboard.press("Escape");
+        await p.reload();
+        await until(
+          () => button(p, "Start practice").isEnabled(),
+          "Restored score ready",
+        );
+        assert.equal(
+          JSON.parse(await saved()).bpm,
+          96,
+          "Automatic save restores after refresh",
+        );
+        await button(p, "Start practice").click();
+        await phase(p, "countIn");
+        if (viewport.width < 1024)
+          assert.equal(await button(p, "Settings").isDisabled(), true);
+        else
+          assert.equal(
+            await p
+              .locator('[data-practice-settings] input[type="number"]')
+              .isDisabled(),
+            true,
+          );
+        await button(p, "End Game").click();
+        await phase(p, "landing");
+        assert.equal(await clean(p), true);
+        if (viewport.width < 1024) await button(p, "Settings").click();
+        const reopened =
+          viewport.width < 1024
+            ? p.getByRole("dialog")
+            : p.locator("[data-practice-settings]");
+        await p.evaluate(() => {
+          Storage.prototype.setItem = () => {
+            throw new Error("Storage denied fixture");
+          };
+        });
+        await reopened
+          .getByRole("spinbutton", { name: "Tempo (BPM)" })
+          .fill("104");
+        assert.equal(
+          await reopened.getByRole("alert").count(),
+          0,
+          "Storage failure does not invalidate the playable settings",
+        );
+        assert.equal(
+          (await p
+            .locator('[data-melody-player] [role="status"]')
+            .filter({ hasText: /could not|cannot|couldn’t|storage/i })
+            .count()) > 0,
+          true,
+          "Storage failure is reported",
+        );
+        if (viewport.width < 1024) await p.keyboard.press("Escape");
+        await until(
+          () => button(p, "Start practice").isEnabled(),
+          "Unsaved in-memory score stays playable",
+        );
+        await p.screenshot({
+          path: `${out}/${viewport.width}-automatic-settings.png`,
+        });
+        return {
+          noApply: true,
+          validAutomaticSave: true,
+          incompleteEditsPreserveSaved: true,
+          resetAndReload: true,
+          lockedDuringPractice: true,
+          storageFailurePlayable: true,
+        };
+      } finally {
+        await c.close();
+      }
+    });
+  }
   await test("meters, dotted notes, triplets and full tempo range", async () => {
     const evidence = [];
     const { c, p } = await context(browser, { width: 390, height: 844 });
@@ -436,16 +606,19 @@ async function clean(p) {
           exact: true,
         });
         await tempo.fill("181");
+        assert.equal(await button(p, "Start practice").isEnabled(), false);
         assert.equal(
-          await scope
-            .getByRole("button", { name: "Apply", exact: true })
-            .isEnabled(),
-          false,
+          await p.evaluate(
+            (key) => JSON.parse(localStorage.getItem(key)).bpm,
+            key,
+          ),
+          72,
+          "Invalid tempo is never saved",
         );
         await scope.getByRole("alert").waitFor();
         await tempo.fill("72");
         assert.equal(await scope.getByRole("alert").count(), 0);
-        await scope.getByRole("button", { name: "Apply", exact: true }).click();
+        await p.keyboard.press("Escape");
         await until(
           () => button(p, "Start practice").isEnabled(),
           "Rhythm score ready",
@@ -533,7 +706,7 @@ async function clean(p) {
         assert.equal(await bell.isChecked(), false);
         await metronome.check();
         await bell.check();
-        await panel.getByRole("button", { name: "Apply", exact: true }).click();
+        if (viewport.width < 1024) await p.keyboard.press("Escape");
         await until(
           () => button(p, "Start practice").isEnabled(),
           "New score ready",
@@ -590,7 +763,7 @@ async function clean(p) {
         }
         assert.ok(
           samples[2].x < samples[0].x - 20,
-          "Preview moves real engraving",
+          `Preview moves real engraving: ${JSON.stringify(samples)}`,
         );
         const cues = await p.evaluate(() => window.__mic.cues);
         const piano = await p.evaluate(() => window.__mic.piano);
@@ -670,6 +843,22 @@ async function clean(p) {
             .getByRole("alert")
             .filter({ hasText: "Could not play the example" })
             .waitFor();
+          await button(p, "Settings").click();
+          const panel = p.getByRole("dialog");
+          const tempo = panel.getByRole("spinbutton", {
+            name: "Tempo (BPM)",
+            exact: true,
+          });
+          await tempo.fill("");
+          await panel.getByRole("alert").waitFor();
+          await p.keyboard.press("Escape");
+          assert.equal(await button(p, "Try again").isEnabled(), false);
+          assert.equal(await button(p, "Play example").isEnabled(), false);
+          assert.equal(await button(p, "Start practice").isEnabled(), false);
+          await button(p, "Settings").click();
+          await tempo.fill("72");
+          await p.keyboard.press("Escape");
+          assert.equal(await button(p, "Try again").isEnabled(), true);
           await c.unroute("**/sonivox.sf2");
           await button(p, "Try again").click();
           await until(
@@ -979,9 +1168,7 @@ async function clean(p) {
       await settingsDialog
         .getByRole("combobox", { name: "Highest note", exact: true })
         .selectOption("67");
-      await settingsDialog
-        .getByRole("button", { name: "Apply", exact: true })
-        .click();
+      await p.keyboard.press("Escape");
       await until(
         () => button(p, "Start practice").isEnabled(),
         "New score ready",
@@ -1177,9 +1364,12 @@ async function clean(p) {
           viewport.width < 1024
             ? p.getByRole("dialog")
             : p.locator("[data-practice-settings]");
-        const apply = scope.getByRole("button", { name: "Apply", exact: true });
-        await apply.scrollIntoViewIfNeeded();
-        const action = await apply.evaluate((element) => {
+        const reset = scope.getByRole("button", {
+          name: "Reset to Default",
+          exact: true,
+        });
+        await reset.scrollIntoViewIfNeeded();
+        const action = await reset.evaluate((element) => {
           const r = element.getBoundingClientRect();
           return {
             rect: r.toJSON(),

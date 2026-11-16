@@ -16,6 +16,7 @@ import type {
   TargetEvent,
 } from "../domain/performance";
 import { exerciseScore } from "@/features/melody/domain/notation";
+import { melodyQuarterWidthFor } from "@/features/melody/domain/score-layout";
 import {
   visibleLivePitchFeedback,
   type ProvisionalPitchFeedback,
@@ -31,8 +32,7 @@ import {
 } from "./score-scroll";
 import styles from "./ScoreViewport.module.css";
 
-// Native whole-note and final sixteenth bounds constrain further compaction.
-export const melodyQuarterWidth = 92;
+export { melodyQuarterWidth } from "@/features/melody/domain/score-layout";
 export const stageScore = exerciseScore;
 
 /** Retained for the written-music regression oracle, independent of viewport layout. */
@@ -94,6 +94,7 @@ export default function ScoreViewport({
   const [render, setRender] = useState<NotationRenderResult | null>(null);
   const [systemReducedMotion, setSystemReducedMotion] = useState(false);
   const reviewing = reviewable && !active;
+  const quarterWidth = melodyQuarterWidthFor(stage);
   useLayoutEffect(() => {
     // A review offset must never displace the fixed playhead on the next attempt.
     if (!reviewing && viewport.current) viewport.current.scrollLeft = 0;
@@ -101,11 +102,9 @@ export default function ScoreViewport({
   const score = useMemo(
     () => ({
       ...stageScore(stage),
-      ...(timeSpacing
-        ? { timeSpacing: { quarterWidth: melodyQuarterWidth } }
-        : {}),
+      ...(timeSpacing ? { timeSpacing: { quarterWidth } } : {}),
     }),
-    [stage, timeSpacing],
+    [stage, timeSpacing, quarterWidth],
   );
   const visualTargets = useMemo(
     () =>
@@ -143,7 +142,7 @@ export default function ScoreViewport({
     // Reserve the complete time-spaced rail before rendering. Growing it from
     // the first render's bounds would remount the engine after reporting Ready.
     timeSpacing
-      ? 512 + stage.measures * beatsPerMeasure(stage) * melodyQuarterWidth * 2
+      ? 512 + stage.measures * beatsPerMeasure(stage) * quarterWidth * 2
       : 320 + stage.events.length * 100,
     Math.ceil(render?.contentWidth ?? 0),
   );

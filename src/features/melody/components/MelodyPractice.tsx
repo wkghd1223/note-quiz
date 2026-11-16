@@ -46,6 +46,11 @@ export default function MelodyPractice() {
     defaultMelodySettings,
   );
   const [draft, setDraft] = useState<MelodySettings>(defaultMelodySettings);
+  const appliedSettingsKey = useRef(JSON.stringify(defaultMelodySettings));
+  const settingsValid = useMemo(
+    () => validateMelodySettings(draft).valid,
+    [draft],
+  );
   const [seed, setSeed] = useState(1),
     [hydrated, setHydrated] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false),
@@ -133,6 +138,7 @@ export default function MelodyPractice() {
       );
       setSettings(restored);
       setDraft(restored);
+      appliedSettingsKey.current = JSON.stringify(restored);
     } catch {
       setStorageWarning(true);
     }
@@ -150,7 +156,13 @@ export default function MelodyPractice() {
     pause();
   }, [pause]);
   const begin = () => {
-    if (!hydrated || readyId !== exercise.id || notationError || session.busy)
+    if (
+      !hydrated ||
+      !settingsValid ||
+      readyId !== exercise.id ||
+      notationError ||
+      session.busy
+    )
       return;
     setSettingsOpen(false);
     session.start({
@@ -167,20 +179,29 @@ export default function MelodyPractice() {
     setSeed((previous) => (previous + 1) >>> 0);
   };
   const resetSession = session.reset;
-  const apply = useCallback(() => {
-    const validation = validateMelodySettings(draft);
-    if (!validation.valid || locked) return;
-    resetSession();
-    setSettings(validation.settings);
-    setSeed((previous) => (previous + 1) >>> 0);
-    setSettingsOpen(false);
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(validation.settings));
-      setStorageWarning(false);
-    } catch {
-      setStorageWarning(true);
-    }
-  }, [draft, locked, resetSession]);
+  const changeSettings = useCallback(
+    (next: MelodySettings) => {
+      if (!hydrated || locked) return;
+      // Editing may temporarily leave a blank tempo or an incomplete range.
+      // Keep the last playable score until the complete settings are valid.
+      setDraft(next);
+      const validation = validateMelodySettings(next);
+      if (!validation.valid) return;
+      const serialized = JSON.stringify(validation.settings);
+      if (serialized === appliedSettingsKey.current) return;
+      resetSession();
+      appliedSettingsKey.current = serialized;
+      setSettings(validation.settings);
+      setSeed((previous) => (previous + 1) >>> 0);
+      try {
+        localStorage.setItem(storageKey, serialized);
+        setStorageWarning(false);
+      } catch {
+        setStorageWarning(true);
+      }
+    },
+    [hydrated, locked, resetSession],
+  );
   const error = session.audioError;
   const errorText = session.previewFailed
     ? m.previewError
@@ -256,7 +277,11 @@ export default function MelodyPractice() {
                           : t.startGame,
                       onClick: begin,
                       tone: "primary",
-                      disabled: !hydrated || !notationReady || session.busy,
+                      disabled:
+                        !hydrated ||
+                        !settingsValid ||
+                        !notationReady ||
+                        session.busy,
                     },
                     {
                       id: "preview",
@@ -267,6 +292,7 @@ export default function MelodyPractice() {
                       onClick: () => void session.example(),
                       disabled:
                         !hydrated ||
+                        !settingsValid ||
                         !notationReady ||
                         (session.busy && !session.previewPreparing),
                     },
@@ -305,7 +331,11 @@ export default function MelodyPractice() {
                       id: "retry",
                       label: m.retry,
                       onClick: begin,
-                      disabled: !hydrated || !notationReady || session.busy,
+                      disabled:
+                        !hydrated ||
+                        !settingsValid ||
+                        !notationReady ||
+                        session.busy,
                     },
                   ],
                 }}
@@ -354,7 +384,12 @@ export default function MelodyPractice() {
                   onClick={
                     session.previewFailed ? () => void session.example() : begin
                   }
-                  disabled={session.busy || notationError}
+                  disabled={
+                    !hydrated ||
+                    !settingsValid ||
+                    !notationReady ||
+                    session.busy
+                  }
                   className="mt-2 min-h-11 rounded-lg border border-red-300 px-3 font-bold"
                 >
                   {c.retry}
@@ -515,7 +550,7 @@ export default function MelodyPractice() {
               <button
                 type="button"
                 onClick={next}
-                disabled={!hydrated || locked}
+                disabled={!hydrated || !settingsValid || locked}
                 className={secondaryButton}
               >
                 {m.next}
@@ -541,9 +576,8 @@ export default function MelodyPractice() {
           >
             <MelodySettingsPanel
               value={draft}
-              onChange={setDraft}
-              onApply={apply}
-              disabled={locked}
+              onChange={changeSettings}
+              disabled={!hydrated || locked}
             />
           </SettingsSurface>
         </div>

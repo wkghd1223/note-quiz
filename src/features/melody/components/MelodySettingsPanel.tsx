@@ -20,12 +20,10 @@ export const pitchName = (midi: number) =>
 function MelodySettingsPanel({
   value,
   onChange,
-  onApply,
   disabled,
 }: {
   value: MelodySettings;
   onChange: (value: MelodySettings) => void;
-  onApply: () => void;
   disabled: boolean;
 }) {
   const { t, language } = useTranslation(),
@@ -207,29 +205,18 @@ function MelodySettingsPanel({
           {c.invalid}
         </p>
       )}
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={() =>
-            onChange({
-              ...defaultMelodySettings,
-              durations: [...defaultMelodySettings.durations],
-            })
-          }
-          className="min-h-11 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold"
-        >
-          {t.settingsLabels.resetToDefault}
-        </button>
-        <button
-          type="button"
-          disabled={!valid}
-          onClick={onApply}
-          aria-describedby={!valid ? `${id}-error` : undefined}
-          className="min-h-11 rounded-lg bg-violet-800 px-3 py-2 text-sm font-bold text-white disabled:bg-slate-200 disabled:text-slate-500"
-        >
-          {t.settingsLabels.apply}
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() =>
+          onChange({
+            ...defaultMelodySettings,
+            durations: [...defaultMelodySettings.durations],
+          })
+        }
+        className="min-h-11 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold"
+      >
+        {t.settingsLabels.resetToDefault}
+      </button>
     </fieldset>
   );
 }
