@@ -27,6 +27,14 @@ export const initialLivePitchFeedback: LivePitchFeedbackState = {
   feedback: null,
 };
 
+export interface LivePitchFeedbackInput {
+  frame: InputFrame | null;
+  target: TargetEvent | null;
+  profile: ScoringProfile;
+  elapsedSec: number;
+  enabled: boolean;
+}
+
 // UI frames arrive roughly every 50 ms. Clear missing input after four frames;
 // compare elapsed-clock deltas, never absolute capture and playback clocks.
 const staleAfterSec = 0.2;
@@ -37,19 +45,7 @@ const staleAfterSec = 0.2;
  */
 export function updateLivePitchFeedback(
   previous: LivePitchFeedbackState,
-  {
-    frame,
-    target,
-    profile,
-    elapsedSec,
-    enabled,
-  }: {
-    frame: InputFrame | null;
-    target: TargetEvent | null;
-    profile: ScoringProfile;
-    elapsedSec: number;
-    enabled: boolean;
-  },
+  { frame, target, profile, elapsedSec, enabled }: LivePitchFeedbackInput,
 ): LivePitchFeedbackState {
   const frameAudioSec =
     frame && Number.isFinite(frame.audioTimeSec) ? frame.audioTimeSec : null;

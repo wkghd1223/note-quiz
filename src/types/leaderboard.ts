@@ -38,7 +38,8 @@ export interface SessionScoreResponse {
 }
 
 export interface LeaderboardResponse {
-  viewerCountry: LeaderboardCountry;
+  /** Legacy responses may include this; public rankings do not locate viewers. */
+  viewerCountry?: LeaderboardCountry;
   periodDate: string;
   entries: LeaderboardEntry[];
 }

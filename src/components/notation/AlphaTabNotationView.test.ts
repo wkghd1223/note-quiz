@@ -213,6 +213,31 @@ function color(api: ApiProbe, call: number) {
 }
 
 describe("optional renderer lifecycle", () => {
+  it("scales horizontal glyphs and reported cursor bounds together", async () => {
+    const onRender = vi.fn();
+    render({
+      score: score(),
+      layout: "horizontal",
+      horizontalScale: 0.85,
+      width: 1200,
+      height: 176,
+      onRender,
+    });
+    await vi.waitFor(() =>
+      expect(harness.apis[0]?.renderScore).toHaveBeenCalledOnce(),
+    );
+    finish(harness.apis[0], 1000, 172);
+    expect(host.style.transform).toContain("scale(0.85)");
+    expect(Number(host.style.transform.match(/, ([\d.]+)px/)?.[1])).toBeCloseTo(
+      14.9,
+    );
+    expect(onRender.mock.calls[0][0]).toMatchObject({
+      width: 1200,
+      height: 176,
+      contentWidth: 850,
+    });
+  });
+
   it("keeps default fitted page geometry and staff contrast", async () => {
     render({ score: score(), width: 620, height: 260 });
     await vi.waitFor(() => expect(harness.apis).toHaveLength(1));

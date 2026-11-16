@@ -147,6 +147,7 @@ export default function ScoreViewport({
       : 320 + stage.events.length * 100,
     Math.ceil(render?.contentWidth ?? 0),
   );
+  const scoreHeight = timeSpacing ? 176 : 200;
   const position = render
     ? scoreCursorPosition(
         visualTargets,
@@ -157,7 +158,9 @@ export default function ScoreViewport({
         scorePreRoll,
       )
     : { x: 0, barIndex: 0, rewinding: false };
-  const playheadX = Math.min(160, Math.max(100, width * 0.3));
+  const playheadX = timeSpacing
+    ? Math.min(240, Math.max(140, width * 0.55))
+    : Math.min(160, Math.max(100, width * 0.3));
   const provisional = visibleLivePitchFeedback(
     active && !finished && !scorePreRoll ? provisionalFeedback : null,
     targets,
@@ -234,8 +237,9 @@ export default function ScoreViewport({
         )}
         <div
           data-score-rail
-          className="relative h-[200px] shrink-0"
+          className="relative shrink-0"
           style={{
+            height: scoreHeight,
             // Keep the renderer's reserved width stable, but don't make review
             // scroll through its unused preparation space after the final bar.
             width: reviewing
@@ -250,8 +254,9 @@ export default function ScoreViewport({
           <AlphaTabNotationView
             score={score}
             width={scoreWidth}
-            height={200}
+            height={scoreHeight}
             layout="horizontal"
+            horizontalScale={timeSpacing ? 0.85 : 1}
             eventColors={colors}
             accessibleLabel={description}
             className="block"

@@ -6,10 +6,6 @@ import PracticeMetrics from "@/components/practice/PracticeMetrics";
 import PracticeResultSurface, {
   usePracticeResultSurface,
 } from "@/components/practice/PracticeResultSurface";
-import {
-  initialLivePitchFeedback,
-  updateLivePitchFeedback,
-} from "../domain/live-feedback";
 import Header from "@/components/layouts/header";
 import Footer from "@/components/layouts/footer";
 import AdLayoutObserver from "@/components/practice/AdLayoutObserver";
@@ -24,6 +20,7 @@ import {
   getScoringProfile,
 } from "@/features/challenge/domain/instrument-profile";
 import { useLiveResult } from "../hooks/useLiveResult";
+import { useLivePitchFeedback } from "../hooks/useLivePitchFeedback";
 import { useMelodyAnalytics } from "../hooks/useMelodyAnalytics";
 import { challengeCopy } from "@/features/challenge/i18n";
 import ScoreViewport from "@/features/challenge/components/ScoreViewport";
@@ -72,7 +69,6 @@ export default function MelodyPractice() {
     () => getScoringProfile(exercise, "voice"),
     [exercise],
   );
-  const [pitchFeedback, setPitchFeedback] = useState(initialLivePitchFeedback);
   const player = useRef<HTMLElement>(null);
   const running = s.phase === "countIn" || s.phase === "playing";
   const active = running || s.phase === "paused" || s.phase === "evaluating";
@@ -105,25 +101,16 @@ export default function MelodyPractice() {
     playback.targets.find(
       (event) => event.endAudioSec > session.elapsed + 1e-7,
     ) ?? playback.targets.at(-1)!;
-  useEffect(() => {
-    setPitchFeedback((previous) =>
-      updateLivePitchFeedback(previous, {
-        frame: session.frame,
-        target,
-        profile: scoringProfile,
-        elapsedSec: session.elapsed,
-        enabled: s.phase === "playing" && !session.previewing,
-      }),
-    );
-  }, [
-    session.frame,
-    session.elapsed,
-    session.previewing,
-    s.phase,
+  const pitchFeedback = useLivePitchFeedback(
+    {
+      frame: session.frame,
+      target,
+      profile: scoringProfile,
+      elapsedSec: session.elapsed,
+      enabled: s.phase === "playing" && !session.previewing,
+    },
     s.attemptToken,
-    target,
-    scoringProfile,
-  ]);
+  );
   const targetEvent = exercise.events.find(
     (event) => event.id === (target.sourceEventId ?? target.stageEventId),
   );
@@ -179,10 +166,11 @@ export default function MelodyPractice() {
     session.reset();
     setSeed((previous) => (previous + 1) >>> 0);
   };
-  const apply = () => {
+  const resetSession = session.reset;
+  const apply = useCallback(() => {
     const validation = validateMelodySettings(draft);
     if (!validation.valid || locked) return;
-    session.reset();
+    resetSession();
     setSettings(validation.settings);
     setSeed((previous) => (previous + 1) >>> 0);
     setSettingsOpen(false);
@@ -192,7 +180,7 @@ export default function MelodyPractice() {
     } catch {
       setStorageWarning(true);
     }
-  };
+  }, [draft, locked, resetSession]);
   const error = session.audioError;
   const errorText = session.previewFailed
     ? m.previewError
@@ -389,7 +377,7 @@ export default function MelodyPractice() {
             ) : (
               <ScoreViewport
                 timeSpacing
-                provisionalFeedback={pitchFeedback.feedback}
+                provisionalFeedback={pitchFeedback}
                 footerFeedback={
                   (s.phase === "countIn" || s.phase === "paused") && (
                     <p

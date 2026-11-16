@@ -1,5 +1,5 @@
 "use client";
-import { useId } from "react";
+import { memo, useId } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { CLEFS, KEY_SIGNATURES } from "@/lib/music/constants";
 import SegmentedControl from "@/components/ui/SegmentedControl";
@@ -17,7 +17,7 @@ import {
 
 export const pitchName = (midi: number) =>
   `${["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"][midi % 12]}${Math.floor(midi / 12) - 1}`;
-export default function MelodySettingsPanel({
+function MelodySettingsPanel({
   value,
   onChange,
   onApply,
@@ -233,3 +233,5 @@ export default function MelodySettingsPanel({
     </fieldset>
   );
 }
+
+export default memo(MelodySettingsPanel);

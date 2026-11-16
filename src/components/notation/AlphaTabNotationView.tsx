@@ -29,6 +29,8 @@ export interface AlphaTabNotationViewProps {
   style?: React.CSSProperties;
   /** Page preserves the legacy fitted geometry; horizontal is a left-aligned rail. */
   layout?: NotationLayout;
+  /** Maximum scale of a horizontal rail; bounds and glyphs use the same scale. */
+  horizontalScale?: number;
   /** One-question practice bars: native weighted layout with a useful physical staff length. */
   fittedBasic?: boolean;
   /** Written event IDs, independent of repeated playback occurrences. */
@@ -48,6 +50,7 @@ export default function AlphaTabNotationView({
   className,
   style,
   layout = "page",
+  horizontalScale = 1,
   fittedBasic = false,
   eventColors,
   onRender,
@@ -268,7 +271,7 @@ export default function AlphaTabNotationView({
             return;
           }
           const fittedScale = Math.min(
-            layout === "horizontal" ? 1 : width / totalWidth,
+            layout === "horizontal" ? horizontalScale : width / totalWidth,
             viewportHeight / totalHeight,
           );
           const { scale, dx, dy } = lines
@@ -371,7 +374,7 @@ export default function AlphaTabNotationView({
       api?.destroy();
       element.replaceChildren();
     };
-  }, [width, height, layout, timeSpacing, basicFit]);
+  }, [width, height, layout, timeSpacing, basicFit, horizontalScale]);
 
   useEffect(() => {
     update.current();
