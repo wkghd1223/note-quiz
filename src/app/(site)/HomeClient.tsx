@@ -9,7 +9,6 @@ import {
   FaWaveSquare,
 } from "react-icons/fa";
 import { useTranslation } from "@/hooks/useTranslation";
-import Header from "@/components/layouts/header";
 import { localizedHref } from "@/lib/i18n/locale";
 import { homeCopy } from "@/lib/i18n/home";
 import { challengeEnabled } from "@/features/challenge/config";
@@ -22,12 +21,7 @@ export default function HomePage() {
   const copy = homeCopy(language, challengeEnabled);
 
   return (
-    <div className="app-shell min-h-screen bg-[#f6f7fb] text-slate-950">
-      <div className="border-b border-slate-200 bg-white">
-        <div className="mx-auto w-full max-w-6xl px-3 py-3 sm:px-4">
-          <Header variant="compact" />
-        </div>
-      </div>
+    <div>
       <main className="mx-auto w-full min-w-0 max-w-6xl px-3 pb-10 pt-5 sm:px-4 sm:pt-8">
         <section aria-labelledby="home-heading">
           <div className="mb-4 sm:mb-6">
@@ -75,7 +69,7 @@ export default function HomePage() {
                       aria-hidden="true"
                       className="mt-0.5 shrink-0 text-sm text-violet-800"
                     />
-                    <span className="min-w-0">
+                    <span className="min-w-0 [overflow-wrap:anywhere]">
                       <span className="block text-sm font-bold text-violet-900">
                         {t.learning[mode]}
                       </span>

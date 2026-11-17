@@ -26,12 +26,14 @@ export default function Header({ variant = "default" }: HeaderProps) {
   const path = stripLocale(usePathname());
   const items = [
     ["/", t.navigation.home],
-    ["/practice", t.navigation.practice],
+    ["/practice/note", t.navigation.practice],
     ...(challengeEnabled ? [["/melody", t.navigation.melody]] : []),
   ];
 
   const active = (href: string) =>
-    path === href || (href === "/practice" && path.startsWith("/practice/"));
+    path === href ||
+    (href === "/practice/note" &&
+      (path === "/practice" || path.startsWith("/practice/")));
 
   return (
     <header className={headerClasses[variant]}>

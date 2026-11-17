@@ -2,7 +2,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import "@/styles/globals.css";
-import GlobalFooter from "@/components/layouts/GlobalFooter";
+import SiteShell from "@/components/layouts/SiteShell";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import GoogleAnalyticsRouteTracker from "@/components/analytics/GoogleAnalyticsRouteTracker";
 import LanguageInitializer from "@/components/providers/LanguageInitializer";
@@ -42,8 +42,7 @@ export default function RootDocument({
       >
         <LanguageInitializer />
         <GoogleAnalyticsRouteTracker />
-        {children}
-        <GlobalFooter />
+        <SiteShell>{children}</SiteShell>
       </body>
     </html>
   );

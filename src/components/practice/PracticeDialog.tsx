@@ -34,6 +34,7 @@ export default function PracticeDialog({
     const previousOverflowX = document.body.style.overflowX;
     const previousOverflowY = document.body.style.overflowY;
     const { scrollX, scrollY } = window;
+    const pathname = window.location.pathname;
     const workspace = document.querySelector<HTMLElement>(
       "[data-practice-scroll]",
     );
@@ -50,17 +51,22 @@ export default function PracticeDialog({
     closeButtonRef.current?.focus({ preventScroll: true });
 
     return () => {
+      const samePage = window.location.pathname === pathname;
       dialog.close();
       document.body.style.overflowX = previousOverflowX;
       document.body.style.overflowY = previousOverflowY;
       if (workspace && previousWorkspace) {
         workspace.style.overflowY = previousWorkspace.overflow;
-        workspace.scrollTo({
-          top: previousWorkspace.top,
-          left: previousWorkspace.left,
-          behavior: "instant",
-        });
+        if (samePage)
+          workspace.scrollTo({
+            top: previousWorkspace.top,
+            left: previousWorkspace.left,
+            behavior: "instant",
+          });
       }
+      // A persistent workspace may already contain another route. Unlock it,
+      // then leave that route's focus and scroll to the navigation handler.
+      if (!samePage) return;
       const returnTarget =
         preferredFocus?.isConnected &&
         preferredFocus.getClientRects().length > 0 &&

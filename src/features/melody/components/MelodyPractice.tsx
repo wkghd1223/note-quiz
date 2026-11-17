@@ -6,9 +6,6 @@ import PracticeMetrics from "@/components/practice/PracticeMetrics";
 import PracticeResultSurface, {
   usePracticeResultSurface,
 } from "@/components/practice/PracticeResultSurface";
-import Header from "@/components/layouts/header";
-import Footer from "@/components/layouts/footer";
-import AdLayoutObserver from "@/components/practice/AdLayoutObserver";
 import SettingsSurface from "@/components/practice/SettingsSurface";
 import { useTranslation } from "@/hooks/useTranslation";
 import MicrophoneSignalDisplay from "@/components/game/MicrophoneSignal";
@@ -213,18 +210,7 @@ export default function MelodyPractice() {
           ? m.unsupported
           : m.audioError;
   return (
-    <div
-      data-practice-scroll
-      data-melody-scroll
-      data-melody-phase={s.phase}
-      className="practice-ad-safe bg-[#f6f7fb] text-slate-950"
-    >
-      <AdLayoutObserver />
-      <div className="border-b border-slate-200 bg-white">
-        <div className="mx-auto w-full max-w-6xl px-3 py-3 sm:px-4">
-          <Header variant="compact" />
-        </div>
-      </div>
+    <div data-melody-scroll data-melody-phase={s.phase}>
       <main className="mx-auto grid w-full min-w-0 max-w-6xl gap-4 px-3 py-4 sm:px-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
@@ -582,7 +568,6 @@ export default function MelodyPractice() {
           </SettingsSurface>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

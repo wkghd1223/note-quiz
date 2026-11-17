@@ -87,7 +87,7 @@ const waitFor = async (predicate, message) => {
       page.locator("[data-practice-mode] input:checked").inputValue();
     const go = async (href) => {
       const response = await page.goto(new URL(href, baseURL).toString(), {
-        waitUntil: "domcontentloaded",
+        waitUntil: "load",
       });
       await page.locator("[data-practice-mode]").waitFor();
       return response;
@@ -423,7 +423,7 @@ const waitFor = async (predicate, message) => {
       assert.equal(new URL(page.url()).hash, "#history");
       if (viewport.width < 1024)
         assert.equal(new URL(page.url()).searchParams.get("settings"), "open");
-      await page.reload({ waitUntil: "domcontentloaded" });
+      await page.reload({ waitUntil: "load" });
       await page.locator("[data-practice-mode]").waitFor();
       panel = await openSettings();
       assert.equal(
@@ -464,7 +464,7 @@ const waitFor = async (predicate, message) => {
       assert.equal(new URL(page.url()).hash, "#history");
       if (viewport.width < 1024)
         assert.equal(new URL(page.url()).searchParams.get("settings"), "open");
-      await page.reload({ waitUntil: "domcontentloaded" });
+      await page.reload({ waitUntil: "load" });
       await page.locator("[data-practice-mode]").waitFor();
       panel = await openSettings();
       intro = panel.locator("[data-practice-settings-intro]");
@@ -546,7 +546,7 @@ const waitFor = async (predicate, message) => {
           }),
         );
       });
-      await page.reload({ waitUntil: "domcontentloaded" });
+      await page.reload({ waitUntil: "load" });
       const trigger = page.locator("[data-practice-history-trigger]");
       await trigger.waitFor();
       assert.equal(

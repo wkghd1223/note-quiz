@@ -173,7 +173,12 @@ const report = {
           "hidden",
         );
         await page.goto(`${base}/ko`);
-        await page.getByRole("combobox").selectOption("de");
+        await page
+          .locator("header .language-selector button[aria-haspopup=dialog]")
+          .click();
+        await page
+          .getByRole("menuitemradio", { name: "Deutsch", exact: true })
+          .click();
         await page.waitForURL("**/de");
         assert.match(
           await page.locator("#home-heading").textContent(),

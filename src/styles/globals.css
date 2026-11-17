@@ -35,6 +35,12 @@
 
 html {
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+}
+
+/* Study pages reserve the gutter on their single internal scroll owner. */
+html:has(.practice-ad-safe) {
+  scrollbar-gutter: auto;
 }
 
 body {
