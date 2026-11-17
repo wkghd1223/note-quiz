@@ -195,7 +195,9 @@ export function scoreNoteColors(
     else if (
       scoreRests &&
       target.kind === "rest" &&
-      elapsed >= target.endAudioSec + 0.12
+      (result.settledRestIds
+        ? result.settledRestIds.includes(target.stageEventId)
+        : elapsed >= target.endAudioSec + 0.12)
     ) {
       colors[target.sourceEventId] = result.restViolations.includes(
         target.stageEventId,

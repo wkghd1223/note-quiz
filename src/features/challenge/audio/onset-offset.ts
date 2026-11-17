@@ -20,6 +20,7 @@ export class NoteEventDetector {
   private active: ActiveSound | null = null;
   private serial = 0;
   private lastTime = -Infinity;
+  private lastPitchTime = -Infinity;
   private noiseFloor = 0.003;
   private prefix = "mic";
 
@@ -27,8 +28,16 @@ export class NoteEventDetector {
     this.active = null;
     this.serial = 0;
     this.lastTime = -Infinity;
+    this.lastPitchTime = -Infinity;
     this.prefix = prefix;
     this.noiseFloor = Math.max(0.001, Math.min(0.04, noiseFloor));
+  }
+
+  /** All sounds starting before this audio time have emitted their final event. */
+  get finalizedBeforeAudioSec(): number {
+    // A legato change can be backdated to the pitch-window center. An open
+    // sound can still change its measured length, so never finalize past it.
+    return Math.min(this.lastPitchTime, this.active?.onset ?? Infinity);
   }
 
   accept(
@@ -53,6 +62,7 @@ export class NoteEventDetector {
     const pitchTime = Number.isFinite(frame.pitchAudioTimeSec)
       ? Math.min(frame.audioTimeSec, frame.pitchAudioTimeSec!)
       : frame.audioTimeSec;
+    this.lastPitchTime = pitchTime;
     const sample = {
       audioTimeSec: pitchTime,
       midi: reliable ? pitch.midi : null,

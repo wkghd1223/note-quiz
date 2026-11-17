@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
-// Isolated real React fixture. Instruments scorer calls in a temporary bundle only.
-// No application server, microphone, storage or external request is used.
+// Real React + Zustand + production scorer in an isolated bundle. Capture
+// progress is explicit synthetic metadata; no microphone or acoustic claims.
 const fs = require("node:fs");
 const path = require("node:path");
 const assert = require("node:assert/strict");
@@ -13,20 +13,18 @@ const root = path.resolve(__dirname, "..");
       resolveDir: root,
       loader: "tsx",
       contents: `
-        import React, { useEffect, useState } from "react";
+        import React, { useEffect } from "react";
         import { createRoot } from "react-dom/client";
-        import { useLiveResult } from "@/features/melody/hooks/useLiveResult";
-        import { getScoringProfile } from "@/features/challenge/domain/instrument-profile";
+        import { createChallengeStore } from "@/features/challenge/store/challengeStore";
         import { generateMelody } from "@/features/melody/domain/generator";
         import { defaultMelodySettings } from "@/features/melody/domain/settings";
-        const profile = getScoringProfile(generateMelody(defaultMelodySettings, 1), "voice");
+        const melody = generateMelody({ ...defaultMelodySettings, bpm: 60,
+          durations: [1], minMidi: 60, maxMidi: 60 }, 1);
+        const store = createChallengeStore(melody);
         function Fixture() {
-          const [input, setInput] = useState({ active: true, events: [], profile, elapsed: 0, held: 0,
-            targets: [{ stageEventId: "n1", targetConcertMidi: 60, startAudioSec: 0,
-              endAudioSec: 1, kind: "note", requiresDistinctAttack: false }] });
-          const result = useLiveResult(input.active, input.events, input.targets,
-            input.profile, input.elapsed, input.held);
-          useEffect(() => { window.fixture = { setInput, input, result }; });
+          const result = store(state => state.liveResult);
+          globalThis.__renders = (globalThis.__renders || 0) + 1;
+          useEffect(() => { window.fixture = { store, melody, result }; });
           return <output>{JSON.stringify(result?.notes ?? null)}</output>;
         }
         createRoot(document.getElementById("root")).render(<Fixture />);
@@ -71,100 +69,93 @@ const root = path.resolve(__dirname, "..");
     await page.setContent('<div id="root"></div>');
     await page.addScriptTag({ content: bundle.outputFiles[0].text });
     await page.waitForFunction(() => !!window.fixture);
-    const inspect = () =>
-      page.evaluate(() => ({
-        calls: window.__scoreCalls,
-        notes: window.fixture.result?.notes.map((note) => note.status) ?? null,
-      }));
-    assert.deepEqual(await inspect(), { calls: 1, notes: [] });
-    // Each update is a separate browser paint, not a single React-batched loop.
+    await page.evaluate(() => {
+      const { store, melody } = window.fixture;
+      const options = {
+        stageId: melody.id,
+        profileId: "voice",
+        inputMethod: "microphone",
+        mode: "challenge",
+      };
+      const token = store.getState().startAttempt(options);
+      store.getState().beginPlaying(token, 10);
+      const segment = store.getState().segmentToken;
+      store.getState().addEvent(token, segment, {
+        eventId: "first",
+        inputMethod: "microphone",
+        onsetAudioSec: 10,
+        offsetAudioSec: 11,
+        observedMidi: 60,
+        medianCents: 0,
+        validPitchRatio: 1,
+        confidence: 1,
+        attackConfidence: 1,
+      });
+      window.attempt = { token, segment, options };
+    });
     for (let tick = 1; tick <= 60; tick++) {
-      await page.evaluate(
-        (elapsed) => window.fixture.setInput((old) => ({ ...old, elapsed })),
-        tick / 30,
-      );
-      await page.waitForFunction(
-        (elapsed) => window.fixture.input.elapsed === elapsed,
-        tick / 30,
-      );
+      await page.evaluate((tick) => {
+        const { token, segment } = window.attempt;
+        // The first input is closed. The next sound is still open at 11.01;
+        // output/RAF time alone must not declare it missed or rejudge history.
+        window.fixture.store
+          .getState()
+          .advanceJudgments(token, segment, 10 + tick / 30, 11.01);
+      }, tick);
+      await page.evaluate(() => new Promise(requestAnimationFrame));
     }
-    const clockOnly = await inspect();
-    assert.deepEqual(clockOnly, { calls: 1, notes: ["missed"] });
-    await page.evaluate(() =>
-      window.fixture.setInput((old) => ({ ...old, held: 1 })),
-    );
-    await page.waitForFunction(() => window.fixture.input.held === 1);
-    assert.deepEqual(await inspect(), { calls: 1, notes: [] });
-    await page.evaluate(() =>
-      window.fixture.setInput((old) => ({
-        ...old,
-        events: [
-          {
-            eventId: "input",
-            inputMethod: "microphone",
-            onsetAudioSec: 0,
-            offsetAudioSec: 1,
-            observedMidi: 60,
-            medianCents: 0,
-            validPitchRatio: 1,
-            confidence: 1,
-            attackConfidence: 1,
-          },
-        ],
-      })),
-    );
-    await page.waitForFunction(
-      () => window.fixture.result?.notes[0]?.status === "passed",
-    );
-    assert.deepEqual(await inspect(), { calls: 2, notes: ["passed"] });
-    await page.evaluate(() =>
-      window.fixture.setInput((old) => ({
-        ...old,
-        targets: old.targets.map((target) => ({
-          ...target,
-          targetConcertMidi: 62,
-        })),
-      })),
-    );
-    await page.waitForFunction(
-      () => window.fixture.result?.notes[0]?.status === "failed",
-    );
-    assert.equal((await inspect()).calls, 3);
-    await page.evaluate(() =>
-      window.fixture.setInput((old) => ({
-        ...old,
-        profile: { ...old.profile, supported: false },
-      })),
-    );
-    await page.waitForFunction(() => window.fixture.result?.unscorable);
-    assert.equal((await inspect()).calls, 4);
-    await page.evaluate(() =>
-      window.fixture.setInput((old) => ({ ...old, active: false })),
-    );
+    await page.waitForFunction(() => window.fixture.result?.notes.length === 1);
+    const afterClock = await page.evaluate(() => ({
+      calls: window.__scoreCalls || 0,
+      renders: window.__renders,
+      statuses: window.fixture.result.notes.map((note) => note.status),
+    }));
+    assert.deepEqual(afterClock, {
+      calls: 1,
+      renders: 2,
+      statuses: ["passed"],
+    });
+    const lifecycle = await page.evaluate(() => {
+      const { store } = window.fixture;
+      const { token, segment, options } = window.attempt;
+      const first = store.getState().liveResult.notes[0];
+      store.getState().pause(token, 11.2);
+      const pausePreserved = store.getState().liveResult.notes[0] === first;
+      store.getState().resume(token);
+      store.getState().beginPlaying(token, 50);
+      const beforeStale = store.getState().liveResult;
+      store.getState().advanceJudgments(token, segment, 999, 999);
+      const staleIgnored = store.getState().liveResult === beforeStale;
+      const result = store.getState().finish(token);
+      const finalPreserved = result.notes[0] === first;
+      store.getState().startAttempt(options);
+      return {
+        pausePreserved,
+        staleIgnored,
+        finalPreserved,
+        retryCleared: store.getState().liveResult === null,
+      };
+    });
+    assert.deepEqual(lifecycle, {
+      pausePreserved: true,
+      staleIgnored: true,
+      finalPreserved: true,
+      retryCleared: true,
+    });
     await page.waitForFunction(() => window.fixture.result === null);
-    assert.deepEqual(await inspect(), { calls: 4, notes: null });
-    await page.evaluate(() =>
-      window.fixture.setInput((old) => ({
-        ...old,
-        active: true,
-        elapsed: 0,
-        held: 0,
-        events: [],
-      })),
-    );
-    await page.waitForFunction(() => window.fixture.input.active);
-    assert.deepEqual(await inspect(), { calls: 5, notes: [] });
     assert.deepEqual(errors, []);
     console.log(
       JSON.stringify(
         {
           outcome: "passed",
           clockUpdates: 60,
-          additionalClockScoringCalls: clockOnly.calls - 1,
+          wholeAttemptRejudgments: 0,
+          committedWindowScoringCalls: afterClock.calls,
+          judgmentRenders: afterClock.renders - 1,
           realReact: true,
           realScorer: true,
-          inputTargetProfileAndRestartRecomputed: true,
-          microphone: "not used",
+          capture: "synthetic progress metadata",
+          ...lifecycle,
           errors,
         },
         null,

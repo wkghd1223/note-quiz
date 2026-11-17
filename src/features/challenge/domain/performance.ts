@@ -79,5 +79,7 @@ export interface AttemptResult {
   unscorable: boolean;
   notes: NoteResult[];
   restViolations: string[];
+  /** Present on partial live results; absent means every rest was evaluated. */
+  settledRestIds?: string[];
   breakdown: { pitch: number; duration: number; onset: number | null };
 }

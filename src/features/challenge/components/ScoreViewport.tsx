@@ -171,17 +171,17 @@ export default function ScoreViewport({
       ? matchedNoteColor
       : incorrectNoteColor
     : undefined;
-  const colorKey = JSON.stringify({
-    ...scoreNoteColors(
+  const colorKey = JSON.stringify(
+    scoreNoteColors(
       visualTargets,
       transitions,
       result,
       finished ? Infinity : elapsed,
       stage.scoring.required.includes("rest"),
     ),
-    ...(provisional ? { [provisional.sourceEventId]: provisionalColor } : {}),
-  });
-  // Render only when a judgment or provisional classification changes.
+  );
+  // Only settled judgments recolor the engraving. Live pitch changes the
+  // lightweight playhead, avoiding whole-score renders for every pitch wobble.
   const colors = useMemo<Readonly<Record<string, string>>>(
     () => JSON.parse(colorKey),
     [colorKey],

@@ -119,6 +119,48 @@ function send(time: number, rms: number, hz: number | null = 261.625565) {
 }
 
 describe("challenge microphone ownership (mocked devices, real frame analysis)", () => {
+  it("reports analyzed input progress separately from output time and waits for a held event", async () => {
+    environment();
+    const events: PerformanceEvent[] = [];
+    const session = new ChallengeAudioSession({
+      onEvent: (input) => events.push(input),
+      onFrame: () => {},
+      onError: () => {},
+    });
+    await session.connectMicrophone();
+    session.beginCollection("progress", 0);
+    expect(session.processedThroughAudioSec).toBe(-Infinity);
+    for (let i = 0; i <= 100; i++) send(i / 100, i < 10 ? 0 : 0.1);
+    expect(session.processedThroughAudioSec).toBe(1);
+    expect(session.finalizedBeforeAudioSec).toBe(0.1);
+    expect(events).toEqual([]);
+    // The output clock jumps ahead while no further PCM has arrived.
+    Object.assign(session.context, { currentTime: 9 });
+    expect(session.processedThroughAudioSec).toBe(1);
+    expect(session.finalizedBeforeAudioSec).toBe(0.1);
+    session.endCollection(true);
+    expect(events[0]).toMatchObject({ onsetAudioSec: 0.1, offsetAudioSec: 1 });
+    session.dispose();
+  });
+  it("advances the finalization frontier only after release hysteresis emits the event", async () => {
+    environment();
+    const events: PerformanceEvent[] = [];
+    const session = new ChallengeAudioSession({
+      onEvent: (input) => events.push(input),
+      onFrame: () => {},
+      onError: () => {},
+    });
+    await session.connectMicrophone();
+    session.beginCollection("progress", 0);
+    for (let i = 0; i < 100; i++) send(i / 100, 0.1);
+    for (let i = 100; i < 105; i++) send(i / 100, 0);
+    expect(session.finalizedBeforeAudioSec).toBe(0);
+    expect(events).toEqual([]);
+    for (let i = 105; i < 112; i++) send(i / 100, 0);
+    expect(events).toHaveLength(1);
+    expect(session.finalizedBeforeAudioSec).toBe(1.11);
+    session.dispose();
+  });
   it("calibrates ambient input during the count-in before scheduled collection", async () => {
     const { track } = environment();
     const events: PerformanceEvent[] = [];

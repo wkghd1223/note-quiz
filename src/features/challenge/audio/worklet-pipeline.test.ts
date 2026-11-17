@@ -13,6 +13,10 @@ import {
 } from "../domain/instrument-profile";
 import { buildScoreTimeline } from "../domain/score-timeline";
 import { scoreAttempt } from "../domain/scoring";
+import { LiveAttemptScorer } from "../domain/live-scoring";
+import { generateMelody } from "@/features/melody/domain/generator";
+import { defaultMelodySettings } from "@/features/melody/domain/settings";
+import type { NoteResult } from "../domain/performance";
 
 interface CaptureMessage {
   type: string;
@@ -39,6 +43,11 @@ function captureFixture(
   returnBuffers = true,
   amplitudeAt: (seconds: number) => number = () => 0.2,
   sampleAt?: (seconds: number, phase: number) => number,
+  onProgress?: (
+    events: PerformanceEvent[],
+    finalizedBeforeSec: number,
+    elapsedSec: number,
+  ) => void,
 ) {
   const messages: CaptureMessage[] = [];
   const events: PerformanceEvent[] = [];
@@ -69,6 +78,11 @@ function captureFixture(
         };
         frames.push(inputFrame);
         events.push(...detector.accept(inputFrame));
+        onProgress?.(
+          events,
+          detector.finalizedBeforeAudioSec,
+          inputFrame.audioTimeSec,
+        );
         if (returnBuffers)
           this.port.onmessage({
             data: { type: "release", buffer: message.buffer },
@@ -122,6 +136,60 @@ function captureFixture(
 }
 
 describe("real capture worklet source → PCM YIN → event segmentation → score (synthetic)", () => {
+  it.each([44100, 48000, 96000])(
+    "never recolors the reproduced seed-298 history at %sHz",
+    (rate) => {
+      const melody = generateMelody(
+        {
+          ...defaultMelodySettings,
+          durations: [0.5, 2],
+          bpm: 60,
+          minMidi: 60,
+          maxMidi: 64,
+        },
+        298,
+      );
+      const targets = buildScoreTimeline(
+        melody,
+        getInstrumentProfile("voice")!,
+        0,
+      );
+      const profile = getScoringProfile(melody, "voice");
+      const scorer = new LiveAttemptScorer(targets, profile);
+      const committed = new Map<string, NoteResult>();
+      const formerStatuses = new Set<string>();
+      const { events } = captureFixture(
+        rate,
+        (t) =>
+          (t >= 0.4 && t < 0.51) || (t >= 0.59 && t < 1.09)
+            ? 329.627557
+            : t >= 1.31 && t < 1.48
+              ? 293.664768
+              : null,
+        3.3,
+        true,
+        () => 0.2,
+        undefined,
+        (inputs, frontier, now) => {
+          formerStatuses.add(
+            scoreAttempt(inputs, targets, profile).notes[1].status,
+          );
+          for (const note of scorer.advance(inputs, frontier, now)?.notes ??
+            []) {
+            if (committed.has(note.stageEventId))
+              expect(note).toBe(committed.get(note.stageEventId));
+            else committed.set(note.stageEventId, note);
+          }
+        },
+      );
+      expect(formerStatuses.has("failed")).toBe(true);
+      expect(formerStatuses.has("passed")).toBe(true);
+      expect(committed.get(targets[1].stageEventId)?.status).toBe("passed");
+      const final = scorer.finish(events);
+      for (const [id, note] of committed)
+        expect(final.notes.find((n) => n.stageEventId === id)).toBe(note);
+    },
+  );
   it.each([44100, 48000, 96000])(
     "timestamps C4 whole note and release at %sHz sample rate",
     (rate) => {

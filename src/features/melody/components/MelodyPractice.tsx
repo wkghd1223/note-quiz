@@ -16,7 +16,6 @@ import {
   getInstrumentProfile,
   getScoringProfile,
 } from "@/features/challenge/domain/instrument-profile";
-import { useLiveResult } from "../hooks/useLiveResult";
 import { useLivePitchFeedback } from "../hooks/useLivePitchFeedback";
 import { useMelodyAnalytics } from "../hooks/useMelodyAnalytics";
 import { challengeCopy } from "@/features/challenge/i18n";
@@ -120,14 +119,6 @@ export default function MelodyPractice() {
     session.frame?.isVoiced && session.frame.detectedHz
       ? Math.round(69 + 12 * Math.log2(session.frame.detectedHz / 440))
       : null;
-  const liveResult = useLiveResult(
-    active,
-    s.events,
-    playback.targets,
-    scoringProfile,
-    session.elapsed,
-    session.heldDuration,
-  );
   useEffect(() => {
     try {
       const restored = sanitizeMelodySettings(
@@ -432,7 +423,7 @@ export default function MelodyPractice() {
                   ["landing", "preview", "paused", "result"].includes(s.phase)
                 }
                 reducedMotion={false}
-                result={session.previewing ? null : (s.result ?? liveResult)}
+                result={session.previewing ? null : (s.result ?? s.liveResult)}
                 c={c}
                 onReady={onReady}
                 onError={onError}

@@ -21,6 +21,8 @@ const harness = vi.hoisted(() => ({
     | ((audio: { context: { currentTime: number } }) => Promise<void>),
   audio: [] as Array<{
     context: { currentTime: number };
+    processedThroughAudioSec: number;
+    finalizedBeforeAudioSec: number;
     dispose: ReturnType<typeof vi.fn>;
     endCollection: ReturnType<typeof vi.fn>;
     pianoTone: ReturnType<typeof vi.fn>;
@@ -69,6 +71,10 @@ vi.mock("../store/challengeStore", async (importOriginal) => {
 vi.mock("../audio/microphone", () => ({
   ChallengeAudioSession: class {
     context = { currentTime: 10 };
+    // Device/capture is mocked in this hook harness. Individual backlog tests
+    // override these independently of the output clock.
+    processedThroughAudioSec = Infinity;
+    finalizedBeforeAudioSec = -Infinity;
     dispose = vi.fn();
     endCollection = vi.fn();
     resume = vi.fn(async () => {});
@@ -314,6 +320,23 @@ function measuredNote(onset: number, offset: number): PerformanceEvent {
 }
 
 describe("first-note audio-clock boundary", () => {
+  it("waits for analyzed microphone PCM before flushing and finishing the last note", async () => {
+    const exercise: ExerciseDefinition = {
+      ...getStage("w1-s1")!,
+      id: "capture-backlog",
+    };
+    const { audio, store, start } = await startClockSession(exercise);
+    audio.processedThroughAudioSec = start + 3.9;
+    runAudioFrame(audio, start + 4.3);
+    expect(store.getState().phase).toBe("playing");
+    expect(audio.endCollection).not.toHaveBeenCalled();
+    audio.callbacks.onEvent(measuredNote(start, start + 4));
+    audio.processedThroughAudioSec = start + 4.25;
+    runAudioFrame(audio, start + 4.4);
+    expect(audio.endCollection).toHaveBeenCalledWith(true);
+    expect(store.getState().phase).toBe("result");
+    expect(store.getState().result?.notes[0].status).toBe("passed");
+  });
   it("shares one signal ref with capture and clears listening and measured values on pause/error", async () => {
     const { session, audio, store, start } = await startClockSession();
     const signal = session.signal.current;

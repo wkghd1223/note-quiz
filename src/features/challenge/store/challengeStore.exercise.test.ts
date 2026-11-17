@@ -33,6 +33,69 @@ const performance = (
 });
 
 describe("explicit runtime exercise store", () => {
+  it("commits audio-processed judgments once and keeps them through pause, finish and retry", () => {
+    const melody = exercise();
+    const store = createChallengeStore(melody);
+    const options = {
+      stageId: melody.id,
+      profileId: "voice",
+      inputMethod: "microphone" as const,
+      mode: "challenge" as const,
+    };
+    const token = store.getState().startAttempt(options);
+    store.getState().beginPlaying(token, 10);
+    const segment = store.getState().segmentToken;
+    const playback = buildPlaybackTimeline(
+      melody,
+      getInstrumentProfile("voice")!,
+      0,
+    );
+    const first = playback.targets[0];
+    store.getState().addEvent(token, segment, performance(first, 10));
+    store.getState().advanceJudgments(token, segment, 15, 10);
+    expect(store.getState().liveResult).toBeNull();
+    store
+      .getState()
+      .advanceJudgments(token, segment, 10 + first.endAudioSec, 11);
+    const committed = store.getState().liveResult!;
+    expect(committed.notes[0].status).toBe("passed");
+    const notifications: unknown[] = [];
+    const unsubscribe = store.subscribe((state) => notifications.push(state));
+    for (let tick = 1; tick <= 60; tick++)
+      store
+        .getState()
+        .advanceJudgments(
+          token,
+          segment,
+          10 + first.endAudioSec + tick / 120,
+          11,
+        );
+    expect(notifications).toEqual([]);
+    unsubscribe();
+    store.getState().pause(token, 10 + first.endAudioSec + 0.1);
+    expect(store.getState().liveResult!.notes[0]).toBe(committed.notes[0]);
+    const paused = store.getState().liveResult;
+    store.getState().advanceJudgments(token, segment, 99, 99);
+    expect(store.getState().liveResult).toBe(paused);
+    store.getState().resume(token);
+    store.getState().beginPlaying(token, 50);
+    const resumedSegment = store.getState().segmentToken;
+    store.getState().advanceJudgments(token, segment, 99, 99);
+    expect(store.getState().liveResult).toBe(paused);
+    // A new physical AudioContext starts at a different origin on resume.
+    store.getState().advanceJudgments(token, resumedSegment, 51, 51);
+    expect(store.getState().liveResult!.notes[0]).toBe(committed.notes[0]);
+    const result = store
+      .getState()
+      .finish(token, 50 + playback.durationSec + 1)!;
+    expect(result.notes[0]).toBe(committed.notes[0]);
+    expect(store.getState().finish(token)).toBe(result);
+    store.getState().startAttempt(options);
+    expect(store.getState().liveResult).toBeNull();
+    expect(store.getState().events).toEqual([]);
+    store.getState().advanceJudgments(token, resumedSegment, 999, 999);
+    expect(store.getState().liveResult).toBeNull();
+  });
   it("scores an uncatalogued voice melody, pauses/resumes, and invalidates stale callbacks", () => {
     const melody = exercise();
     expect(getStage(melody.id)).toBeUndefined();

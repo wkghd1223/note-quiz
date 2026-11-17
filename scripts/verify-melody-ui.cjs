@@ -982,6 +982,22 @@ async function clean(p) {
           attributeFilter: ["data-visible"],
         });
         const surface = document.querySelector("[data-score-viewport]");
+        window.__committedColors = {};
+        window.__historyChanges = [];
+        new MutationObserver(() => {
+          const colors = JSON.parse(surface.dataset.scoreColors || "{}");
+          for (const [id, color] of Object.entries(window.__committedColors))
+            if (colors[id] !== color)
+              window.__historyChanges.push({
+                id,
+                before: color,
+                after: colors[id],
+              });
+          Object.assign(window.__committedColors, colors);
+        }).observe(surface, {
+          attributes: true,
+          attributeFilter: ["data-score-colors"],
+        });
         new MutationObserver(() => {
           const value = surface.getAttribute("data-score-provisional");
           if (window.__pitchStates.at(-1) !== value)
@@ -1055,6 +1071,11 @@ async function clean(p) {
         "The wrong second pitch receives red feedback",
       );
       assert.equal(await clean(p), true);
+      assert.deepEqual(
+        await p.evaluate(() => window.__historyChanges),
+        [],
+        "Every committed note/rest color stays fixed through the final result",
+      );
       const pitchStates = await p.evaluate(() => window.__pitchStates);
       assert.ok(
         pitchStates.includes("matched"),

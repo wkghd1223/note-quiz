@@ -301,7 +301,14 @@ export function useChallengeSession(
           }
           const position = left > 0 ? base : base + (now - start);
           setElapsed(Math.min(end, position));
-          if (position >= end + 0.25) {
+          useStore
+            .getState()
+            .advanceJudgments(token, segment, now, a.finalizedBeforeAudioSec);
+          if (
+            position >= end + 0.25 &&
+            (s.inputMethod !== "microphone" ||
+              a.processedThroughAudioSec >= start + end - base + 0.2)
+          ) {
             touch.current?.release(now);
             setHeldMidi(null);
             a.endCollection(true);

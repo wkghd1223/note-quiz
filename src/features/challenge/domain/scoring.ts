@@ -11,7 +11,7 @@ const finite = (n: unknown): n is number =>
   typeof n === "number" && Number.isFinite(n);
 const unit = (n: unknown): n is number => finite(n) && n >= 0 && n <= 1;
 const round = (n: number) => Math.round(n * 100) / 100;
-function validEvent(e: PerformanceEvent): boolean {
+export function validPerformanceEvent(e: PerformanceEvent): boolean {
   return (
     typeof e.eventId === "string" &&
     finite(e.onsetAudioSec) &&
@@ -88,8 +88,8 @@ export function scoreAttempt(
             t.targetConcertMidi! <= 127),
     );
   const validOffset = finite(offsetMs) && Math.abs(offsetMs) <= 250;
-  const invalidInput = input.some((e) => !validEvent(e));
-  const events = input.filter(validEvent);
+  const invalidInput = input.some((e) => !validPerformanceEvent(e));
+  const events = input.filter(validPerformanceEvent);
   const supported =
     profile.supported && validProfile && validTargets && validOffset;
   const matches = supported
@@ -234,6 +234,21 @@ export function scoreAttempt(
           )
           .map((t) => t.stageEventId)
       : [];
+  return summarizeAttempt(
+    notes,
+    restViolations,
+    requiredOnset,
+    !supported || invalidInput,
+  );
+}
+
+/** Aggregate the same immutable note judgments during play and at completion. */
+export function summarizeAttempt(
+  notes: NoteResult[],
+  restViolations: string[],
+  requiredOnset: boolean,
+  invalidInput = false,
+): AttemptResult {
   const mean = (key: "pitchScore" | "durationScore" | "onsetScore") =>
     notes.length
       ? notes.reduce((sum, n) => sum + (n[key] ?? 0), 0) / notes.length
@@ -254,7 +269,7 @@ export function scoreAttempt(
     ? notes.filter((n) => n.status === "passed").length / notes.length
     : 0;
   const unscorable =
-    !supported || invalidInput || notes.some((n) => n.status === "unscorable");
+    invalidInput || notes.some((n) => n.status === "unscorable");
   let stars: AttemptResult["stars"] = 0;
   if (
     !unscorable &&

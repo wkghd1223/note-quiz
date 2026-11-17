@@ -75,6 +75,19 @@ const repeat: PlaybackTransition = {
 };
 
 describe("audio-clock projection onto a single engraved score", () => {
+  it("paints live rests only after their input was actually settled", () => {
+    const rest = { ...target("rest", "rest", 0, 1, 2), kind: "rest" as const };
+    const pending = { ...result([]), settledRestIds: [] };
+    expect(scoreNoteColors([rest], [], pending, 10, true)).toEqual({});
+    const passed = { ...pending, settledRestIds: ["rest"] };
+    expect(scoreNoteColors([rest], [], passed, 10, true)).toEqual({
+      rest: matchedNoteColor,
+    });
+    const failed = { ...passed, restViolations: ["rest"] };
+    expect(scoreNoteColors([rest], [], failed, 10, true)).toEqual({
+      rest: incorrectNoteColor,
+    });
+  });
   it("aligns every onset with its actual note anchor and traverses bar boundaries continuously", () => {
     const targets = [
       target("a", "a", 0, 0, 2),

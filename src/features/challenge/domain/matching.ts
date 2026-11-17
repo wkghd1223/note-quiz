@@ -1,4 +1,8 @@
 import type { PerformanceEvent, TargetEvent } from "./performance";
+
+export const matchingWindowSec = (target: TargetEvent) =>
+  Math.min(0.45, (target.endAudioSec - target.startAudioSec) * 0.45);
+
 // Global monotone alignment: gaps allow a missed first note without shifting all
 // later answers; each observed attack can be consumed only once.
 export function matchEvents(
@@ -42,12 +46,11 @@ export function matchEvents(
       if (j < m) update(i, j + 1, cost[i][j] + 0.45, "extra");
       if (i < n && j < m) {
         const target = notes[i],
-          event = events[j],
-          duration = target.endAudioSec - target.startAudioSec;
+          event = events[j];
         const delta = Math.abs(
           event.onsetAudioSec - offsetMs / 1000 - target.startAudioSec,
         );
-        const window = Math.min(0.45, duration * 0.45);
+        const window = matchingWindowSec(target);
         if (delta <= window + 1e-9) {
           const pitch =
             event.observedMidi === null

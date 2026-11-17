@@ -13,6 +13,7 @@ import {
 } from "../domain/score-timeline";
 import { validatePlaybackNavigation } from "../domain/playback-order";
 import { scoreAttempt } from "../domain/scoring";
+import { LiveAttemptScorer } from "../domain/live-scoring";
 import type {
   AttemptResult,
   InputMethod,
@@ -48,6 +49,7 @@ interface ChallengeState {
   inputMethod: InputMethod;
   inputOffsetMs: number;
   events: PerformanceEvent[];
+  liveResult: AttemptResult | null;
   result: AttemptResult | null;
   error: string | null;
   elapsedSec: number;
@@ -61,6 +63,12 @@ interface ChallengeState {
     segmentToken: number,
     event: PerformanceEvent,
   ) => boolean;
+  advanceJudgments: (
+    token: number,
+    segmentToken: number,
+    audioNowSec: number,
+    finalizedBeforeAudioSec: number,
+  ) => void;
   pause: (token: number, audioNowSec: number) => boolean;
   resume: (token: number) => boolean;
   getElapsed: (audioNowSec: number) => number;
@@ -77,12 +85,14 @@ const initial = () => ({
   inputMethod: "touch" as InputMethod,
   inputOffsetMs: 0,
   events: [] as PerformanceEvent[],
+  liveResult: null as AttemptResult | null,
   result: null as AttemptResult | null,
   error: null as string | null,
   elapsedSec: 0,
   segmentStartAudioSec: null as number | null,
 });
 export function createChallengeStore(exercise?: ExerciseDefinition) {
+  let liveScorer: LiveAttemptScorer | null = null;
   // An explicit exercise is isolated from the curriculum catalog, even on ID
   // collision. Every lifecycle operation must resolve the same musical data.
   const resolveExercise = (id: string | null) =>
@@ -93,6 +103,7 @@ export function createChallengeStore(exercise?: ExerciseDefinition) {
     segmentToken: 0,
     selectStage: (id) => {
       const s = get();
+      liveScorer = null;
       set({
         ...initial(),
         stageId: resolveExercise(id) ? id : null,
@@ -134,6 +145,14 @@ export function createChallengeStore(exercise?: ExerciseDefinition) {
         Math.abs(offset) <= 250 &&
         supportsStage(stage, profile, options.inputMethod) &&
         validatePlaybackNavigation(stage).length === 0;
+      liveScorer =
+        allowed && exercise
+          ? new LiveAttemptScorer(
+              buildPlaybackTimeline(stage, profile, 0, tempo).targets,
+              getScoringProfile(stage, options.profileId),
+              offset,
+            )
+          : null;
       set({
         ...initial(),
         ...options,
@@ -204,6 +223,24 @@ export function createChallengeStore(exercise?: ExerciseDefinition) {
       });
       return true;
     },
+    advanceJudgments: (token, segmentToken, audioNowSec, finalizedBefore) => {
+      const s = get();
+      if (
+        !liveScorer ||
+        token !== s.attemptToken ||
+        segmentToken !== s.segmentToken ||
+        s.phase !== "playing" ||
+        s.segmentStartAudioSec === null ||
+        !Number.isFinite(finalizedBefore)
+      )
+        return;
+      const result = liveScorer.advance(
+        s.events,
+        finalizedBefore + s.elapsedSec - s.segmentStartAudioSec,
+        s.getElapsed(audioNowSec),
+      );
+      if (result !== s.liveResult) set({ liveResult: result });
+    },
     getElapsed: (audioNowSec) => {
       const s = get();
       return s.phase === "playing" &&
@@ -235,6 +272,7 @@ export function createChallengeStore(exercise?: ExerciseDefinition) {
       const offsetSec = s.inputOffsetMs / 1000;
       set({
         phase: "paused",
+        liveResult: liveScorer?.rewind(rewind) ?? null,
         elapsedSec: rewind,
         segmentStartAudioSec: null,
         segmentToken: s.segmentToken + 1,
@@ -271,15 +309,23 @@ export function createChallengeStore(exercise?: ExerciseDefinition) {
       )
         return null;
       set({ phase: "evaluating" });
-      const result = scoreAttempt(
-        filterPlaybackInput(s.events, playback.transitions, s.inputOffsetMs),
-        timeline,
-        getScoringProfile(stage, s.profileId),
+      const events = filterPlaybackInput(
+        s.events,
+        playback.transitions,
         s.inputOffsetMs,
       );
+      const result = liveScorer
+        ? liveScorer.finish(events)
+        : scoreAttempt(
+            events,
+            timeline,
+            getScoringProfile(stage, s.profileId),
+            s.inputOffsetMs,
+          );
       set({
         phase: "result",
         result,
+        liveResult: liveScorer ? result : null,
         elapsedSec: end,
         segmentStartAudioSec: null,
         segmentToken: s.segmentToken + 1,
@@ -288,6 +334,7 @@ export function createChallengeStore(exercise?: ExerciseDefinition) {
     },
     fail: (reason) => {
       const s = get();
+      liveScorer = null;
       set({
         phase: "error",
         error: reason,
@@ -298,6 +345,7 @@ export function createChallengeStore(exercise?: ExerciseDefinition) {
     },
     reset: () => {
       const s = get();
+      liveScorer = null;
       set({
         ...initial(),
         attemptToken: s.attemptToken + 1,

@@ -81,6 +81,7 @@ export class ChallengeAudioSession {
   private noiseFloor = 0.003;
   private tones = new Set<AudioScheduledSourceNode>();
   private lastUiFrame = -Infinity;
+  private lastCaptureAudioSec = -Infinity;
   private pianoGeneration = 0;
   private pianoBuffers = new Map<string, AudioBuffer>();
   appliedSettings: MediaTrackSettings | null = null;
@@ -92,6 +93,14 @@ export class ChallengeAudioSession {
       if (!this.disposed && this.context.state === "suspended")
         callbacks.onError("suspended");
     };
+  }
+
+  get processedThroughAudioSec(): number {
+    return this.lastCaptureAudioSec;
+  }
+
+  get finalizedBeforeAudioSec(): number {
+    return this.detector.finalizedBeforeAudioSec;
   }
 
   async resume() {
@@ -175,6 +184,7 @@ export class ChallengeAudioSession {
           confidence: estimate.confidence,
           isVoiced: estimate.hz !== null && estimate.confidence >= 0.8,
         };
+        this.lastCaptureAudioSec = frame.audioTimeSec;
         // Return transferable buffers: bounded pool on the real-time thread.
         capture.port.postMessage({ type: "release", buffer: pcm.buffer }, [
           pcm.buffer,
@@ -242,7 +252,12 @@ export class ChallengeAudioSession {
     const wasCollecting = this.collectAfter !== Infinity;
     this.collectAfter = Infinity;
     if (flush && wasCollecting) {
-      for (const event of this.detector.flush(this.context.currentTime))
+      // Main-thread delivery may lag the output clock. Do not fabricate a hold
+      // through PCM that has not actually been analyzed yet.
+      const end = Number.isFinite(this.lastCaptureAudioSec)
+        ? this.lastCaptureAudioSec
+        : this.context.currentTime;
+      for (const event of this.detector.flush(end))
         this.callbacks.onEvent(event);
     } else this.detector.reset("paused", this.noiseFloor);
   }

@@ -322,6 +322,7 @@ function readActualView() {
               const rect = node.getBoundingClientRect();
               return {
                 id: notes[i]?.id,
+                fill: getComputedStyle(node).fill,
                 delta: rect.x + rect.width / 2 - line.x,
                 localX: (rect.x + rect.width / 2 - railRect.x) / scale,
                 anchor: bounds?.events.find((e) => e.id === notes[i]?.id)
@@ -407,6 +408,22 @@ function readActualView() {
     }, seconds);
     const frames = collected.commits || [];
     const rafFrames = collected.frames || [];
+    const committedGlyphs = new Map();
+    const committedGlyphChanges = [];
+    for (const frame of rafFrames)
+      for (const head of frame.heads) {
+        if (!head.id) continue;
+        const prior = committedGlyphs.get(head.id);
+        if (prior && prior !== head.fill)
+          committedGlyphChanges.push({
+            id: head.id,
+            before: prior,
+            after: head.fill,
+            elapsed: frame.elapsed,
+          });
+        if (["rgb(21, 128, 61)", "rgb(185, 28, 28)"].includes(head.fill))
+          committedGlyphs.set(head.id, head.fill);
+      }
     const gaps = rafFrames.slice(1).map((f, i) => f.perf - rafFrames[i].perf);
     const crossings = [];
     for (const target of collected.targets || []) {
@@ -520,6 +537,10 @@ function readActualView() {
       pixelsPerSecond: [minVelocity, maxVelocity],
       velocityRatio: maxVelocity / minVelocity,
       colorsChanged,
+      committedGlyphCount: committedGlyphs.size,
+      committedGlyphChanges,
+      judgmentHistoryPassed:
+        committedGlyphs.size > 0 && committedGlyphChanges.length === 0,
       inputMidi,
       measuredInputPitches: [
         ...new Set((collected.events || []).map((event) => event.observedMidi)),
@@ -546,6 +567,7 @@ function readActualView() {
       temporalResolutionSufficient &&
       crossings.length >= 3 &&
       colorsChanged > 0 &&
+      summary.judgmentHistoryPassed &&
       maxVelocity / minVelocity < 1.01 &&
       maxAnchorError <= 2 &&
       summary.hiddenGlyphFrameCount === 0 &&
