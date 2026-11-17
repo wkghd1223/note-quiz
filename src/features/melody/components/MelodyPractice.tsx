@@ -21,43 +21,38 @@ import { useMelodyAnalytics } from "../hooks/useMelodyAnalytics";
 import { challengeCopy } from "@/features/challenge/i18n";
 import ScoreViewport from "@/features/challenge/components/ScoreViewport";
 import { secondaryButton } from "@/features/challenge/components/ChallengeShell";
-import { generateMelody } from "../domain/generator";
+import { createMelody, type MelodyGeneration } from "../domain/generator";
 import {
   defaultMelodySettings,
   sanitizeMelodySettings,
-  validateMelodySettings,
+  serializeMelodySettings,
+  melodySettingsStorageKey,
   type MelodySettings,
 } from "../domain/settings";
 import { melodyCopy } from "../i18n";
 import MelodySettingsPanel, { pitchName } from "./MelodySettingsPanel";
 
-const storageKey = "note-quiz-melody-settings-v1";
 const newSeed = () => crypto.getRandomValues(new Uint32Array(1))[0];
 const voice = getInstrumentProfile("voice")!;
 export default function MelodyPractice() {
   const { t, language } = useTranslation(),
     c = challengeCopy(language),
     m = melodyCopy(language);
-  const [settings, setSettings] = useState<MelodySettings>(
-    defaultMelodySettings,
-  );
+  const [generation, setGeneration] = useState(() => {
+    const initial = createMelody(defaultMelodySettings, 1);
+    if (!initial.ok) throw new Error(initial.issue.code);
+    return { active: initial, attempt: initial as MelodyGeneration, seed: 1 };
+  });
+  const settings = generation.active.settings;
+  const exercise = generation.active.exercise;
   const [draft, setDraft] = useState<MelodySettings>(defaultMelodySettings);
-  const appliedSettingsKey = useRef(JSON.stringify(defaultMelodySettings));
-  const settingsValid = useMemo(
-    () => validateMelodySettings(draft).valid,
-    [draft],
-  );
-  const [seed, setSeed] = useState(1),
-    [hydrated, setHydrated] = useState(false);
+  const settingsValid = generation.attempt.ok;
+  const [hydrated, setHydrated] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false),
     [storageWarning, setStorageWarning] = useState(false);
   const [readyId, setReadyId] = useState<string | null>(null),
     [notationError, setNotationError] = useState(false),
     [revision, setRevision] = useState(0);
-  const exercise = useMemo(
-    () => generateMelody(settings, seed),
-    [settings, seed],
-  );
   const session = useChallengeSession(exercise, settings),
     s = session.state;
   useMelodyAnalytics(hydrated, exercise, session);
@@ -122,15 +117,19 @@ export default function MelodyPractice() {
   useEffect(() => {
     try {
       const restored = sanitizeMelodySettings(
-        JSON.parse(localStorage.getItem(storageKey) ?? "null"),
+        JSON.parse(localStorage.getItem(melodySettingsStorageKey) ?? "null"),
       );
-      setSettings(restored);
+      const seed = newSeed();
+      const result = createMelody(restored, seed);
       setDraft(restored);
-      appliedSettingsKey.current = JSON.stringify(restored);
+      setGeneration((previous) => ({
+        active: result.ok ? result : previous.active,
+        attempt: result,
+        seed,
+      }));
     } catch {
       setStorageWarning(true);
     }
-    setSeed(newSeed());
     setHydrated(true);
   }, []);
   const onReady = useCallback(() => {
@@ -163,8 +162,15 @@ export default function MelodyPractice() {
     });
   };
   const next = () => {
-    session.reset();
-    setSeed((previous) => (previous + 1) >>> 0);
+    if (!hydrated || locked || !settingsValid) return;
+    const seed = (generation.seed + 1) >>> 0;
+    const result = createMelody(draft, seed);
+    setGeneration((previous) => ({
+      active: result.ok ? result : previous.active,
+      attempt: result,
+      seed,
+    }));
+    if (result.ok) session.reset();
   };
   const resetSession = session.reset;
   const changeSettings = useCallback(
@@ -173,22 +179,31 @@ export default function MelodyPractice() {
       // Editing may temporarily leave a blank tempo or an incomplete range.
       // Keep the last playable score until the complete settings are valid.
       setDraft(next);
-      const validation = validateMelodySettings(next);
-      if (!validation.valid) return;
-      const serialized = JSON.stringify(validation.settings);
-      if (serialized === appliedSettingsKey.current) return;
+      const seed = (generation.seed + 1) >>> 0;
+      const result = createMelody(next, seed);
+      if (!result.ok) {
+        setGeneration((previous) => ({ ...previous, attempt: result }));
+        return;
+      }
+      const serialized = serializeMelodySettings(result.settings);
+      if (serialized === serializeMelodySettings(settings)) {
+        setGeneration((previous) => ({
+          ...previous,
+          attempt: previous.active,
+        }));
+        return;
+      }
       resetSession();
-      appliedSettingsKey.current = serialized;
-      setSettings(validation.settings);
-      setSeed((previous) => (previous + 1) >>> 0);
+      setDraft(result.settings);
+      setGeneration({ active: result, attempt: result, seed });
       try {
-        localStorage.setItem(storageKey, serialized);
+        localStorage.setItem(melodySettingsStorageKey, serialized);
         setStorageWarning(false);
       } catch {
         setStorageWarning(true);
       }
     },
-    [hydrated, locked, resetSession],
+    [hydrated, locked, resetSession, generation.seed, settings],
   );
   const error = session.audioError;
   const errorText = session.previewFailed
@@ -389,6 +404,7 @@ export default function MelodyPractice() {
             ) : (
               <ScoreViewport
                 timeSpacing
+                barLabels={exercise.harmony?.bars}
                 provisionalFeedback={pitchFeedback}
                 footerFeedback={
                   (s.phase === "countIn" || s.phase === "paused") && (
@@ -553,6 +569,7 @@ export default function MelodyPractice() {
           >
             <MelodySettingsPanel
               value={draft}
+              generation={generation.attempt}
               onChange={changeSettings}
               disabled={!hydrated || locked}
             />

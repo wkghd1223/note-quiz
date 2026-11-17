@@ -417,7 +417,7 @@ it("keeps native timing and bar widths across clefs, keys, rests, dots and tripl
         {
           ...defaultMelodySettings,
           clef,
-          keySignature: "Gb",
+          tonalityId: "Gb-major",
           minMidi: 48,
           maxMidi: 84,
           timeSignature,
@@ -569,7 +569,8 @@ describe("compact melody geometry at supported pitch extrema", () => {
           "Cb",
         ]) {
           const pitches = getMelodyPitches({
-            keySignature,
+            tonalityId:
+              `${keySignature}-major` as import("@/features/melody/domain/harmony").TonalityId,
             minMidi: 48,
             maxMidi: 84,
           });

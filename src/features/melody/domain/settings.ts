@@ -1,6 +1,13 @@
 import { CLEFS, KEY_SIGNATURES, NOTE_NAMES } from "@/lib/music/constants";
 import { beatsPerMeasure } from "@/features/challenge/domain/stage";
 
+import {
+  getTonality,
+  melodyPatterns,
+  type TonalityId,
+  type ProgressionChoice,
+} from "./harmony";
+
 export const melodyTimeSignatures: readonly (readonly [number, number])[] = [
   [2, 4],
   [3, 4],
@@ -10,7 +17,8 @@ export const melodyTimeSignatures: readonly (readonly [number, number])[] = [
 
 export interface MelodySettings {
   clef: ClefType;
-  keySignature: string;
+  tonalityId: TonalityId;
+  progressionId: ProgressionChoice;
   minMidi: number;
   maxMidi: number;
   /** Allowed undotted base note lengths in quarter-note beats. */
@@ -26,7 +34,8 @@ export interface MelodySettings {
 
 export const defaultMelodySettings: MelodySettings = {
   clef: "treble",
-  keySignature: "C",
+  tonalityId: "C-major",
+  progressionId: "none",
   minMidi: 60,
   maxMidi: 67,
   durations: [1, 2],
@@ -50,10 +59,11 @@ const naturalMidi: Record<NoteName, number> = {
 
 /** Written octave belongs to the letter, so B#3 is MIDI 60 and Cb4 is 59. */
 export function getMelodyPitches(
-  settings: Pick<MelodySettings, "keySignature" | "minMidi" | "maxMidi">,
+  settings: Pick<MelodySettings, "tonalityId" | "minMidi" | "maxMidi">,
 ): { midi: number; spelling: string }[] {
-  if (!Object.hasOwn(KEY_SIGNATURES, settings.keySignature)) return [];
-  const key = KEY_SIGNATURES[settings.keySignature];
+  const tonality = getTonality(settings.tonalityId);
+  if (!tonality) return [];
+  const key = KEY_SIGNATURES[tonality.keySignature];
   const pitches: { midi: number; spelling: string }[] = [];
   // Includes enharmonic spellings on both sides of the supported voice range.
   for (let octave = 2; octave <= 7; octave++) {
@@ -87,11 +97,26 @@ export function validateMelodySettings(
   const input = value as Record<string, unknown>;
   const errors: string[] = [];
   if (!CLEFS.includes(input.clef as ClefType)) errors.push("clef");
+  const tonalityId = Object.hasOwn(input, "tonalityId")
+    ? input.tonalityId
+    : typeof input.keySignature === "string" &&
+        Object.hasOwn(KEY_SIGNATURES, input.keySignature)
+      ? `${input.keySignature}-major`
+      : undefined;
+  const tonality = getTonality(tonalityId);
+  const progressionId = Object.hasOwn(input, "progressionId")
+    ? input.progressionId
+    : "none";
+  if (!tonality) errors.push("tonalityId");
   if (
-    typeof input.keySignature !== "string" ||
-    !Object.hasOwn(KEY_SIGNATURES, input.keySignature)
+    progressionId !== "none" &&
+    progressionId !== "random" &&
+    !melodyPatterns.some(
+      (pattern) =>
+        pattern.id === progressionId && pattern.mode === tonality?.mode,
+    )
   )
-    errors.push("keySignature");
+    errors.push("progressionId");
   for (const field of ["minMidi", "maxMidi"] as const) {
     if (
       !Number.isInteger(input[field]) ||
@@ -143,7 +168,8 @@ export function validateMelodySettings(
   if (errors.length) return { valid: false, errors };
   const settings: MelodySettings = {
     clef: input.clef as ClefType,
-    keySignature: input.keySignature as string,
+    tonalityId: tonalityId as TonalityId,
+    progressionId: progressionId as ProgressionChoice,
     minMidi: input.minMidi as number,
     maxMidi: input.maxMidi as number,
     durations: [...new Set(input.durations as number[])].sort((a, b) => a - b),
@@ -154,7 +180,7 @@ export function validateMelodySettings(
     metronome: metronome as boolean,
     barBell: barBell as boolean,
   };
-  if (!getMelodyPitches(settings).length)
+  if (settings.progressionId === "none" && !getMelodyPitches(settings).length)
     return { valid: false, errors: ["noAvailablePitch"] };
   // Bases are powers of two; any fitting base can fill a bar with standard
   // automatic rests. A complete eighth-triplet group independently fits 1 beat.
@@ -170,7 +196,13 @@ export function validateMelodySettings(
 
 /** Invalid persisted payloads restore a fresh default, never a partial exercise. */
 export function sanitizeMelodySettings(value: unknown): MelodySettings {
-  const result = validateMelodySettings(value);
+  const payload =
+    value && typeof value === "object" && "version" in value
+      ? (value as { version: unknown; settings?: unknown }).version === 2
+        ? (value as { settings?: unknown }).settings
+        : null
+      : value;
+  const result = validateMelodySettings(payload);
   return result.valid
     ? result.settings
     : {
@@ -178,4 +210,30 @@ export function sanitizeMelodySettings(value: unknown): MelodySettings {
         durations: [...defaultMelodySettings.durations],
         timeSignature: [...defaultMelodySettings.timeSignature],
       };
+}
+
+export const melodySettingsStorageKey = "note-quiz-melody-settings-v1";
+export function serializeMelodySettings(settings: MelodySettings): string {
+  return JSON.stringify({ version: 2, settings });
+}
+/** A tonic change retains a fixed progression; a mode change shows random. */
+export function changeMelodyTonality(
+  settings: MelodySettings,
+  tonalityId: TonalityId,
+): MelodySettings {
+  const progressionId = settings.progressionId;
+  return {
+    ...settings,
+    tonalityId,
+    progressionId:
+      progressionId !== "none" &&
+      progressionId !== "random" &&
+      !melodyPatterns.some(
+        (pattern) =>
+          pattern.id === progressionId &&
+          pattern.mode === getTonality(tonalityId)?.mode,
+      )
+        ? "random"
+        : progressionId,
+  };
 }

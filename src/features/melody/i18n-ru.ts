@@ -1,6 +1,21 @@
 import type { MelodyCopy } from "./i18n";
 
 export const russianMelody = {
+  tonality: "Тональность",
+  major: "Мажор",
+  minor: "Минор",
+  majorTonality: "{key} мажор",
+  minorTonality: "{key} минор",
+  progression: "Аккордовая последовательность",
+  noProgression: "Не использовать",
+  randomProgression: "Случайная",
+  missingChord: "В диапазоне нет звуков аккорда {chord}. Расширьте диапазон.",
+  noAvailableProgression:
+    "Нет подходящей последовательности. Расширьте диапазон.",
+  invalidTempo: "Введите темп от 40 до 180.",
+  invalidRange: "Выберите диапазон со звуками гаммы, от низкого к высокому.",
+  invalidRhythm: "Выберите длительность, которая помещается в такт.",
+
   livePitchHint:
     "Линия показывает только высоту звука: ✓ верно, × неверно. Момент начала и длительность оцениваются после каждой ноты.",
   preparingAudio: "Подготовка звука фортепиано…",

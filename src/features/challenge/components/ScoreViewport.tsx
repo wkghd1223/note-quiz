@@ -35,6 +35,28 @@ import styles from "./ScoreViewport.module.css";
 export { melodyQuarterWidth } from "@/features/melody/domain/score-layout";
 export const stageScore = exerciseScore;
 
+interface ScoreBarLabel {
+  barIndex: number;
+  label: string;
+}
+
+const noBarLabels: readonly ScoreBarLabel[] = [];
+const barLabelBandHeight = 24;
+
+/** Written-bar positions are already projected into the score rail's coordinates. */
+export function scoreBarLabels(
+  labels: readonly ScoreBarLabel[],
+  render: NotationRenderResult | null,
+) {
+  const measures = new Map(
+    render?.measures?.map((measure) => [measure.index, measure]),
+  );
+  return labels.flatMap((label) => {
+    const x = measures.get(label.barIndex)?.timeStartX;
+    return x === undefined ? [] : [{ ...label, x }];
+  });
+}
+
 /** Retained for the written-music regression oracle, independent of viewport layout. */
 export function stageBarScore(
   stage: ExerciseDefinition,
@@ -65,6 +87,7 @@ export default function ScoreViewport({
   onError,
   onReady,
   timeSpacing = false,
+  barLabels = noBarLabels,
   provisionalFeedback = null,
   footerFeedback,
   footerFeedbackVisible = false,
@@ -84,6 +107,8 @@ export default function ScoreViewport({
   onError: () => void;
   onReady: () => void;
   timeSpacing?: boolean;
+  /** Final display strings indexed by written bar, independent of playback visits. */
+  barLabels?: readonly ScoreBarLabel[];
   /** Current microphone pitch guidance, independent of finalized judgments. */
   provisionalFeedback?: ProvisionalPitchFeedback | null;
   footerFeedback?: ReactNode;
@@ -146,7 +171,19 @@ export default function ScoreViewport({
       : 320 + stage.events.length * 100,
     Math.ceil(render?.contentWidth ?? 0),
   );
-  const scoreHeight = timeSpacing ? 176 : 200;
+  const notationHeight = timeSpacing ? 176 : 200;
+  const labelBandHeight = barLabels.length ? barLabelBandHeight : 0;
+  const labels = useMemo(
+    () => scoreBarLabels(barLabels, render),
+    [barLabels, render],
+  );
+  const labelDescription = useMemo(
+    () =>
+      barLabels
+        .map(({ barIndex, label }) => `${c.measure} ${barIndex + 1}: ${label}`)
+        .join("; "),
+    [barLabels, c.measure],
+  );
   const position = render
     ? scoreCursorPosition(
         visualTargets,
@@ -238,7 +275,7 @@ export default function ScoreViewport({
           data-score-rail
           className="relative shrink-0"
           style={{
-            height: scoreHeight,
+            height: notationHeight + labelBandHeight,
             // Keep the renderer's reserved width stable, but don't make review
             // scroll through its unused preparation space after the final bar.
             width: reviewing
@@ -253,25 +290,50 @@ export default function ScoreViewport({
           <AlphaTabNotationView
             score={score}
             width={scoreWidth}
-            height={scoreHeight}
+            height={notationHeight}
             layout="horizontal"
             horizontalScale={timeSpacing ? 0.85 : 1}
             eventColors={colors}
-            accessibleLabel={description}
+            accessibleLabel={
+              labelDescription
+                ? `${description} · ${labelDescription}`
+                : description
+            }
             className="block"
+            style={
+              labelBandHeight
+                ? { position: "relative", top: labelBandHeight }
+                : undefined
+            }
             onRender={(next) => {
               setRender(next);
               onReady();
             }}
             onError={onError}
           />
+          {labels.map(({ barIndex, label, x }) => (
+            <span
+              key={barIndex}
+              aria-hidden="true"
+              data-score-chord
+              data-bar-index={barIndex}
+              className={styles.barLabel}
+              style={{ left: x, height: labelBandHeight }}
+            >
+              {label}
+            </span>
+          ))}
         </div>
         {active && render && (
           <div
             aria-hidden="true"
             data-score-playhead
             className="pointer-events-none absolute bottom-3 top-3 w-0.5 bg-violet-600"
-            style={{ left: playheadX, backgroundColor: provisionalColor }}
+            style={{
+              left: playheadX,
+              top: labelBandHeight ? labelBandHeight + 12 : undefined,
+              backgroundColor: provisionalColor,
+            }}
           >
             <span
               className="absolute -left-[3px] -top-1 h-2 w-2 rounded-full bg-violet-600"

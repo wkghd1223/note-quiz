@@ -38,7 +38,7 @@ describe("seeded eight-bar melody", () => {
                 {
                   ...defaultMelodySettings,
                   clef,
-                  keySignature,
+                  tonalityId: `${keySignature}-major`,
                   minMidi,
                   maxMidi,
                   durations,

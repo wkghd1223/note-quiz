@@ -1,7 +1,7 @@
 "use client";
 import { memo, useId } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
-import { CLEFS, KEY_SIGNATURES } from "@/lib/music/constants";
+import { CLEFS } from "@/lib/music/constants";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import {
   settingsSelectClassName,
@@ -11,9 +11,18 @@ import { melodyCopy } from "../i18n";
 import {
   defaultMelodySettings,
   melodyTimeSignatures,
-  validateMelodySettings,
+  changeMelodyTonality,
   type MelodySettings,
 } from "../domain/settings";
+
+import {
+  melodyTonalities,
+  patternsForTonality,
+  progressionLabel,
+  type TonalityId,
+  type ProgressionChoice,
+} from "../domain/harmony";
+import type { MelodyGeneration } from "../domain/generator";
 
 export const pitchName = (midi: number) =>
   `${["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"][midi % 12]}${Math.floor(midi / 12) - 1}`;
@@ -21,16 +30,33 @@ function MelodySettingsPanel({
   value,
   onChange,
   disabled,
+  generation,
 }: {
   value: MelodySettings;
   onChange: (value: MelodySettings) => void;
   disabled: boolean;
+  generation: MelodyGeneration;
 }) {
   const { t, language } = useTranslation(),
     c = melodyCopy(language),
     id = useId();
-  const validation = validateMelodySettings(value);
-  const valid = validation.valid;
+  const issue = generation.ok ? undefined : generation.issue;
+  const issueText = !issue
+    ? undefined
+    : issue.code === "missingChord"
+      ? c.missingChord.replace("{chord}", issue.chord ?? "")
+      : issue.code === "noAvailableProgression"
+        ? c.noAvailableProgression
+        : issue.code === "bpm"
+          ? c.invalidTempo
+          : ["pitchRange", "minMidi", "maxMidi", "noAvailablePitch"].includes(
+                issue.code,
+              )
+            ? c.invalidRange
+            : ["durations", "noFittingNotes"].includes(issue.code)
+              ? c.invalidRhythm
+              : c.invalid;
+
   return (
     <fieldset
       disabled={disabled}
@@ -43,18 +69,60 @@ function MelodySettingsPanel({
         onChange={(clef) => onChange({ ...value, clef })}
         options={CLEFS.map((clef) => ({ value: clef, label: t.clefs[clef] }))}
       />
-      <label className="grid gap-1 text-sm font-semibold">
-        {t.settingsLabels.keySignature}
+      <label className="grid min-w-0 gap-1 text-sm font-semibold">
+        {c.tonality}
         <select
           className={settingsSelectClassName}
-          value={value.keySignature}
+          value={value.tonalityId}
           onChange={(event) =>
-            onChange({ ...value, keySignature: event.target.value })
+            onChange(
+              changeMelodyTonality(value, event.target.value as TonalityId),
+            )
           }
         >
-          {Object.keys(KEY_SIGNATURES).map((key) => (
-            <option key={key} value={key}>
-              {t.keySignatures.major.replace("{key}", key)}
+          {(["major", "minor"] as const).map((mode) => (
+            <optgroup key={mode} label={c[mode]}>
+              {melodyTonalities
+                .filter((tonality) => tonality.mode === mode)
+                .map((tonality) => (
+                  <option key={tonality.id} value={tonality.id}>
+                    {c[
+                      mode === "major" ? "majorTonality" : "minorTonality"
+                    ].replace(
+                      "{key}",
+                      tonality.tonic.replace("#", "♯").replace("b", "♭"),
+                    )}
+                  </option>
+                ))}
+            </optgroup>
+          ))}
+        </select>
+      </label>
+      <label className="grid min-w-0 gap-1 text-sm font-semibold">
+        {c.progression}
+        <select
+          className={`${settingsSelectClassName} w-full min-w-0 text-xs`}
+          value={value.progressionId}
+          onChange={(event) =>
+            onChange({
+              ...value,
+              progressionId: event.target.value as ProgressionChoice,
+            })
+          }
+        >
+          <option value="none">{c.noProgression}</option>
+          <option value="random">{c.randomProgression}</option>
+          {patternsForTonality(value.tonalityId).map((pattern) => (
+            <option
+              key={pattern.id}
+              value={pattern.id}
+              disabled={
+                generation.availability.find(
+                  (entry) => entry.patternId === pattern.id,
+                )?.available === false
+              }
+            >
+              {progressionLabel(pattern)}
             </option>
           ))}
         </select>
@@ -196,13 +264,9 @@ function MelodySettingsPanel({
         <p className="text-xs leading-5 text-slate-500">{c.beatSoundsHint}</p>
         <p className="text-xs leading-5 text-slate-500">{c.headphones}</p>
       </fieldset>
-      <div className="rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-600">
-        <p className="font-bold">{c.automatic}</p>
-        {c.automaticHint}
-      </div>
-      {!valid && (
+      {issueText && (
         <p id={`${id}-error`} role="alert" className="text-sm text-red-700">
-          {c.invalid}
+          {issueText}
         </p>
       )}
       <button

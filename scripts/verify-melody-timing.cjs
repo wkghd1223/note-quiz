@@ -4,7 +4,9 @@
 // AudioContext, worklet/YIN, React commits and alphaTab rerenders remain real.
 // Usage: UI_BASE_URL=http://localhost:3013 TIMING_SECONDS=20 node scripts/verify-melody-timing.cjs
 // TIMING_TRANSPORT=playwright uses an existing PLAYWRIGHT_MODULE installation for a separate Chromium cadence comparison.
-// Optional TIMING_SETTINGS_JSON temporarily supplies settings; exact prior origin storage is restored.
+// Optional TIMING_SETTINGS_JSON supplies v2 settings (legacy plain fixtures still migrate).
+// Mutating settings is permitted only in the isolated Playwright context; native
+// Orca tabs share origin storage and must remain read-only with respect to settings.
 // TIMING_INPUT_MIDI=40 supplies E2 regardless of score pitch, to check low-voice capture without octave correction.
 const fs = require("node:fs");
 const { execFileSync } = require("node:child_process");
@@ -150,7 +152,15 @@ function readActualView() {
       )
     ).browserPageId;
     if (process.env.TIMING_SETTINGS_JSON) {
-      const settings = JSON.parse(process.env.TIMING_SETTINGS_JSON);
+      if (transport !== "playwright")
+        throw Error(
+          "TIMING_SETTINGS_JSON requires isolated Playwright transport",
+        );
+      const supplied = JSON.parse(process.env.TIMING_SETTINGS_JSON);
+      const settings =
+        supplied.version === 2 || Object.hasOwn(supplied, "keySignature")
+          ? supplied
+          : { version: 2, settings: supplied };
       previousSettings = await evaluate(() =>
         JSON.stringify(localStorage.getItem("note-quiz-melody-settings-v1")),
       );

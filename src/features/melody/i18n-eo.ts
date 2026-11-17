@@ -1,6 +1,21 @@
 import type { MelodyCopy } from "./i18n";
 
 export const esperantoMelody: MelodyCopy = {
+  tonality: "Tonaleco",
+  major: "Maĵora",
+  minor: "Minora",
+  majorTonality: "{key} maĵora",
+  minorTonality: "{key} minora",
+  progression: "Akorda progresio",
+  noProgression: "Neniu",
+  randomProgression: "Hazarda",
+  missingChord:
+    "Neniu tono de la akordo {chord} en ĉi tiu registro. Plilarĝigu ĝin.",
+  noAvailableProgression: "Neniu progresio taŭgas. Plilarĝigu la registron.",
+  invalidTempo: "Enigu taktorapidon inter 40 kaj 180.",
+  invalidRange: "Elektu registron kun skaltonoj, de malalta ĝis alta.",
+  invalidRhythm: "Elektu notlongon, kiu taŭgas por ĉi tiu takto.",
+
   livePitchHint:
     "La linio montras nur la tonalton: ✓ ĝusta, × malĝusta. La komenca momento kaj daŭro estas taksataj post ĉiu noto.",
   preparingAudio: "Preparante pianan sonon…",

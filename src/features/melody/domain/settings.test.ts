@@ -10,7 +10,8 @@ describe("melody settings validation and restoration", () => {
   it("uses treble C4–G4 and quarter/half notes by default", () => {
     expect(defaultMelodySettings).toEqual({
       clef: "treble",
-      keySignature: "C",
+      tonalityId: "C-major",
+      progressionId: "none",
       minMidi: 60,
       maxMidi: 67,
       durations: [1, 2],
@@ -27,8 +28,8 @@ describe("melody settings validation and restoration", () => {
     [[], "settingsObject"],
     ["{}", "settingsObject"],
     [{ clef: "random" }, "clef"],
-    [{ keySignature: "__proto__" }, "keySignature"],
-    [{ keySignature: "H" }, "keySignature"],
+    [{ tonalityId: "__proto__" }, "tonalityId"],
+    [{ tonalityId: "H" }, "tonalityId"],
     [{ minMidi: 47 }, "minMidi"],
     [{ maxMidi: 85 }, "maxMidi"],
     [{ minMidi: 60.5 }, "minMidi"],
@@ -85,13 +86,13 @@ describe("melody settings validation and restoration", () => {
   });
   it("spells enharmonic boundary pitches using the letter's octave", () => {
     expect(
-      getMelodyPitches({ keySignature: "C#", minMidi: 60, maxMidi: 60 }),
+      getMelodyPitches({ tonalityId: "C#-major", minMidi: 60, maxMidi: 60 }),
     ).toEqual([{ midi: 60, spelling: "B#3" }]);
     expect(
-      getMelodyPitches({ keySignature: "Cb", minMidi: 59, maxMidi: 59 }),
+      getMelodyPitches({ tonalityId: "Cb-major", minMidi: 59, maxMidi: 59 }),
     ).toEqual([{ midi: 59, spelling: "Cb4" }]);
     expect(
-      getMelodyPitches({ keySignature: "C#", minMidi: 84, maxMidi: 84 }),
+      getMelodyPitches({ tonalityId: "C#-major", minMidi: 84, maxMidi: 84 }),
     ).toEqual([{ midi: 84, spelling: "B#5" }]);
   });
   it("migrates v1 settings without discarding their musical selections", () => {
@@ -105,7 +106,12 @@ describe("melody settings validation and restoration", () => {
     expect(validateMelodySettings(legacy)).toEqual({
       valid: true,
       settings: {
-        ...legacy,
+        clef: "bass",
+        tonalityId: "Eb-major",
+        progressionId: "none",
+        minMidi: 48,
+        maxMidi: 62,
+        durations: [0.5, 2],
         bpm: 60,
         timeSignature: [4, 4],
         dotted: false,

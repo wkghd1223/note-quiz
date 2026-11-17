@@ -1,6 +1,22 @@
 import type { MelodyCopy } from "./i18n";
 
 export const georgianMelody = {
+  tonality: "ტონალობა",
+  major: "მაჟორი",
+  minor: "მინორი",
+  majorTonality: "{key} მაჟორი",
+  minorTonality: "{key} მინორი",
+  progression: "აკორდების მიმდევრობა",
+  noProgression: "გამორთულია",
+  randomProgression: "შემთხვევითი",
+  missingChord:
+    "ამ დიაპაზონში {chord} აკორდის ნოტა არ არის. გააფართოეთ დიაპაზონი.",
+  noAvailableProgression:
+    "შესაფერისი მიმდევრობა არ არის. გააფართოეთ დიაპაზონი.",
+  invalidTempo: "შეიყვანეთ ტემპი 40-დან 180-მდე.",
+  invalidRange: "აირჩიეთ გამის ნოტების შემცველი დიაპაზონი, დაბლიდან მაღლისკენ.",
+  invalidRhythm: "აირჩიეთ ამ ზომაში ჩატეული ნოტის ხანგრძლივობა.",
+
   livePitchHint:
     "ხაზი მხოლოდ ბგერის სიმაღლეს აჩვენებს: ✓ სწორია, × არასწორია. დაწყების მომენტი და გრძლიობა ყოველი ნოტის დასრულების შემდეგ ფასდება.",
   preparingAudio: "ფორტეპიანოს ხმა მზადდება…",

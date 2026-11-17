@@ -190,7 +190,7 @@ describe("native alphaTab meter and rhythm semantics", () => {
       const exercise = generateMelody(
         {
           ...defaultMelodySettings,
-          keySignature,
+          tonalityId: `${keySignature}-major`,
           minMidi: midi,
           maxMidi: midi,
           timeSignature: [6, 8],

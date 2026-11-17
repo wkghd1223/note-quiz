@@ -13,7 +13,7 @@ describe("melody engraving preserves generated written music", () => {
       const exercise = generateMelody(
         {
           ...defaultMelodySettings,
-          keySignature,
+          tonalityId: `${keySignature}-major`,
           minMidi: midi,
           maxMidi: midi,
           durations: [0.5],

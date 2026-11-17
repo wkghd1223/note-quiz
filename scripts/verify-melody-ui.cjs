@@ -23,6 +23,10 @@ const settings = {
   maxMidi: 60,
   durations: [1],
 };
+const parseSettings = (text) => {
+  const value = JSON.parse(text);
+  return value.settings ?? value;
+};
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const button = (p, name) => p.getByRole("button", { name, exact: true });
 async function reviewScore(page, mobile) {
@@ -347,10 +351,10 @@ async function clean(p) {
           "Applied score ready",
         );
         assert.notEqual(await notation.getAttribute("aria-label"), original);
-        const saved = await p.evaluate(
-          (key) => JSON.parse(localStorage.getItem(key)),
-          key,
-        );
+        const saved = await p.evaluate((key) => {
+          const payload = JSON.parse(localStorage.getItem(key));
+          return payload.settings ?? payload;
+        }, key);
         assert.equal(saved.clef, "bass");
         assert.ok(saved.durations.includes(0.5));
         if (size === "mobile") {
@@ -470,7 +474,7 @@ async function clean(p) {
         );
         await tempo.fill("96");
         assert.equal(
-          JSON.parse(await saved()).bpm,
+          parseSettings(await saved()).bpm,
           96,
           "Valid changes save without Apply",
         );
@@ -492,25 +496,25 @@ async function clean(p) {
           "Reversed range stays an uncommitted edit",
         );
         await highest.selectOption("74");
-        assert.equal(JSON.parse(await saved()).minMidi, 72);
-        assert.equal(JSON.parse(await saved()).maxMidi, 74);
+        assert.equal(parseSettings(await saved()).minMidi, 72);
+        assert.equal(parseSettings(await saved()).maxMidi, 74);
         const quarter = panel.getByRole("checkbox", {
           name: "Quarter",
           exact: true,
         });
         await quarter.uncheck();
         await panel.getByRole("alert").waitFor();
-        assert.deepEqual(JSON.parse(await saved()).durations, [1]);
+        assert.deepEqual(parseSettings(await saved()).durations, [1]);
         await panel
           .getByRole("checkbox", { name: "Half", exact: true })
           .check();
-        assert.deepEqual(JSON.parse(await saved()).durations, [2]);
+        assert.deepEqual(parseSettings(await saved()).durations, [2]);
         await panel
           .getByRole("button", { name: "Reset to Default", exact: true })
           .click();
         assert.equal(await panel.getByRole("alert").count(), 0);
-        assert.equal(JSON.parse(await saved()).bpm, 72);
-        assert.deepEqual(JSON.parse(await saved()).durations, [1, 2]);
+        assert.equal(parseSettings(await saved()).bpm, 72);
+        assert.deepEqual(parseSettings(await saved()).durations, [1, 2]);
         if (viewport.width < 1024)
           assert.equal(await p.getByRole("dialog").isVisible(), true);
         await tempo.fill("96");
@@ -521,7 +525,7 @@ async function clean(p) {
           "Restored score ready",
         );
         assert.equal(
-          JSON.parse(await saved()).bpm,
+          parseSettings(await saved()).bpm,
           96,
           "Automatic save restores after refresh",
         );
@@ -608,10 +612,10 @@ async function clean(p) {
         await tempo.fill("181");
         assert.equal(await button(p, "Start practice").isEnabled(), false);
         assert.equal(
-          await p.evaluate(
-            (key) => JSON.parse(localStorage.getItem(key)).bpm,
-            key,
-          ),
+          await p.evaluate((key) => {
+            const payload = JSON.parse(localStorage.getItem(key));
+            return (payload.settings ?? payload).bpm;
+          }, key),
           72,
           "Invalid tempo is never saved",
         );
@@ -623,10 +627,10 @@ async function clean(p) {
           () => button(p, "Start practice").isEnabled(),
           "Rhythm score ready",
         );
-        const saved = await p.evaluate(
-          (key) => JSON.parse(localStorage.getItem(key)),
-          key,
-        );
+        const saved = await p.evaluate((key) => {
+          const payload = JSON.parse(localStorage.getItem(key));
+          return payload.settings ?? payload;
+        }, key);
         assert.deepEqual(saved.timeSignature, meter.split("/").map(Number));
         assert.equal(saved.dotted, true);
         assert.equal(saved.triplets, true);
@@ -789,10 +793,10 @@ async function clean(p) {
           false,
         );
         assert.equal(await button(p, "New melody").isEnabled(), true);
-        const saved = await p.evaluate(
-          (key) => JSON.parse(localStorage.getItem(key)),
-          key,
-        );
+        const saved = await p.evaluate((key) => {
+          const payload = JSON.parse(localStorage.getItem(key));
+          return payload.settings ?? payload;
+        }, key);
         assert.equal(saved.metronome, true);
         assert.equal(saved.barBell, true);
         return {
@@ -877,7 +881,7 @@ async function clean(p) {
     }
     return evidence;
   });
-  await test("compact melody controls in nine locales", async () => {
+  await test("compact melody controls in eleven locales", async () => {
     const evidence = [];
     for (const width of [390, 1440]) {
       const { c, p } = await context(browser, {
@@ -935,11 +939,46 @@ async function clean(p) {
             assert.equal(settings.font, "14px");
             assert.equal(settings.height, 44);
           }
+          if (width === 390)
+            await p
+              .locator("[data-melody-player] button[aria-haspopup=dialog]")
+              .click();
+          const scope =
+            width === 390
+              ? p.getByRole("dialog")
+              : p.locator("[data-practice-settings]");
+          await scope.locator("select").last().selectOption("84");
+          await scope
+            .locator('select:has(option[value="major-descending"])')
+            .selectOption("major-descending");
+          const selectGeometry = await scope
+            .locator("select")
+            .evaluateAll((nodes) =>
+              nodes.map((node) => ({
+                width: node.getBoundingClientRect().width,
+                height: node.getBoundingClientRect().height,
+                overflow: node.scrollWidth > node.clientWidth,
+              })),
+            );
+          assert.ok(
+            selectGeometry.every((item) => !item.overflow && item.height >= 44),
+          );
+          assert.equal(
+            await p.evaluate(
+              () => document.documentElement.scrollWidth <= innerWidth + 1,
+            ),
+            true,
+          );
+          if (locale === "ko")
+            await p.screenshot({
+              path: `${out}/${width}-translated-chord-settings.png`,
+            });
+          if (width === 390) await p.keyboard.press("Escape");
           if (locale === "ko")
             await p.screenshot({
               path: `${out}/${width}-compact-controls.png`,
             });
-          evidence.push({ locale, width, controls });
+          evidence.push({ locale, width, controls, selectGeometry });
         }
       } finally {
         await c.close();
