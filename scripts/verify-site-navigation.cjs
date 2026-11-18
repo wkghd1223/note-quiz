@@ -50,7 +50,7 @@ async function ready(page, pathname) {
   await page.waitForURL((url) => url.pathname === pathname);
   if (/\/practice\//.test(pathname))
     await page.locator("[data-practice-phase=idle]").waitFor();
-  else if (pathname.endsWith("/melody"))
+  else if (pathname.endsWith("/melody/generated"))
     await page.locator("[data-melody-phase]").waitFor();
   else await page.locator("#home-heading").waitFor();
   await frames(page);
@@ -224,11 +224,11 @@ async function check(page, pathname, prefix, initial, steps) {
   assert.equal(s.headers, 1);
   assert.equal(s.footers, 1);
   const home = pathname === homePath(prefix),
-    melody = pathname.endsWith("/melody");
+    melody = pathname.endsWith("/melody/generated");
   assert.deepEqual(s.active, [
     home
       ? homePath(prefix)
-      : `${prefix}/${melody ? "melody" : "practice/note"}`,
+      : `${prefix}/${melody ? "melody/generated" : "practice/note"}`,
   ]);
   assert.equal(s.owners, home ? 0 : 1);
   assert.equal(s.adSafeOwners, home ? 0 : 1);
@@ -357,7 +357,7 @@ async function scrollAndDialog(page) {
 
 async function crossStudyBack(page, prefix) {
   const owner = page.locator("[data-practice-scroll]");
-  const melodyPath = `${prefix}/melody`,
+  const melodyPath = `${prefix}/melody/generated`,
     practicePath = `${prefix}/practice/note`;
   await owner.evaluate((node) =>
     node.scrollTo({ top: 0, behavior: "instant" }),
@@ -610,8 +610,8 @@ async function runCase(browser, viewport, prefix, delayed = false) {
         }
         await navigate(
           page,
-          page.locator(`header nav a[href="${prefix}/melody"]`),
-          `${prefix}/melody`,
+          page.locator(`header nav a[href="${prefix}/melody/generated"]`),
+          `${prefix}/melody/generated`,
           prefix,
           initial,
           result.steps,
@@ -632,8 +632,8 @@ async function runCase(browser, viewport, prefix, delayed = false) {
           result.steps,
         );
         await page.goBack();
-        await ready(page, `${prefix}/melody`);
-        await check(page, `${prefix}/melody`, prefix, initial, result.steps);
+        await ready(page, `${prefix}/melody/generated`);
+        await check(page, `${prefix}/melody/generated`, prefix, initial, result.steps);
         await page.goForward();
         await ready(page, homePath(prefix));
         await check(page, homePath(prefix), prefix, initial, result.steps);

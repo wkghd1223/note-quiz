@@ -35,6 +35,7 @@ function hasLocalizedPage(pathname: string): boolean {
     pathname === "/practice" ||
     /^\/practice\/(note|ear|interval|chord)$/.test(pathname) ||
     pathname === "/melody" ||
+    /^\/melody\/(generated|upload)$/.test(pathname) ||
     pathname === "/challenge" ||
     pathname.startsWith("/challenge/")
   );

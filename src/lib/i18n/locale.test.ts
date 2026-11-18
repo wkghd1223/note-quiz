@@ -172,10 +172,16 @@ describe("localized URL contract", () => {
   });
 });
 
-it("keeps the melody route localized when linking and changing language", () => {
-  expect(localizedHref("/melody", "ko")).toBe("/ko/melody");
-  expect(languageSwitchHref("/ko/melody", "", "", "de")).toBe("/de/melody");
-});
+it.each(["generated", "upload"])(
+  "keeps the %s melody screen when switching language",
+  (source) => {
+    const path = `/melody/${source}`;
+    expect(localizedHref(path, "ko")).toBe(`/ko${path}`);
+    expect(languageSwitchHref(`/ko${path}`, "?tempo=80", "#score", "de")).toBe(
+      `/de${path}?tempo=80#score`,
+    );
+  },
+);
 
 it("pre-renders Russian alongside the existing supported locale layouts", async () => {
   const { generateStaticParams } = await import("@/app/[locale]/layout");

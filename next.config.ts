@@ -13,6 +13,13 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      ...["/melody", "/:locale(en|ko|ja|es|de|fr|zh|pt|ru|ka|eo)/melody"].map(
+        (source) => ({
+          source,
+          destination: source + "/generated",
+          permanent: true,
+        }),
+      ),
       // Permanent URL migration: resolve practice indexes before layout streaming.
       ...[
         "/practice",

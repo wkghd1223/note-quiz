@@ -104,7 +104,22 @@ describe("legacy practice HTTP redirects", () => {
     const board = await resolveRedirect("/leaderboard", { daily: "1" });
     expect(board?.pathname).toBe("/practice/note");
     expect(board?.query).toMatchObject({ daily: "1", leaderboard: "open" });
-    expect(await resolveRedirect("/melody", {})).toBeNull();
-    expect(await resolveRedirect("/ko/melody", {})).toBeNull();
   });
+  it.each([null, ...SUPPORTED_LOCALES])(
+    "preserves melody entry links in %s",
+    async (locale) => {
+      const prefix = locale ? `/${locale}` : "";
+      const query = { tempo: "80" };
+      const result = await resolveRedirect(`${prefix}/melody`, query);
+      expect(result).toMatchObject({
+        status: 308,
+        pathname: `${prefix}/melody/generated`,
+        query,
+      });
+      for (const source of ["generated", "upload"])
+        expect(
+          await resolveRedirect(`${prefix}/melody/${source}`, {}),
+        ).toBeNull();
+    },
+  );
 });

@@ -12,7 +12,7 @@ export default function ChallengeLink() {
 
   return (
     <Link
-      href={localizedHref("/melody", locale)}
+      href={localizedHref("/melody/generated", locale)}
       className="inline-flex min-h-11 items-center text-sm font-bold text-[#5b21b6] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
     >
       {melodyCopy(language).title}

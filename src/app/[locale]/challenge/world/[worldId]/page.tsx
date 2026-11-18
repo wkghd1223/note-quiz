@@ -8,5 +8,5 @@ export default async function LegacyChallengePage({
 }) {
   const { locale } = await params;
   if (!challengeEnabled || !isLanguage(locale)) notFound();
-  permanentRedirect(localizedHref("/melody", locale));
+  permanentRedirect(localizedHref("/melody/generated", locale));
 }

@@ -11,7 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/practice/ear",
     "/practice/interval",
     "/practice/chord",
-    ...(challengeEnabled ? ["/melody"] : []),
+    ...(challengeEnabled ? ["/melody/generated", "/melody/upload"] : []),
   ];
   const pages: MetadataRoute.Sitemap = localizedPaths.flatMap((path) =>
     [null, ...SUPPORTED_LOCALES].map((locale) => ({

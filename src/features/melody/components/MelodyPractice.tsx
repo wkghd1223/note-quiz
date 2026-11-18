@@ -35,6 +35,11 @@ import {
   type MelodySettings,
 } from "../domain/settings";
 import { melodyCopy } from "../i18n";
+import {
+  MelodyHeading,
+  MelodySettingsButton,
+  MelodyWorkspace,
+} from "./MelodyWorkspace";
 import MelodySettingsPanel, { pitchName } from "./MelodySettingsPanel";
 
 const secondaryButton = `${practiceControlSizeClassName} inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white text-center font-semibold text-slate-800 hover:bg-violet-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-700 disabled:cursor-not-allowed disabled:opacity-50`;
@@ -270,20 +275,9 @@ export default function MelodyPractice() {
           : m.audioError;
   return (
     <div data-melody-scroll data-melody-phase={s.phase}>
-      <main className="mx-auto grid w-full min-w-0 max-w-6xl gap-4 px-3 py-4 sm:px-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h1
-              data-practice-heading
-              tabIndex={-1}
-              className="text-2xl font-black"
-            >
-              {m.title}
-            </h1>
-            <p className="mt-1 text-sm leading-6 text-slate-600">{m.intro}</p>
-          </div>
-        </div>
-        <div className="grid min-w-0 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="grid min-w-0 gap-4">
+        <MelodyHeading title={m.title} description={m.intro} />
+        <MelodyWorkspace>
           <section
             ref={player}
             data-melody-player
@@ -297,19 +291,15 @@ export default function MelodyPractice() {
                 <p className="text-sm font-bold text-violet-800">
                   {m.voiceOnly}
                 </p>
-                <button
-                  type="button"
+                <MelodySettingsButton
+                  label={t.settings}
+                  open={settingsOpen}
                   disabled={locked}
                   onClick={() => {
                     clearReview();
                     setSettingsOpen(true);
                   }}
-                  aria-expanded={settingsOpen}
-                  aria-haspopup="dialog"
-                  className={`${secondaryButton} lg:hidden`}
-                >
-                  {t.settings}
-                </button>
+                />
               </div>
               <PracticeController
                 state={
@@ -631,8 +621,8 @@ export default function MelodyPractice() {
               disabled={!hydrated || locked}
             />
           </SettingsSurface>
-        </div>
-      </main>
+        </MelodyWorkspace>
+      </div>
     </div>
   );
 }

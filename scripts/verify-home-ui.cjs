@@ -87,7 +87,7 @@ const report = {
           "practice/ear",
           "practice/interval",
           "practice/chord",
-          "melody",
+          "melody/generated",
         ]) {
           assert.equal(
             await page.locator(`main a[href="/${locale}/${path}"]`).count(),
@@ -103,7 +103,7 @@ const report = {
             },
           ),
           melodyBottom: document
-            .querySelector('main a[href$="/melody"]')
+            .querySelector('main a[href$="/melody/generated"]')
             .getBoundingClientRect().bottom,
           horizontalClip: [
             ...document.querySelectorAll(
@@ -157,7 +157,7 @@ const report = {
           await page.locator("[data-practice-phase=idle]").waitFor();
         }
         await page.goto(`${base}/ko`);
-        await page.locator('main a[href="/ko/melody"]').click();
+        await page.locator('main a[href="/ko/melody/generated"]').click();
         await page.locator("[data-melody-phase=landing]").waitFor();
         await page.goto(`${base}/ko`);
         await page
@@ -195,7 +195,10 @@ const report = {
         (await page.locator("#home-heading").textContent()).length > 0,
         "SSR home content",
       );
-      assert.equal(await page.locator('main a[href$="/melody"]').count(), 1);
+      assert.equal(
+        await page.locator('main a[href$="/melody/generated"]').count(),
+        1,
+      );
       await page.close();
     }
     await noJs.close();

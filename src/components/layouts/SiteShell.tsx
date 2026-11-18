@@ -6,13 +6,14 @@ import Header from "./header";
 import Footer from "./footer";
 import AdLayoutObserver from "@/components/practice/AdLayoutObserver";
 import { stripLocale } from "@/lib/i18n/locale";
+import { releaseScoreDraft } from "@/features/melody/score-draft";
 
 /** Keep site chrome above route loading boundaries and inside one study scroll owner. */
 export default function SiteShell({ children }: { children: ReactNode }) {
   const path = stripLocale(usePathname());
   const home = path === "/";
   const study =
-    path === "/melody"
+    path === "/melody" || path.startsWith("/melody/")
       ? "melody"
       : path === "/practice" || path.startsWith("/practice/")
         ? "practice"
@@ -20,6 +21,7 @@ export default function SiteShell({ children }: { children: ReactNode }) {
   const scrollOwner = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
+    if (study !== "melody") releaseScoreDraft();
     // These previously had separate scroll owners. Keep their entry origins
     // independent while retaining the shared chrome and practice-mode scrolling.
     if (study)

@@ -60,6 +60,13 @@ export function beatCuePcm(
 interface SessionCallbacks {
   signal?: MicrophoneSignal;
   onFrame: (frame: InputFrame) => void;
+  /** Synchronous analysis only. The worklet reclaims this window on return. */
+  onSamples?: (
+    pcm: Float32Array,
+    sampleRate: number,
+    frame: InputFrame & { pitchAudioTimeSec: number },
+    energyGate: number,
+  ) => void;
   onEvent: (event: PerformanceEvent) => void;
   onError: (error: ChallengeAudioError) => void;
 }
@@ -247,13 +254,16 @@ export class ChallengeAudioSession {
           }
         } else this.pendingCalibration = [];
         const active = frame.audioTimeSec >= this.collectAfter;
+        const energyGate = microphoneEnergyGates(this.noiseFloor).enter;
         frame.inputQuality = qualityObserver.observe(
           estimate,
           frame.audioTimeSec,
-          microphoneEnergyGates(this.noiseFloor).enter,
+          energyGate,
           active,
           frame.rms,
         );
+        if (active)
+          this.callbacks.onSamples?.(pcm, data.sampleRate, frame, energyGate);
         if (frame.audioTimeSec - this.lastUiFrame >= 0.05) {
           this.lastUiFrame = frame.audioTimeSec;
           // Read actual PCM and spectral magnitudes from the same stream. These

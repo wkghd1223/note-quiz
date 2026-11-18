@@ -1,9 +1,12 @@
+import { notFound } from "next/navigation";
+import { melodySourceCopy, type MelodySource } from "@/features/melody/sources";
 import type { Metadata } from "next";
 import { siteUrl } from "@/lib/metadata";
 import { melodyCopy } from "@/features/melody/i18n";
 import { getTranslation } from "./translations";
 import {
   htmlLanguage,
+  isLanguage,
   localizedHref,
   stripLocale,
   SUPPORTED_LOCALES,
@@ -15,6 +18,7 @@ const absolute = (pathname: string) => new URL(pathname, siteUrl).toString();
 function canonicalPagePath(href: string): string {
   const url = new URL(href, siteUrl);
   const path = stripLocale(url.pathname);
+  if (path === "/melody") return "/melody/generated";
   if (path !== "/practice") return path;
   const requested = url.searchParams.get("mode");
   const mode =
@@ -71,8 +75,11 @@ export function localeMetadata(
               : t.learning.entryDescription,
           }
         : {
-            title: `${challenge.title} | Note Quiz`,
-            description: challenge.intro,
+            title: `${path === "/melody/upload" ? melodySourceCopy[locale].upload + " · " : ""}${challenge.title} | Note Quiz`,
+            description:
+              path === "/melody/upload"
+                ? melodySourceCopy[locale].openHint
+                : challenge.intro,
           });
   const ogLocales: Record<Language, string | null> = {
     en: "en_US",
@@ -145,4 +152,26 @@ export function practiceModeMetadata(
           description: copy.description,
         },
       };
+}
+
+export function melodyPageMetadata(
+  source: MelodySource,
+  locale: Language | null,
+): Metadata {
+  const path = "/melody/" + source;
+  const metadata = localeMetadata(locale ?? "en", path);
+  if (locale) return metadata;
+  return {
+    ...metadata,
+    alternates: languageAlternates(path, null),
+    openGraph: { ...metadata.openGraph, url: absolute(path) },
+  };
+}
+
+export function localizedMelodyMetadata(source: MelodySource) {
+  return async ({ params }: { params: Promise<{ locale: string }> }) => {
+    const { locale } = await params;
+    if (!isLanguage(locale)) notFound();
+    return melodyPageMetadata(source, locale);
+  };
 }

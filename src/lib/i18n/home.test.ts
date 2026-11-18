@@ -110,7 +110,9 @@ describe.each([true, false])("home with melody enabled=%s", (enabled) => {
       expect(markup).toContain(
         `href="/${locale}/practice/note?leaderboard=open"`,
       );
-      expect(markup.includes(`href="/${locale}/melody"`)).toBe(enabled);
+      expect(markup.includes(`href="/${locale}/melody/generated"`)).toBe(
+        enabled,
+      );
       expect(markup.match(/<summary\b/g)).toHaveLength(enabled ? 4 : 3);
       if (enabled) {
         expect(markup).toContain(escaped(copy.melodyDescription));
@@ -140,7 +142,7 @@ describe.each([true, false])("home with melody enabled=%s", (enabled) => {
     });
     const markup = renderToStaticMarkup(createElement(HomePage));
     expect(markup).toContain('href="/practice/note"');
-    expect(markup.includes('href="/melody"')).toBe(enabled);
+    expect(markup.includes('href="/melody/generated"')).toBe(enabled);
     if (!enabled) {
       expect(`${markup} ${JSON.stringify(metadata)}`).not.toMatch(
         melodyTerms.en,

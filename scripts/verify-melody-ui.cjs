@@ -246,7 +246,7 @@ async function context(browser, viewport, init) {
   p.on("pageerror", (e) => report.errors.push(e.message));
   return { c, p };
 }
-async function open(p, path = "/en/melody") {
+async function open(p, path = "/en/melody/generated") {
   const response = await p.goto(base + path);
   if (report.build)
     assert.ok(
@@ -304,7 +304,7 @@ async function clean(p) {
     await test(`${size} settings, canonical routes and radio keyboard`, async () => {
       const { c, p } = await context(browser, viewport);
       try {
-        await open(p, "/melody");
+        await open(p, "/melody/generated");
         assert.equal(await p.title(), "Melody Practice | Note Quiz");
         assert.equal(await p.getByRole("contentinfo").count(), 1);
         assert.equal(
@@ -406,7 +406,7 @@ async function clean(p) {
           "/challenge/play/w1-s1",
         ]) {
           await p.goto(base + "/ko" + old);
-          assert.equal(new URL(p.url()).pathname, "/ko/melody");
+          assert.equal(new URL(p.url()).pathname, "/ko/melody/generated");
         }
         await p.goto(base + "/en/practice?mode=note");
         await p.locator("[data-practice-mode] input:checked").waitFor();
@@ -902,7 +902,7 @@ async function clean(p) {
           "ka",
           "eo",
         ]) {
-          await p.goto(`${base}/${locale}/melody`);
+          await p.goto(`${base}/${locale}/melody/generated`);
           const controls = await p
             .locator(
               "[data-melody-player] [data-practice-controller] button:visible",
@@ -1389,12 +1389,12 @@ async function clean(p) {
         "ka",
         "eo",
       ]) {
-        await p.goto(`${base}/${locale}/melody`);
+        await p.goto(`${base}/${locale}/melody/generated`);
         await p.locator("[data-melody-scroll]").waitFor();
         titles[locale] = await p.locator("h1").textContent();
         assert.equal(
           await p.locator('link[rel="canonical"]').getAttribute("href"),
-          `https://note-quiz.com/${locale}/melody`,
+          `https://note-quiz.com/${locale}/melody/generated`,
         );
         assert.equal(
           await p.evaluate(

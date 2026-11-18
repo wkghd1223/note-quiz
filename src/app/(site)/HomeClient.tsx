@@ -96,7 +96,7 @@ export default function HomePage() {
                   {copy.melodyFeatures}
                 </p>
                 <Link
-                  href={localizedHref("/melody", locale)}
+                  href={localizedHref("/melody/generated", locale)}
                   className={`motion-control mt-auto inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-violet-800 px-3 py-2 text-sm font-bold text-white hover:bg-violet-950 ${focusStyle}`}
                 >
                   {copy.melodyAction}

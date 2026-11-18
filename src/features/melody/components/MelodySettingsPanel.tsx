@@ -10,6 +10,10 @@ import {
 } from "@/components/practice/SettingsControls";
 import { melodyCopy } from "../i18n";
 import {
+  MelodyBeatSoundFields,
+  MelodyTempoField,
+} from "./MelodyPlaybackFields";
+import {
   defaultMelodySettings,
   melodyTimeSignatures,
   changeMelodyTonality,
@@ -168,29 +172,15 @@ function MelodySettingsPanel({
           label: meter.join("/"),
         }))}
       />
-      <div className="grid gap-1 text-sm font-semibold">
-        <label htmlFor={`${id}-tempo`}>{c.bpm}</label>
-        <input
-          type="number"
-          id={`${id}-tempo`}
-          inputMode="numeric"
-          min={40}
-          max={180}
-          step={1}
-          value={Number.isFinite(value.bpm) ? value.bpm : ""}
-          onChange={(event) =>
-            onChange({ ...value, bpm: event.target.valueAsNumber })
-          }
-          aria-describedby={`${id}-tempo-hint`}
-          className={settingsSelectClassName}
-        />
-        <span
-          id={`${id}-tempo-hint`}
-          className="text-xs font-normal leading-5 text-slate-500"
-        >
-          {c.bpmHint}
-        </span>
-      </div>
+      <MelodyTempoField
+        value={Number.isFinite(value.bpm) ? value.bpm : ""}
+        onChange={(input) =>
+          onChange({ ...value, bpm: input === "" ? NaN : Number(input) })
+        }
+        min={40}
+        max={180}
+        hint={c.bpmHint}
+      />
       <fieldset>
         <legend className="mb-2 text-sm font-semibold">{c.durations}</legend>
         <div className="grid grid-cols-2 gap-2">
@@ -244,27 +234,10 @@ function MelodySettingsPanel({
         ))}
         <p className="text-xs leading-5 text-slate-500">{c.dottedHint}</p>
       </fieldset>
-      <fieldset className="grid gap-2">
-        <legend className="mb-2 text-sm font-semibold">{c.beatSounds}</legend>
-        {(["metronome", "barBell"] as const).map((key) => (
-          <label
-            key={key}
-            className={`flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 font-semibold ${practiceControlSizeClassName}`}
-          >
-            <input
-              type="checkbox"
-              className={settingsCheckboxClassName}
-              checked={value[key]}
-              onChange={(event) =>
-                onChange({ ...value, [key]: event.target.checked })
-              }
-            />
-            {c[key]}
-          </label>
-        ))}
-        <p className="text-xs leading-5 text-slate-500">{c.beatSoundsHint}</p>
-        <p className="text-xs leading-5 text-slate-500">{c.headphones}</p>
-      </fieldset>
+      <MelodyBeatSoundFields
+        value={value}
+        onChange={(patch) => onChange({ ...value, ...patch })}
+      />
       {issueText && (
         <p id={`${id}-error`} role="alert" className="text-sm text-red-700">
           {issueText}

@@ -11,9 +11,9 @@ import { melodyCopy } from "@/features/melody/i18n";
 
 describe("static locale metadata", () => {
   it("uses Georgian regional metadata without inventing an Esperanto territory", () => {
-    expect(localeMetadata("ka", "/melody").openGraph).toMatchObject({
+    expect(localeMetadata("ka", "/melody/generated").openGraph).toMatchObject({
       locale: "ka_GE",
-      url: "https://note-quiz.com/ka/melody",
+      url: "https://note-quiz.com/ka/melody/generated",
     });
     const metadata = localeMetadata("eo", "/practice/note?share=1#history");
     expect(metadata.openGraph).not.toHaveProperty("locale");
@@ -49,11 +49,11 @@ describe("static locale metadata", () => {
     expect(metadata.twitter).toMatchObject({
       description: getTranslation("ru").learning.earDescription,
     });
-    const melody = localeMetadata("ru", "/melody");
+    const melody = localeMetadata("ru", "/melody/generated");
     expect(melody.title).toEqual({ absolute: "Практика мелодий | Note Quiz" });
     expect(melody.openGraph).toMatchObject({
       locale: "ru_RU",
-      url: "https://note-quiz.com/ru/melody",
+      url: "https://note-quiz.com/ru/melody/generated",
     });
   });
   it("publishes Brazilian Portuguese social metadata", () => {
@@ -98,14 +98,27 @@ describe("static locale metadata", () => {
   it.each(SUPPORTED_LOCALES)(
     "describes and links melody practice in %s",
     (locale) => {
-      const metadata = localeMetadata(locale, "/melody");
+      const metadata = localeMetadata(locale, "/melody/generated");
       expect(metadata.alternates?.canonical).toBe(
-        `https://note-quiz.com/${locale}/melody`,
+        `https://note-quiz.com/${locale}/melody/generated`,
       );
       expect(metadata.description).toBe(melodyCopy(locale).intro);
       expect(metadata.openGraph).toMatchObject({
-        url: `https://note-quiz.com/${locale}/melody`,
+        url: `https://note-quiz.com/${locale}/melody/generated`,
         description: metadata.description,
+      });
+      expect(languageAlternates("/melody?tempo=80", locale)).toEqual(
+        metadata.alternates,
+      );
+      const uploaded = localeMetadata(locale, "/melody/upload");
+      expect(uploaded.title).not.toEqual(metadata.title);
+      expect(uploaded.description).not.toEqual(metadata.description);
+      expect(uploaded.alternates).toMatchObject({
+        canonical: `https://note-quiz.com/${locale}/melody/upload`,
+        languages: {
+          "x-default": "https://note-quiz.com/melody/upload",
+          ko: "https://note-quiz.com/ko/melody/upload",
+        },
       });
       expect(getTranslation(locale).navigation.melody).toBeTruthy();
     },
@@ -193,10 +206,14 @@ describe("indexable route sitemap", () => {
         const pages = flaggedSitemap();
         const urls = pages.map(({ url }) => url);
         expect(urls).toHaveLength(
-          (enabled ? 6 : 5) * (SUPPORTED_LOCALES.length + 1) + 4,
+          (enabled ? 7 : 5) * (SUPPORTED_LOCALES.length + 1) + 4,
         );
         expect(urls).toContain("https://note-quiz.com/ru");
-        expect(urls.includes("https://note-quiz.com/ru/melody")).toBe(enabled);
+        for (const source of ["generated", "upload"])
+          expect(
+            urls.includes(`https://note-quiz.com/ru/melody/${source}`),
+          ).toBe(enabled);
+        expect(urls).not.toContain("https://note-quiz.com/ru/melody");
         for (const mode of ["note", "ear", "interval", "chord"]) {
           const url = `https://note-quiz.com/ru/practice/${mode}`;
           expect(urls).toContain(url);
@@ -254,7 +271,7 @@ describe("indexable route sitemap", () => {
   it("lists existing pages and all supported localized home/practice/melody routes exactly once", () => {
     const pages = sitemap(),
       urls = pages.map(({ url }) => url);
-    expect(urls.length).toBe(6 * (SUPPORTED_LOCALES.length + 1) + 4);
+    expect(urls.length).toBe(7 * (SUPPORTED_LOCALES.length + 1) + 4);
     expect(new Set(urls).size).toBe(urls.length);
     for (const locale of SUPPORTED_LOCALES) {
       expect(urls).toContain(`https://note-quiz.com/${locale}`);
@@ -271,7 +288,11 @@ describe("indexable route sitemap", () => {
         );
       }
       expect(urls).not.toContain(`https://note-quiz.com/${locale}/practice`);
-      expect(urls).toContain(`https://note-quiz.com/${locale}/melody`);
+      expect(urls).not.toContain(`https://note-quiz.com/${locale}/melody`);
+      for (const source of ["generated", "upload"])
+        expect(urls).toContain(
+          `https://note-quiz.com/${locale}/melody/${source}`,
+        );
       expect(urls.some((url) => url.includes("/challenge"))).toBe(false);
       for (const path of [
         "about",

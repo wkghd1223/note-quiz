@@ -479,7 +479,7 @@ async function ready(page) {
     await test("melody preview, denied start, playing/pause/resume, completion, retry and exit", async () => {
       const { c, page } = await context(browser, { denyFirstMicrophone: true });
       try {
-        await open(page, "/en/melody");
+        await open(page, "/en/melody/generated");
         await ready(page);
         await count(page, "practice_entered", "melody", 1);
         await button(page, "Play example").click();
@@ -568,8 +568,8 @@ async function ready(page) {
         assert.equal(exit.completed, false);
         assert.equal(exit.total_questions, undefined);
         assert.equal(exit.correct_answers, undefined);
-        assert.equal(exit.page_path, "/en/melody");
-        assert.equal(exit.page_location, `${base.origin}/en/melody`);
+        assert.equal(exit.page_path, "/en/melody/generated");
+        assert.equal(exit.page_location, `${base.origin}/en/melody/generated`);
         assert.equal(exit.page_title, melodyTitle);
         assert.equal(exit.page_referrer, "");
         await count(page, "practice_entered", "note", 1);
@@ -577,7 +577,7 @@ async function ready(page) {
         const incoming = (await events(page, "page_view"))[1][2];
         assert.equal(incoming.page_path, "/en/practice/note");
         assert.equal(incoming.page_title, await page.title());
-        assert.equal(incoming.page_referrer, `${base.origin}/en/melody`);
+        assert.equal(incoming.page_referrer, `${base.origin}/en/melody/generated`);
         const captured = await calls(page);
         privacy(captured);
         assert.ok(!(await events(page, "note_quiz_session_started")).length);

@@ -27,11 +27,12 @@ export default function Header({ variant = "default" }: HeaderProps) {
   const items = [
     ["/", t.navigation.home],
     ["/practice/note", t.navigation.practice],
-    ...(challengeEnabled ? [["/melody", t.navigation.melody]] : []),
+    ...(challengeEnabled ? [["/melody/generated", t.navigation.melody]] : []),
   ];
 
   const active = (href: string) =>
     path === href ||
+    (href === "/melody/generated" && path.startsWith("/melody/")) ||
     (href === "/practice/note" &&
       (path === "/practice" || path.startsWith("/practice/")));
 
