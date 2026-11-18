@@ -80,7 +80,11 @@ describe("explicit Esperanto dictionaries before locale registration", () => {
     expect(judgments[0]).toMatch(/tonalto/i);
     expect(judgments[1]).toMatch(/komenca/i);
     expect(judgments[2]).toMatch(/daŭro/i);
-    expect(esperantoMelody.livePitchHint).toMatch(/post ĉiu noto/);
+    expect(esperantoMelody.livePitchLabel).toBe("Nuna tonalto");
+    expect(esperantoMelody.reasonPitchCorrectTooShort).toContain(
+      "tro mallonga",
+    );
+    expect(esperantoMelody.reasonNoSignal).toContain("fidinde konfirmita");
     expect(esperantoMelody.metronome).toMatch(/pulso/);
     expect(esperantoMelody.rhythm).toMatch(/ritm/i);
     expect(esperantoTranslations.settingsLabels.clef).toMatch(/klefo/i);

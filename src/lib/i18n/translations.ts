@@ -67,6 +67,10 @@ export interface Translations {
     signal: string;
     signalQuiet: string;
     signalActive: string;
+    inputWeak: string;
+    inputUncertain: string;
+    inputClipping: string;
+    continuousListening: string;
     description: string;
     startListening: string;
     stopListening: string;
@@ -435,6 +439,10 @@ export const translations: Record<Language, Translations> = {
       signal: "Microphone signal",
       signalQuiet: "Waiting for sound",
       signalActive: "Sound detected",
+      inputWeak: "Input is quiet",
+      inputUncertain: "Finding the pitch",
+      inputClipping: "Input is too loud",
+      continuousListening: "Continuous listening",
       description:
         "Hold the button and play one note; release or move focus away to submit. You can also hold Space or Enter.",
       startListening: "Hold to detect",
@@ -807,6 +815,10 @@ export const translations: Record<Language, Translations> = {
       signal: "마이크 신호",
       signalQuiet: "소리를 기다리는 중",
       signalActive: "소리 감지됨",
+      inputWeak: "입력이 작아요",
+      inputUncertain: "음정 확인 중",
+      inputClipping: "입력이 너무 커요",
+      continuousListening: "연속 인식",
       description:
         "버튼을 누른 채 한 음을 내세요. 손을 떼거나 다른 곳으로 포커스를 옮기면 답을 제출합니다. Space나 Enter 키로도 누를 수 있어요.",
       startListening: "누르고 소리 내기",
@@ -1174,6 +1186,10 @@ export const translations: Record<Language, Translations> = {
       signal: "マイク信号",
       signalQuiet: "音声を待っています",
       signalActive: "音声を検出しました",
+      inputWeak: "入力音が小さいです",
+      inputUncertain: "音程を確認中",
+      inputClipping: "入力音が大きすぎます",
+      continuousListening: "連続認識",
       description:
         "ボタンを押したまま一つの音を出してください。離すかフォーカスを移すと送信します。Space・Enterキーでも操作できます。",
       startListening: "押して音を入力",
@@ -1545,6 +1561,10 @@ export const translations: Record<Language, Translations> = {
       signal: "Señal del micrófono",
       signalQuiet: "Esperando sonido",
       signalActive: "Sonido detectado",
+      inputWeak: "El sonido es bajo",
+      inputUncertain: "Comprobando la nota",
+      inputClipping: "El sonido es demasiado fuerte",
+      continuousListening: "Escucha continua",
       description:
         "Mantén pulsado el botón y toca una nota. Suelta o mueve el foco para responder. También puedes mantener Espacio o Intro.",
       startListening: "Mantén para detectar",
@@ -1925,10 +1945,14 @@ export const translations: Record<Language, Translations> = {
       signal: "Mikrofonsignal",
       signalQuiet: "Warte auf Ton",
       signalActive: "Ton erkannt",
+      inputWeak: "Eingang zu leise",
+      inputUncertain: "Tonhöhe wird erkannt",
+      inputClipping: "Eingang zu laut",
+      continuousListening: "Dauerhaft hören",
       description:
         "Halte die Taste gedrückt und spiele einen Ton. Loslassen oder Fokuswechsel sendet die Antwort. Auch mit Leertaste oder Enter.",
       startListening: "Zum Erkennen halten",
-      stopListening: "Loslassen zum Antworten",
+      stopListening: "Loslassen",
       listening: "Hört zu",
       ready: "Bereit",
       detectedNote: "Erkannter Ton",
@@ -2306,6 +2330,10 @@ export const translations: Record<Language, Translations> = {
       signal: "Signal du microphone",
       signalQuiet: "En attente de son",
       signalActive: "Son détecté",
+      inputWeak: "Le son est faible",
+      inputUncertain: "Recherche de la note",
+      inputClipping: "Le son est trop fort",
+      continuousListening: "Écoute continue",
       description:
         "Maintiens le bouton et joue une note. Relâche ou déplace le focus pour répondre. Espace et Entrée fonctionnent aussi.",
       startListening: "Maintenir pour détecter",

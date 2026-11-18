@@ -11,7 +11,7 @@ export default function StablePracticeActions({
   states: Record<string, React.ReactNode>;
 }) {
   return (
-    <div className="grid min-w-0" data-practice-action-frame>
+    <div className="grid min-w-0 items-stretch" data-practice-action-frame>
       {Object.entries(states).map(([state, controls]) => (
         <div
           key={state}

@@ -16,11 +16,16 @@ import {
   getInstrumentProfile,
   getScoringProfile,
 } from "@/features/challenge/domain/instrument-profile";
-import { useLivePitchFeedback } from "../hooks/useLivePitchFeedback";
+import {
+  useLivePitchFeedback,
+  useFreshInputQuality,
+} from "../hooks/useLivePitchFeedback";
+import { melodyReviewEvents } from "../domain/result-review";
+import MelodyResultReview from "./MelodyResultReview";
 import { useMelodyAnalytics } from "../hooks/useMelodyAnalytics";
 import { challengeCopy } from "@/features/challenge/i18n";
 import ScoreViewport from "@/features/challenge/components/ScoreViewport";
-import { secondaryButton } from "@/features/challenge/components/ChallengeShell";
+import { practiceControlSizeClassName } from "@/components/practice/SettingsControls";
 import { createMelody, type MelodyGeneration } from "../domain/generator";
 import {
   defaultMelodySettings,
@@ -31,6 +36,8 @@ import {
 } from "../domain/settings";
 import { melodyCopy } from "../i18n";
 import MelodySettingsPanel, { pitchName } from "./MelodySettingsPanel";
+
+const secondaryButton = `${practiceControlSizeClassName} inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white text-center font-semibold text-slate-800 hover:bg-violet-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-700 disabled:cursor-not-allowed disabled:opacity-50`;
 
 const newSeed = () => crypto.getRandomValues(new Uint32Array(1))[0];
 const voice = getInstrumentProfile("voice")!;
@@ -61,6 +68,14 @@ export default function MelodyPractice() {
     s.phase === "result",
     s.attemptToken,
   );
+  const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null);
+  const clearReview = useCallback(() => {
+    session.stopReview();
+    setSelectedReviewId(null);
+  }, [session.stopReview]);
+  useEffect(() => {
+    clearReview();
+  }, [clearReview, exercise.id, s.attemptToken, s.phase, results.open]);
   const scoringProfile = useMemo(
     () => getScoringProfile(exercise, "voice"),
     [exercise],
@@ -107,11 +122,46 @@ export default function MelodyPractice() {
     },
     s.attemptToken,
   );
+  const quality = useFreshInputQuality(
+    session.frame,
+    session.elapsed,
+    s.phase === "playing" && !session.previewing && target?.kind === "note",
+  );
+  const direction =
+    quality === "stable" && pitchFeedback?.stageEventId === target?.stageEventId
+      ? pitchFeedback.direction
+      : null;
+  const inputStatus =
+    quality === "clipping"
+      ? t.microphone.inputClipping
+      : quality === "weak"
+        ? t.microphone.inputWeak
+        : quality === "inactive"
+          ? ""
+          : direction === "match"
+            ? m.pitchMatch
+            : direction === "higher"
+              ? m.pitchHigher
+              : direction === "lower"
+                ? m.pitchLower
+                : t.microphone.inputUncertain;
+  const reviewEvents = useMemo(
+    () => melodyReviewEvents(exercise, playback.targets, s.result),
+    [exercise, playback.targets, s.result],
+  );
+  const selectReview = (id: string | null) => {
+    session.stopReview();
+    setSelectedReviewId(id);
+  };
+  const setResultsOpen = (open: boolean) => {
+    clearReview();
+    results.setOpen(open);
+  };
   const targetEvent = exercise.events.find(
     (event) => event.id === (target.sourceEventId ?? target.stageEventId),
   );
   const detected =
-    session.frame?.isVoiced && session.frame.detectedHz
+    direction && session.frame?.isVoiced && session.frame.detectedHz
       ? Math.round(69 + 12 * Math.log2(session.frame.detectedHz / 440))
       : null;
   useEffect(() => {
@@ -151,6 +201,7 @@ export default function MelodyPractice() {
       session.busy
     )
       return;
+    clearReview();
     setSettingsOpen(false);
     session.start({
       stageId: exercise.id,
@@ -163,6 +214,7 @@ export default function MelodyPractice() {
   };
   const next = () => {
     if (!hydrated || locked || !settingsValid) return;
+    clearReview();
     const seed = (generation.seed + 1) >>> 0;
     const result = createMelody(draft, seed);
     setGeneration((previous) => ({
@@ -176,6 +228,7 @@ export default function MelodyPractice() {
   const changeSettings = useCallback(
     (next: MelodySettings) => {
       if (!hydrated || locked) return;
+      clearReview();
       // Editing may temporarily leave a blank tempo or an incomplete range.
       // Keep the last playable score until the complete settings are valid.
       setDraft(next);
@@ -203,7 +256,7 @@ export default function MelodyPractice() {
         setStorageWarning(true);
       }
     },
-    [hydrated, locked, resetSession, generation.seed, settings],
+    [hydrated, locked, resetSession, generation.seed, settings, clearReview],
   );
   const error = session.audioError;
   const errorText = session.previewFailed
@@ -234,7 +287,7 @@ export default function MelodyPractice() {
           <section
             ref={player}
             data-melody-player
-            className="grid min-w-0 gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:p-4 [&_button]:min-h-11 [&_button]:py-2 [&_button]:text-sm"
+            className="grid min-w-0 gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:p-4"
           >
             <div
               data-practice-dock
@@ -247,7 +300,10 @@ export default function MelodyPractice() {
                 <button
                   type="button"
                   disabled={locked}
-                  onClick={() => setSettingsOpen(true)}
+                  onClick={() => {
+                    clearReview();
+                    setSettingsOpen(true);
+                  }}
                   aria-expanded={settingsOpen}
                   aria-haspopup="dialog"
                   className={`${secondaryButton} lg:hidden`}
@@ -315,7 +371,7 @@ export default function MelodyPractice() {
                     {
                       id: "results",
                       label: t.practiceUi.viewResults,
-                      onClick: () => results.setOpen(true),
+                      onClick: () => setResultsOpen(true),
                       tone: "primary",
                       buttonRef: resultButton,
                     },
@@ -350,7 +406,10 @@ export default function MelodyPractice() {
                       value:
                         session.previewing || detected === null
                           ? "—"
-                          : pitchName(detected),
+                          : detected === target.targetConcertMidi
+                            ? (targetEvent?.writtenSpelling ??
+                              pitchName(detected))
+                            : pitchName(detected),
                       icon: <FaMicrophone />,
                     },
                   ]}
@@ -382,7 +441,7 @@ export default function MelodyPractice() {
                     !notationReady ||
                     session.busy
                   }
-                  className="mt-2 min-h-11 rounded-lg border border-red-300 px-3 font-bold"
+                  className={`mt-2 rounded-lg border border-red-300 font-bold ${practiceControlSizeClassName}`}
                 >
                   {c.retry}
                 </button>
@@ -406,6 +465,15 @@ export default function MelodyPractice() {
                 timeSpacing
                 barLabels={exercise.harmony?.bars}
                 provisionalFeedback={pitchFeedback}
+                reviewEvents={
+                  s.phase === "result" && !results.open ? reviewEvents : []
+                }
+                selectedReviewId={selectedReviewId}
+                onReviewSelect={
+                  s.phase === "result" && !results.open
+                    ? selectReview
+                    : undefined
+                }
                 footerFeedback={
                   (s.phase === "countIn" || s.phase === "paused") && (
                     <p
@@ -458,48 +526,37 @@ export default function MelodyPractice() {
                   listening={session.listening}
                   expanded
                 />
-                <p className="basis-full text-xs leading-5 text-slate-600">
-                  {m.livePitchHint}
-                </p>
-                <div
+                <p
+                  role="status"
+                  aria-atomic="true"
                   className="basis-full text-xs leading-5 text-slate-600"
                   data-pitch-feedback
                 >
-                  <span>
-                    {detected === null ? m.pitchListening : m.pitchMeasuring}
-                  </span>
-                  {detected !== null && session.frame?.detectedHz && (
-                    <span
-                      className="ml-2 font-semibold tabular-nums"
-                      title={m.centsHint}
-                    >
-                      {session.frame.detectedHz.toFixed(1)} Hz ·{" "}
-                      {Math.round(
-                        1200 *
-                          Math.log2(
-                            session.frame.detectedHz /
-                              (440 * 2 ** ((detected - 69) / 12)),
-                          ),
-                      ) > 0
-                        ? "+"
-                        : ""}
-                      {Math.round(
-                        1200 *
-                          Math.log2(
-                            session.frame.detectedHz /
-                              (440 * 2 ** ((detected - 69) / 12)),
-                          ),
-                      )}{" "}
-                      ¢
-                    </span>
+                  {inputStatus && (
+                    <>
+                      {m.livePitchLabel}: {inputStatus}
+                    </>
                   )}
-                </div>
+                </p>
               </div>
+            )}
+            {s.phase === "result" && s.result && !results.open && (
+              <MelodyResultReview
+                events={reviewEvents}
+                selectedId={selectedReviewId}
+                onSelect={selectReview}
+                stage={exercise}
+                playback={session.reviewPlayback}
+                onListen={(id) => void session.reviewBar(id)}
+                onStop={session.stopReview}
+                m={m}
+                rest={c.rest}
+              />
             )}
             {s.phase === "result" && s.result && (
               <PracticeResultSurface
                 open={results.open}
-                onOpenChange={results.setOpen}
+                onOpenChange={setResultsOpen}
                 returnFocusRef={resultButton}
               >
                 <section

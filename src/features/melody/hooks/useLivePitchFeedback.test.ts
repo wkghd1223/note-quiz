@@ -6,7 +6,10 @@ import type {
   LivePitchFeedbackInput,
   ProvisionalPitchFeedback,
 } from "../domain/live-feedback";
-import { useLivePitchFeedback } from "./useLivePitchFeedback";
+import {
+  useLivePitchFeedback,
+  useFreshInputQuality,
+} from "./useLivePitchFeedback";
 
 const harness = vi.hoisted(() => ({
   refs: [] as Array<{ current: unknown }>,
@@ -65,6 +68,7 @@ function confirm() {
   expect(harness.feedback).toEqual({
     stageEventId: "note-1",
     pitchMatches: true,
+    direction: "match",
   });
 }
 beforeEach(() => {
@@ -111,6 +115,7 @@ describe("live pitch feedback publication", () => {
     expect(harness.feedback).toEqual({
       stageEventId: "note-2",
       pitchMatches: true,
+      direction: "match",
     });
   });
 
@@ -124,6 +129,7 @@ describe("live pitch feedback publication", () => {
     expect(harness.feedback).toEqual({
       stageEventId: "note-1",
       pitchMatches: true,
+      direction: "match",
     });
   });
 
@@ -134,5 +140,64 @@ describe("live pitch feedback publication", () => {
     FeedbackProbe({ frame: frame(20.05), elapsedSec: 1.15 });
     expect(harness.feedback).toBeNull();
     expect(harness.updates).toHaveLength(2);
+  });
+});
+
+function QualityProbe(next: Partial<LivePitchFeedbackInput> = {}) {
+  harness.refIndex = 0;
+  const args = { ...input, ...next };
+  const quality = useFreshInputQuality(
+    args.frame,
+    args.elapsedSec,
+    args.enabled,
+  );
+  for (const effect of harness.effects.splice(0)) effect();
+  return quality;
+}
+describe("capture quality freshness publication", () => {
+  it("publishes only status changes and expires held observations after 200ms", () => {
+    QualityProbe({ frame: { ...frame(20), inputQuality: "weak" } });
+    expect(harness.feedback).toBe("weak");
+    for (let index = 1; index <= 10; index++)
+      QualityProbe({
+        frame: { ...frame(20 + index * 0.05), inputQuality: "weak" },
+        elapsedSec: 1 + index * 0.05,
+      });
+    expect(harness.updates).toEqual(["weak"]);
+    QualityProbe({
+      frame: { ...frame(20.5), inputQuality: "weak" },
+      elapsedSec: 1.71,
+    });
+    expect(harness.feedback).toBe("inactive");
+  });
+  it("uses supplied quality without independent RMS thresholds and clears disabled contexts", () => {
+    QualityProbe({
+      frame: { ...frame(20), rms: 0.00001, inputQuality: "clipping" },
+    });
+    expect(harness.feedback).toBe("clipping");
+    QualityProbe({
+      frame: { ...frame(20.05), inputQuality: "stable" },
+      elapsedSec: 1.05,
+    });
+    expect(harness.feedback).toBe("stable");
+    QualityProbe({ frame: frame(20.1), elapsedSec: 1.1, enabled: false });
+    expect(harness.feedback).toBe("inactive");
+    QualityProbe({ frame: frame(20.1), elapsedSec: 1.15, enabled: true });
+    expect(harness.feedback).toBe("inactive");
+  });
+  it("does not display old quality when the clock rewinds or frames arrive out of order", () => {
+    QualityProbe({ frame: { ...frame(20), inputQuality: "stable" } });
+    QualityProbe({
+      frame: { ...frame(20.05), inputQuality: "stable" },
+      elapsedSec: 0,
+    });
+    expect(harness.feedback).toBe("inactive");
+    QualityProbe({
+      frame: { ...frame(20), inputQuality: "stable" },
+      elapsedSec: 0.05,
+    });
+    expect(harness.feedback).toBe("inactive");
+    QualityProbe({ frame: null, elapsedSec: 0.1 });
+    expect(harness.feedback).toBe("inactive");
   });
 });

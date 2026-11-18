@@ -1,6 +1,29 @@
 import type { MelodyCopy } from "./i18n";
 
 export const georgianMelody = {
+  livePitchLabel: "მიმდინარე სიმაღლე",
+  pitchHigher: "უფრო მაღალია",
+  pitchLower: "უფრო დაბალია",
+  pitchMatch: "სიმაღლე სწორია",
+  reviewSelect: "შეცდომის არჩევა",
+  reviewPrompt: "აირჩიეთ ნოტი ან პაუზა",
+  reviewPosition: "ტაქტი {bar} · {ordinal} · {note}",
+  reviewListen: "ამ ტაქტის მოსმენა",
+  reviewStop: "მოსმენის შეწყვეტა",
+  reviewError: "ტაქტის დაკვრა ვერ მოხერხდა. სცადეთ ხელახლა.",
+  reasonUnsupportedInput: "ამ შეყვანით შეფასება შეუძლებელია.",
+  reasonNoSignal: "შეყვანა სანდოდ ვერ დადასტურდა.",
+  reasonMissed: "ნოტი ვერ დადასტურდა.",
+  reasonMissingAttack: "შემდეგი ნოტის დასაწყისი ვერ გაირჩა.",
+  reasonWrongPitch: "სხვა სიმაღლე დაფიქსირდა.",
+  reasonTooShort: "ნოტი ზედმეტად მოკლე იყო.",
+  reasonTooLong: "ნოტი ზედმეტად გრძელი იყო.",
+  reasonEarly: "ნოტი ადრე დაიწყო.",
+  reasonLate: "ნოტი გვიან დაიწყო.",
+  reasonRestViolation: "პაუზის დროს ხმა დაფიქსირდა.",
+  reasonPitchCorrectTooShort: "სიმაღლე სწორი იყო, მაგრამ ნოტი მოკლე იყო.",
+  reasonPitchCorrectTooLong: "სიმაღლე სწორი იყო, მაგრამ ნოტი გრძელი იყო.",
+
   tonality: "ტონალობა",
   major: "მაჟორი",
   minor: "მინორი",
@@ -17,8 +40,6 @@ export const georgianMelody = {
   invalidRange: "აირჩიეთ გამის ნოტების შემცველი დიაპაზონი, დაბლიდან მაღლისკენ.",
   invalidRhythm: "აირჩიეთ ამ ზომაში ჩატეული ნოტის ხანგრძლივობა.",
 
-  livePitchHint:
-    "ხაზი მხოლოდ ბგერის სიმაღლეს აჩვენებს: ✓ სწორია, × არასწორია. დაწყების მომენტი და გრძლიობა ყოველი ნოტის დასრულების შემდეგ ფასდება.",
   preparingAudio: "ფორტეპიანოს ხმა მზადდება…",
   previewError:
     "მაგალითის დაკვრა ვერ მოხერხდა. შეამოწმეთ კავშირი და სცადეთ ხელახლა.",
@@ -28,9 +49,6 @@ export const georgianMelody = {
   beatSoundsHint:
     "მოქმედებს მაგალითისა და ვარჯიშის დროს. 6/8 ზომაში მეტრონომი თითო ტაქტში ორ წერტილიან მეოთხედს აღნიშნავს.",
   headphones: "გამოიყენეთ ყურსასმენები, რომ დაკვრის ხმა მიკროფონში არ მოხვდეს.",
-  pitchListening: "მკაფიო ბგერის მოლოდინში",
-  pitchMeasuring: "ბგერის სიმაღლე იზომება",
-  centsHint: "უახლოეს ნოტთან სხვაობა ცენტებში. 0 ზუსტ სიმაღლეს ნიშნავს.",
   scoreReady: "ვარჯიშის დროს სანოტო ჩანაწერი ავტომატურად მოძრაობს.",
   rhythm: "რიტმის ვარიანტები",
   triplets: "მერვედების ტრიოლები",

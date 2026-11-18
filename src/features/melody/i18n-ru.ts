@@ -1,6 +1,29 @@
 import type { MelodyCopy } from "./i18n";
 
 export const russianMelody = {
+  livePitchLabel: "Текущая высота",
+  pitchHigher: "Выше",
+  pitchLower: "Ниже",
+  pitchMatch: "Высота верна",
+  reviewSelect: "Выбрать ошибку",
+  reviewPrompt: "Выберите ноту или паузу",
+  reviewPosition: "Такт {bar} · {ordinal} · {note}",
+  reviewListen: "Послушать этот такт",
+  reviewStop: "Остановить",
+  reviewError: "Не удалось воспроизвести такт. Попробуйте снова.",
+  reasonUnsupportedInput: "Этот ввод нельзя оценить.",
+  reasonNoSignal: "Не удалось надёжно определить звук.",
+  reasonMissed: "Не удалось определить ноту.",
+  reasonMissingAttack: "Не удалось различить начало следующей ноты.",
+  reasonWrongPitch: "Определена другая высота звука.",
+  reasonTooShort: "Нота была слишком короткой.",
+  reasonTooLong: "Нота была слишком длинной.",
+  reasonEarly: "Нота началась рано.",
+  reasonLate: "Нота началась поздно.",
+  reasonRestViolation: "Во время паузы обнаружен звук.",
+  reasonPitchCorrectTooShort: "Высота верна, но нота слишком короткая.",
+  reasonPitchCorrectTooLong: "Высота верна, но нота слишком длинная.",
+
   tonality: "Тональность",
   major: "Мажор",
   minor: "Минор",
@@ -16,8 +39,6 @@ export const russianMelody = {
   invalidRange: "Выберите диапазон со звуками гаммы, от низкого к высокому.",
   invalidRhythm: "Выберите длительность, которая помещается в такт.",
 
-  livePitchHint:
-    "Линия показывает только высоту звука: ✓ верно, × неверно. Момент начала и длительность оцениваются после каждой ноты.",
   preparingAudio: "Подготовка звука фортепиано…",
   previewError:
     "Не удалось воспроизвести пример. Проверьте подключение и попробуйте снова.",
@@ -28,9 +49,6 @@ export const russianMelody = {
     "Действует для примера и практики. В размере 6/8 метроном отмечает две четверти с точкой в каждом такте.",
   headphones:
     "Используйте наушники, чтобы звук воспроизведения не попадал в микрофон.",
-  pitchListening: "Ожидание чёткого звука",
-  pitchMeasuring: "Определение высоты звука",
-  centsHint: "Отклонение в центах от ближайшей ноты. 0 означает точную высоту.",
   scoreReady: "Во время практики ноты прокручиваются автоматически.",
   rhythm: "Ритмические варианты",
   triplets: "Триоли восьмыми",

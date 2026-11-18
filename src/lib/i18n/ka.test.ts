@@ -71,7 +71,11 @@ describe("explicit Georgian dictionaries before registry integration", () => {
     expect(georgianChallenge.pitch).toContain("სიმაღლე");
     expect(georgianChallenge.onset).toContain("დაწყების");
     expect(georgianChallenge.duration).toContain("გრძლიობა");
-    expect(georgianMelody.livePitchHint).toContain("დასრულების შემდეგ");
+    expect(georgianMelody.livePitchLabel).toBe("მიმდინარე სიმაღლე");
+    expect(georgianMelody.reasonPitchCorrectTooShort).toContain(
+      "ნოტი მოკლე იყო",
+    );
+    expect(georgianMelody.reasonNoSignal).toContain("ვერ დადასტურდა");
     expect(georgianLearning.interval_A4).not.toBe(georgianLearning.interval_d5);
     expect(georgianLearning.inversion).not.toBe(georgianLearning.progression);
     expect(georgianTranslations.solfege.notes).toEqual({

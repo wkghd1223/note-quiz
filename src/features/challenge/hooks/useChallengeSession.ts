@@ -20,6 +20,10 @@ import type { ScorePreRoll } from "../components/score-scroll";
 import type { InputFrame, PerformanceEvent } from "../domain/performance";
 import { beatCues, type BeatCueOptions } from "../audio/beat-cues";
 import { playbackAudioTime } from "../audio/playback-clock";
+import {
+  referencePlayback,
+  scheduleReferencePlayback,
+} from "../audio/reference-playback";
 
 export function useChallengeSession(
   stage: ExerciseDefinition,
@@ -43,6 +47,7 @@ export function useChallengeSession(
   const pendingEvents = useRef(new Map<string, PerformanceEvent>());
   const [scorePreRoll, setScorePreRoll] = useState<ScorePreRoll | null>(null);
   const isPreview = useRef(false);
+  const isReview = useRef(false);
   const presentedTime = useRef(0);
   const presentationTime = useCallback((context: AudioContext) => {
     // Timestamp support can become available just after resume. Never move
@@ -69,10 +74,15 @@ export function useChallengeSession(
     [previewing, setPreviewing] = useState(false),
     [previewPreparing, setPreviewPreparing] = useState(false),
     [previewFailed, setPreviewFailed] = useState(false);
+  const [reviewPlayback, setReviewPlayback] = useState<
+    "idle" | "preparing" | "playing" | "error"
+  >("idle");
   const stop = useCallback(() => {
     generation.current++;
     cancelAnimationFrame(raf.current);
     isPreview.current = false;
+    isReview.current = false;
+    setReviewPlayback("idle");
     presentedTime.current = 0;
     releaseTone.current?.();
     releaseTone.current = null;
@@ -107,7 +117,15 @@ export function useChallengeSession(
       useStore.getState().reset();
     };
   }, [stage.id, stop, useStore]);
+  const stopReview = useCallback(() => {
+    if (isReview.current) stop();
+    else setReviewPlayback("idle");
+  }, [stop]);
   const pause = useCallback(() => {
+    if (isReview.current) {
+      stop();
+      return;
+    }
     if (isPreview.current) {
       stop();
       setElapsed(0);
@@ -187,6 +205,11 @@ export function useChallengeSession(
         onEvent: emit,
         onError: (error) => {
           if (myGeneration !== generation.current) return;
+          if (isReview.current) {
+            stop();
+            setReviewPlayback("error");
+            return;
+          }
           setAudioError(error);
           const s = useStore.getState();
           if (error === "suspended" && ["countIn", "playing"].includes(s.phase))
@@ -422,29 +445,12 @@ export function useChallengeSession(
         getInstrumentProfile("touch-keyboard")!,
         0,
       );
-      await a.preparePiano(
-        playback.targets.flatMap((target) =>
-          target.kind === "note"
-            ? [
-                {
-                  midi: target.targetConcertMidi!,
-                  durationSec:
-                    (target.endAudioSec - target.startAudioSec) * 0.95,
-                },
-              ]
-            : [],
-        ),
+      const start = await scheduleReferencePlayback(
+        a,
+        referencePlayback(playback.targets, 0, playback.durationSec),
+        () => request === generation.current,
       );
-      if (request !== generation.current) return;
-      // Preparation may fetch/decode samples; establish zero only after it ends.
-      const start = a.context.currentTime + 0.08;
-      for (const target of playback.targets)
-        if (target.kind === "note")
-          a.pianoTone(
-            target.targetConcertMidi!,
-            start + target.startAudioSec,
-            (target.endAudioSec - target.startAudioSec) * 0.95,
-          );
+      if (start === null) return;
       for (const cue of beatCues(stage, { metronome, barBell }))
         a.beatCue(start + cue.timeSec, cue.kind);
       isPreview.current = true;
@@ -474,6 +480,75 @@ export function useChallengeSession(
       }
     }
   }, [makeAudio, presentationTime, stage, stop, metronome, barBell]);
+  const reviewBar = useCallback(
+    async (stageEventId: string) => {
+      const state = useStore.getState();
+      if (state.phase !== "result" || !state.result) return;
+      const playback = buildPlaybackTimeline(
+        stage,
+        getInstrumentProfile("touch-keyboard")!,
+        0,
+        state.tempoScale,
+      );
+      const target = playback.targets.find(
+        (target) => target.stageEventId === stageEventId,
+      );
+      const event = stage.events.find(
+        (event) => event.id === (target?.sourceEventId ?? target?.stageEventId),
+      );
+      const failed =
+        state.result.notes.some(
+          (note) =>
+            note.stageEventId === stageEventId && note.status !== "passed",
+        ) || state.result.restViolations.includes(stageEventId);
+      if (!target || !event || !failed) return;
+      const barBeats = beatsPerMeasure(stage);
+      const quarterSec = 60 / (stage.bpm * state.tempoScale);
+      const startSec =
+        target.startAudioSec - (event.startBeat % barBeats) * quarterSec;
+      const reference = referencePlayback(
+        playback.targets,
+        startSec,
+        startSec + barBeats * quarterSec,
+      );
+      stop();
+      if (!reference.tones.length) return;
+      isReview.current = true;
+      setReviewPlayback("preparing");
+      const request = generation.current;
+      try {
+        const a = makeAudio();
+        await a.resume();
+        if (request !== generation.current) return;
+        const start = await scheduleReferencePlayback(
+          a,
+          reference,
+          () => request === generation.current,
+        );
+        if (start === null) return;
+        setReviewPlayback("playing");
+        const tick = () => {
+          if (request !== generation.current) return;
+          // Completion uses the shared output clock. Review never moves the score clock.
+          if (
+            presentationTime(a.context) >=
+            start + reference.durationSec + 0.2
+          ) {
+            stop();
+            return;
+          }
+          raf.current = requestAnimationFrame(tick);
+        };
+        raf.current = requestAnimationFrame(tick);
+      } catch {
+        if (request === generation.current) {
+          stop();
+          setReviewPlayback("error");
+        }
+      }
+    },
+    [makeAudio, presentationTime, stage, stop, useStore],
+  );
   return {
     state,
     elapsed,
@@ -491,6 +566,9 @@ export function useChallengeSession(
     previewing,
     previewPreparing,
     previewFailed,
+    reviewPlayback,
+    reviewBar,
+    stopReview,
     start,
     pause,
     resume,

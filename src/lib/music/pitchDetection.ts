@@ -1,10 +1,10 @@
-import { estimatePitch } from "./estimatePitch";
+import { estimatePitch, type PitchEstimate } from "./estimatePitch";
 
 const MIN_DETECTABLE_FREQUENCY = 65;
 // C6 is the top supported note. Include its upper half-semitone so a small
 // estimation error does not reject C6 before nearest-note conversion.
 const MAX_DETECTABLE_FREQUENCY = 1046.502261 * 2 ** (50 / 1200);
-const MIN_SIGNAL_RMS = 0.015;
+export const MIN_SIGNAL_RMS = 0.015;
 
 const CHROMATIC_NOTES = [
   "C",
@@ -24,8 +24,9 @@ const CHROMATIC_NOTES = [
 export function detectPitch(
   buffer: Float32Array,
   sampleRate: number,
+  estimate: PitchEstimate = estimatePitch(buffer, sampleRate),
 ): number | null {
-  const { hz, rms } = estimatePitch(buffer, sampleRate);
+  const { hz, rms } = estimate;
   return hz !== null &&
     rms >= MIN_SIGNAL_RMS &&
     hz >= MIN_DETECTABLE_FREQUENCY &&

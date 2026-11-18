@@ -1,3 +1,4 @@
+import type { MicrophoneInputQuality } from "@/lib/music/input-quality";
 export type InputMethod = "microphone" | "touch" | "midi";
 export interface InputFrame {
   streamSampleIndex: number;
@@ -6,6 +7,7 @@ export interface InputFrame {
   detectedHz: number | null;
   confidence: number;
   isVoiced: boolean;
+  inputQuality?: MicrophoneInputQuality;
 }
 export interface PitchSample {
   audioTimeSec: number;

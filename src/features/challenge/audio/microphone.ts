@@ -4,8 +4,9 @@ import {
   type MicrophoneSignal,
 } from "@/lib/music/microphoneSignal";
 import type { InputFrame, PerformanceEvent } from "../domain/performance";
-import { estimatePitch } from "./pitch";
-import { NoteEventDetector } from "./onset-offset";
+import { createPitchAnalyzer, hasReliablePitch } from "./pitch";
+import { NoteEventDetector, microphoneEnergyGates } from "./onset-offset";
+import { createInputQualityObserver } from "@/lib/music/input-quality";
 import { pianoNoteKey, preparePianoBuffers, type PianoNote } from "./piano";
 
 export type ChallengeAudioError =
@@ -78,6 +79,11 @@ export class ChallengeAudioSession {
   private collectionPrefix = "mic";
   private collectionStarted = false;
   private calibration: number[] = [];
+  private pendingCalibration: Array<{
+    audioTimeSec: number;
+    hopEndAudioSec: number;
+    rms: number;
+  }> = [];
   private noiseFloor = 0.003;
   private tones = new Set<AudioScheduledSourceNode>();
   private lastUiFrame = -Infinity;
@@ -153,8 +159,16 @@ export class ChallengeAudioSession {
       const analyser = this.context.createAnalyser();
       analyser.fftSize = 2048;
       analyser.smoothingTimeConstant = 0;
-      const timeData = new Float32Array(analyser.fftSize);
       const frequencyData = new Float32Array(analyser.frequencyBinCount);
+      const pitchAnalyzer = createPitchAnalyzer(
+        this.context.sampleRate,
+        this.context.sampleRate > 48000 ? 4096 : 2048,
+      );
+      const qualityObserver = createInputQualityObserver();
+      this.calibration = [];
+      this.pendingCalibration = [];
+      this.noiseFloor = 0.003;
+      this.lastUiFrame = this.lastCaptureAudioSec = -Infinity;
       this.analyser = analyser;
       this.source = source;
       this.capture = capture;
@@ -174,7 +188,7 @@ export class ChallengeAudioSession {
           this.callbacks.onError("audio-error");
           return;
         }
-        const estimate = estimatePitch(pcm, data.sampleRate);
+        const estimate = pitchAnalyzer.analyze(pcm, data.sampleRate);
         const frame: InputFrame & { pitchAudioTimeSec: number } = {
           streamSampleIndex: data.streamSampleIndex,
           audioTimeSec: data.audioTimeSec,
@@ -182,42 +196,84 @@ export class ChallengeAudioSession {
           rms: data.rms,
           detectedHz: estimate.hz,
           confidence: estimate.confidence,
-          isVoiced: estimate.hz !== null && estimate.confidence >= 0.8,
+          isVoiced: hasReliablePitch(estimate.hz, estimate.confidence),
         };
         this.lastCaptureAudioSec = frame.audioTimeSec;
-        // Return transferable buffers: bounded pool on the real-time thread.
-        capture.port.postMessage({ type: "release", buffer: pcm.buffer }, [
-          pcm.buffer,
-        ]);
+        const windowDuration = pcm.length / data.sampleRate;
         if (
           this.calibration.length < 70 &&
           !frame.isVoiced &&
-          frame.audioTimeSec < this.collectAfter
+          frame.audioTimeSec < this.collectAfter &&
+          Number.isFinite(windowDuration) &&
+          windowDuration > 0
         ) {
-          // A count-in hum is a periodic input, not ambient noise. Learning it
-          // as the noise floor can close the energy gate on the actual attempt.
-          this.calibration.push(frame.rms);
-          const sorted = [...this.calibration].sort((a, b) => a - b);
-          this.noiseFloor = Math.max(
-            0.001,
-            sorted[Math.floor(sorted.length * 0.3)],
+          const previous = this.pendingCalibration.at(-1);
+          if (
+            previous &&
+            (frame.audioTimeSec <= previous.audioTimeSec ||
+              frame.audioTimeSec - previous.audioTimeSec > windowDuration)
+          )
+            this.pendingCalibration = [];
+          const hopEndAudioSec = frame.audioTimeSec + 256 / data.sampleRate;
+          this.pendingCalibration.push({
+            audioTimeSec: frame.audioTimeSec,
+            hopEndAudioSec,
+            rms: frame.rms,
+          });
+          const windowStart = Number.isFinite(data.pitchAudioTimeSec)
+            ? data.pitchAudioTimeSec - windowDuration / 2
+            : hopEndAudioSec - windowDuration;
+          // A full ring can still contain a zero-to-voice onset. Keep its hop
+          // provisional until a later unvoiced analysis window is wholly past
+          // that hop. Periodic context below discards overlapping candidates.
+          let confirmed = false;
+          while (
+            this.calibration.length < 70 &&
+            this.pendingCalibration[0]?.hopEndAudioSec <= windowStart
+          ) {
+            this.calibration.push(this.pendingCalibration.shift()!.rms);
+            confirmed = true;
+          }
+          // Only metadata is retained, for at most one analysis window + hop.
+          this.pendingCalibration = this.pendingCalibration.slice(
+            -Math.ceil(pcm.length / 512) - 1,
           );
-        }
+          if (confirmed) {
+            const sorted = [...this.calibration].sort((a, b) => a - b);
+            this.noiseFloor = Math.max(
+              0.001,
+              sorted[Math.floor(sorted.length * 0.3)],
+            );
+          }
+        } else this.pendingCalibration = [];
+        const active = frame.audioTimeSec >= this.collectAfter;
+        frame.inputQuality = qualityObserver.observe(
+          estimate,
+          frame.audioTimeSec,
+          microphoneEnergyGates(this.noiseFloor).enter,
+          active,
+          frame.rms,
+        );
         if (frame.audioTimeSec - this.lastUiFrame >= 0.05) {
           this.lastUiFrame = frame.audioTimeSec;
           // Read actual PCM and spectral magnitudes from the same stream. These
           // display samples never enter event timestamps or scoring.
-          analyser.getFloatTimeDomainData(timeData);
           analyser.getFloatFrequencyData(frequencyData);
           updateMicrophoneSignal(
             this.signal,
-            timeData,
+            pcm,
             frequencyData,
             this.context.sampleRate,
             estimate.hz,
+            { rms: frame.rms },
+            frame.inputQuality,
           );
           this.callbacks.onFrame(frame);
         }
+        // Return transferable buffers: bounded pool on the real-time thread.
+        capture.port.postMessage({ type: "release", buffer: pcm.buffer }, [
+          pcm.buffer,
+        ]);
         if (frame.audioTimeSec >= this.collectAfter) {
           if (!this.collectionStarted) {
             this.detector.reset(this.collectionPrefix, this.noiseFloor);
@@ -242,6 +298,7 @@ export class ChallengeAudioSession {
   }
 
   beginCollection(prefix: string, afterAudioSec: number) {
+    this.pendingCalibration = [];
     this.detector.reset(prefix, this.noiseFloor);
     this.collectionPrefix = prefix;
     this.collectionStarted = false;
@@ -249,6 +306,7 @@ export class ChallengeAudioSession {
   }
 
   endCollection(flush = true) {
+    this.pendingCalibration = [];
     const wasCollecting = this.collectAfter !== Infinity;
     this.collectAfter = Infinity;
     if (flush && wasCollecting) {
@@ -407,6 +465,7 @@ export class ChallengeAudioSession {
     this.analyser = null;
     this.signal.rms = 0;
     this.signal.frequencyHz = null;
+    this.signal.inputQuality = "inactive";
     this.signal.bins.fill(0);
     this.capture?.disconnect();
     this.capture?.port.close();

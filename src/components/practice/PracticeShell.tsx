@@ -7,6 +7,7 @@ import SettingsSurface from "./SettingsSurface";
 import PracticeAnswerArea from "./PracticeAnswerArea";
 import PracticeController from "./PracticeController";
 import StablePracticeActions from "./StablePracticeActions";
+import { practiceControlSizeClassName } from "./SettingsControls";
 import PracticeResultSurface, {
   usePracticeResultSurface,
 } from "./PracticeResultSurface";
@@ -80,15 +81,30 @@ export default function PracticeShell({
               <p className="hidden text-xs font-black text-[#5b21b6] sm:block">
                 {kicker}
               </p>
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
                 <h1
                   tabIndex={-1}
                   data-practice-heading
-                  className="text-xl font-black text-slate-950 sm:mt-1 sm:text-2xl"
+                  className="min-w-0 flex-1 basis-32 text-xl font-black text-slate-950 [overflow-wrap:anywhere] sm:mt-1 sm:text-2xl"
                 >
                   {title}
                 </h1>
-                {headerActions}
+                <div className="flex shrink-0 items-stretch gap-2">
+                  {headerActions}
+                  <button
+                    data-practice-settings-trigger
+                    type="button"
+                    onClick={onSettingsOpen}
+                    aria-haspopup="dialog"
+                    aria-expanded={settingsOpen}
+                    className={`inline-flex shrink-0 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white font-bold text-slate-800 sm:gap-2 lg:hidden ${practiceControlSizeClassName}`}
+                  >
+                    <FaCog aria-hidden="true" className="shrink-0" />
+                    <span className="min-w-0 [overflow-wrap:anywhere]">
+                      {t.settings}
+                    </span>
+                  </button>
+                </div>
               </div>
               {description && (
                 <p
@@ -108,7 +124,7 @@ export default function PracticeShell({
             data-practice-control-dock
             className="sticky top-0 z-10 grid gap-2 self-start bg-white pb-2"
           >
-            <div className="grid min-h-11 min-w-0 grid-cols-[minmax(0,1fr)_auto] items-stretch gap-2 lg:grid-cols-1">
+            <div className="grid min-h-11 min-w-0 items-stretch">
               <div data-practice-actions className="min-w-0">
                 <StablePracticeActions
                   active={isFinished ? "results" : "mode"}
@@ -143,18 +159,6 @@ export default function PracticeShell({
                   }}
                 />
               </div>
-              <button
-                type="button"
-                onClick={onSettingsOpen}
-                aria-haspopup="dialog"
-                aria-expanded={settingsOpen}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-800 lg:hidden"
-              >
-                <FaCog aria-hidden="true" className="shrink-0" />
-                <span className="min-w-0 [overflow-wrap:anywhere]">
-                  {t.settings}
-                </span>
-              </button>
             </div>
             <div className="relative min-w-0">
               <div

@@ -622,12 +622,12 @@ describe("preview clock and cue lifecycle", () => {
     };
     const session = SessionProbe();
     await session.example();
-    expect(harness.states.at(-1)).toBe(true); // previewFailed
+    expect(harness.states[13]).toBe(true); // previewFailed
     expect(harness.audio[0].dispose).toHaveBeenCalledOnce();
     expect(harness.rafs.size).toBe(0);
     harness.prepare = null;
     await session.example();
-    expect(harness.states.at(-1)).toBe(false);
+    expect(harness.states[13]).toBe(false);
     expect(harness.audio[1].pianoTone).toHaveBeenCalled();
     expect(harness.audio[1].beginCollection).not.toHaveBeenCalled();
   });
@@ -712,4 +712,228 @@ it("aligns preview and the first note to the reported device output clock", asyn
   runAudioFrame(playing, first + 0.04);
   expect(harness.stores[0].getState().phase).toBe("playing");
   expect(visual().elapsed).toBeCloseTo(0.01, 3);
+});
+
+async function completedReview(
+  stage: ExerciseDefinition = getStage("w1-s2")!,
+  tempoScale: 0.7 | 0.85 | 1 = 1,
+) {
+  const session = SessionProbe(stage);
+  for (const effect of harness.effects) {
+    const cleanup = effect();
+    if (cleanup) cleanups.push(cleanup);
+  }
+  const store = harness.stores[0];
+  const token = store
+    .getState()
+    .startAttempt({
+      stageId: stage.id,
+      profileId: "voice",
+      inputMethod: "microphone",
+      mode: "rehearsal",
+      tempoScale,
+    });
+  store.getState().beginPlaying(token, 10);
+  store.getState().finish(token, 100);
+  return {
+    session,
+    store,
+    id:
+      store.getState().result!.notes[0]?.stageEventId ??
+      store.getState().result!.restViolations[0],
+  };
+}
+const reviewStatus = () => harness.states[14];
+describe("completed result target-bar review", () => {
+  it("plays one bar at current tempo while preserving the complete result, elapsed, ledger and input", async () => {
+    const { session, store, id } = await completedReview(
+      getStage("w1-s2")!,
+      0.85,
+    );
+    const before = store.getState();
+    const snapshot = JSON.stringify(before);
+    const elapsed = visual().elapsed;
+    await session.reviewBar(id);
+    const audio = harness.audio[0];
+    expect(reviewStatus()).toBe("playing");
+    expect(audio.pianoTone).toHaveBeenCalledTimes(2);
+    expect(audio.pianoTone.mock.calls[0]).toEqual([
+      60,
+      10.08,
+      (2 / 0.85) * 0.95,
+    ]);
+    expect(audio.pianoTone.mock.calls[1][1]).toBeCloseTo(10.08 + 2 / 0.85);
+    expect(audio.beginCollection).not.toHaveBeenCalled();
+    expect(
+      (audio as unknown as { connectMicrophone: ReturnType<typeof vi.fn> })
+        .connectMicrophone,
+    ).not.toHaveBeenCalled();
+    audio.callbacks.onEvent(measuredNote(10, 12));
+    expect(store.getState()).toBe(before);
+    expect(JSON.stringify(store.getState())).toBe(snapshot);
+    runAudioFrame(audio, 10.08 + 4 / 0.85 + 0.21);
+    expect(reviewStatus()).toBe("idle");
+    expect(audio.dispose).toHaveBeenCalledOnce();
+    expect(visual().elapsed).toBe(elapsed);
+    expect(store.getState()).toBe(before);
+  });
+  it("keeps rest offsets and trailing silence, with no extra transport or beat cue", async () => {
+    const stage: ExerciseDefinition = {
+      ...getStage("w1-s1")!,
+      events: [
+        { id: "lead", kind: "rest", startBeat: 0, durationBeats: 1 },
+        {
+          id: "note",
+          kind: "note",
+          writtenMidi: 60,
+          writtenSpelling: "C4",
+          startBeat: 1,
+          durationBeats: 1,
+        },
+        { id: "tail", kind: "rest", startBeat: 2, durationBeats: 2 },
+      ],
+    };
+    const { session, id } = await completedReview(stage);
+    await session.reviewBar(id);
+    const audio = harness.audio[0];
+    expect(audio.pianoTone).toHaveBeenCalledWith(60, 11.08, 0.95);
+    expect(audio.beatCue).not.toHaveBeenCalled();
+    runAudioFrame(audio, 13);
+    expect(reviewStatus()).toBe("playing");
+    runAudioFrame(audio, 14.29);
+    expect(reviewStatus()).toBe("idle");
+  });
+  it("does not start an audio session for an all-rest bar or passed/unrelated note", async () => {
+    const { session, store, id } = await completedReview();
+    await session.reviewBar("not-in-result");
+    store.setState({
+      result: {
+        ...store.getState().result!,
+        notes: store
+          .getState()
+          .result!.notes.map((note) => ({ ...note, status: "passed" })),
+      },
+    });
+    await session.reviewBar(id);
+    expect(harness.audio).toHaveLength(0);
+    const stage: ExerciseDefinition = {
+      ...getStage("w1-s1")!,
+      events: [{ id: "rest", kind: "rest", startBeat: 0, durationBeats: 4 }],
+    };
+    const restSession = SessionProbe(stage);
+    const restStore = harness.stores.at(-1)!;
+    restStore.setState({
+      phase: "result",
+      result: {
+        ...store.getState().result!,
+        notes: [],
+        restViolations: ["rest"],
+      },
+    });
+    await restSession.reviewBar("rest");
+    expect(harness.audio).toHaveLength(0);
+  });
+  it("ignores a late decode after selecting another note, and keeps only one scheduled transport", async () => {
+    const { session, store, id } = await completedReview();
+    let ready!: () => void;
+    harness.prepare = () =>
+      new Promise<void>((resolve) => {
+        ready = resolve;
+      });
+    const first = session.reviewBar(id);
+    await settleSchedule();
+    const prior = harness.audio[0];
+    session.stopReview(); // selection change
+    harness.prepare = null;
+    await session.reviewBar(store.getState().result!.notes[1].stageEventId);
+    expect(harness.audio[1].pianoTone).toHaveBeenCalledTimes(2);
+    ready();
+    await first;
+    expect(prior.dispose).toHaveBeenCalledOnce();
+    expect(prior.pianoTone).not.toHaveBeenCalled();
+    expect(harness.rafs.size).toBe(1);
+    expect(reviewStatus()).toBe("playing");
+  });
+  it.each(["stop", "summary", "hidden", "blur", "reset", "unmount"])(
+    "cancels loading on %s and ignores late errors/events/decode",
+    async (action) => {
+      const { session, store, id } = await completedReview();
+      let ready!: () => void;
+      harness.prepare = () =>
+        new Promise<void>((resolve) => {
+          ready = resolve;
+        });
+      const pending = session.reviewBar(id);
+      await settleSchedule();
+      const audio = harness.audio[0];
+      const before = store.getState();
+      if (action === "hidden") {
+        Object.assign(document, { hidden: true });
+        document.dispatchEvent(new Event("visibilitychange"));
+      } else if (action === "blur")
+        windowEvents.dispatchEvent(new Event("blur"));
+      else if (action === "reset") session.reset();
+      else if (action === "unmount") {
+        for (const cleanup of cleanups.splice(0).reverse()) cleanup();
+      } else session.stopReview();
+      const after = store.getState();
+      if (action !== "reset" && action !== "unmount")
+        expect(after).toBe(before);
+      ready();
+      await pending;
+      audio.callbacks.onError("audio-error");
+      audio.callbacks.onEvent(measuredNote(10, 12));
+      expect(store.getState()).toBe(after);
+      expect(audio.dispose).toHaveBeenCalledOnce();
+      expect(audio.pianoTone).not.toHaveBeenCalled();
+      expect(reviewStatus()).toBe("idle");
+      expect(harness.rafs.size).toBe(0);
+    },
+  );
+  it("keeps review failures local and permits a clean retry", async () => {
+    const { session, store, id } = await completedReview();
+    const before = store.getState();
+    harness.prepare = async () => {
+      throw new Error("decode failed");
+    };
+    await session.reviewBar(id);
+    expect(reviewStatus()).toBe("error");
+    expect(store.getState()).toBe(before);
+    expect(harness.states[8]).toBeNull(); // no session audio error
+    harness.prepare = null;
+    await session.reviewBar(id);
+    expect(reviewStatus()).toBe("playing");
+    const audio = harness.audio[1];
+    audio.callbacks.onError("suspended");
+    expect(reviewStatus()).toBe("error");
+    expect(store.getState()).toBe(before);
+    expect(audio.dispose).toHaveBeenCalledOnce();
+    expect(harness.rafs.size).toBe(0);
+  });
+  it("rejects review during live play and new practice cancels loading review", async () => {
+    const { session, store, id } = await completedReview();
+    let ready!: () => void;
+    harness.prepare = () =>
+      new Promise<void>((resolve) => {
+        ready = resolve;
+      });
+    const pending = session.reviewBar(id);
+    await settleSchedule();
+    const reviewAudio = harness.audio[0];
+    session.start({
+      stageId: store.getState().stageId!,
+      profileId: "voice",
+      inputMethod: "microphone",
+      mode: "challenge",
+    });
+    await settleSchedule();
+    const count = harness.audio.length;
+    await session.reviewBar(id);
+    ready();
+    await pending;
+    expect(harness.audio).toHaveLength(count);
+    expect(reviewAudio.dispose).toHaveBeenCalledOnce();
+    expect(reviewAudio.pianoTone).not.toHaveBeenCalled();
+    expect(store.getState().phase).toBe("countIn");
+  });
 });

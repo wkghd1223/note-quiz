@@ -61,6 +61,7 @@ export default function NotePracticeMode({
       settings: state.settings,
       sessionSettings: state.sessionSettings,
       sessionKind: state.sessionKind,
+      sessionId: state.sessionId,
       answers: state.answers,
       currentQuestion: state.currentQuestion,
       currentAnswer: state.currentAnswer,
@@ -76,6 +77,7 @@ export default function NotePracticeMode({
     settings,
     sessionSettings,
     sessionKind,
+    sessionId,
     answers,
     currentQuestion,
     currentAnswer,
@@ -90,6 +92,11 @@ export default function NotePracticeMode({
   const [submissionStatus, setSubmissionStatus] =
     useState<SessionSubmissionUiStatus>("idle");
   const [sessionPoints, setSessionPoints] = useState(0);
+  const [manualPlayback, setManualPlayback] = useState(false);
+  const manualPlaybackRef = useRef(false);
+  const playbackRequest = useRef(0);
+  const continuousInput = useRef(false);
+  const stopContinuousInput = useRef<(() => void) | null>(null);
   const audioAttempt = useRef(0);
   const startingRef = useRef(false);
   const mounted = useRef(true);
@@ -121,7 +128,8 @@ export default function NotePracticeMode({
       gameState !== "playing" ||
       !currentQuestion ||
       !sessionSettings.enableSound ||
-      !audioReady
+      !audioReady ||
+      continuousInput.current
     )
       return;
     let active = true;
@@ -276,6 +284,12 @@ export default function NotePracticeMode({
     return isCorrect;
   };
   const replay = async (note: Note) => {
+    const playback = ++playbackRequest.current;
+    // Close eligibility before the first await/audio operation. The child also
+    // turns continuous capture OFF; replay completion never restarts it.
+    manualPlaybackRef.current = true;
+    setManualPlayback(true);
+    stopContinuousInput.current?.();
     const attempt = ++audioAttempt.current;
     const original = useGameStore.getState();
     const isCurrent = () => {
@@ -296,6 +310,11 @@ export default function NotePracticeMode({
       if (isCurrent()) setAudioError(false);
     } catch {
       if (isCurrent()) setAudioError(true);
+    } finally {
+      if (mounted.current && playback === playbackRequest.current) {
+        manualPlaybackRef.current = false;
+        setManualPlayback(false);
+      }
     }
   };
   const mistakes =
@@ -506,6 +525,27 @@ export default function NotePracticeMode({
         ) : (
           <MicrophoneInput
             captureKey={currentQuestion?.id}
+            sessionKey={sessionId}
+            sessionActive={gameState === "playing"}
+            continuousAllowed={() =>
+              !manualPlayback && !manualPlaybackRef.current
+            }
+            canSubmit={() => {
+              const latest = useGameStore.getState();
+              return (
+                mounted.current &&
+                latest.sessionId === sessionId &&
+                latest.gameState === "playing" &&
+                latest.sessionSettings.answerMode === "microphone" &&
+                !latest.isAnswerLocked &&
+                latest.currentQuestion?.id === currentQuestion?.id
+              );
+            }}
+            onContinuousChange={(active, stop) => {
+              continuousInput.current = active;
+              stopContinuousInput.current = active ? (stop ?? null) : null;
+              if (active) stopAllNotes();
+            }}
             onSubmit={answer}
             selectedNote={currentAnswer}
             disabled={gameState !== "playing" || isAnswerLocked}

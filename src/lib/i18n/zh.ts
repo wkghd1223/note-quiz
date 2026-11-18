@@ -171,6 +171,10 @@ export const chineseTranslations = {
     signal: "麦克风信号",
     signalQuiet: "等待声音",
     signalActive: "已检测到声音",
+    inputWeak: "输入声音太小",
+    inputUncertain: "正在识别音高",
+    inputClipping: "输入声音太大",
+    continuousListening: "连续识别",
     description:
       "按住按钮并发出一个音。松开或移开焦点即可提交，也可按住空格或回车键。",
     startListening: "按住识别",

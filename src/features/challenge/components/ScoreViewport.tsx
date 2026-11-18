@@ -31,6 +31,13 @@ import {
   type ScorePreRoll,
 } from "./score-scroll";
 import styles from "./ScoreViewport.module.css";
+import {
+  reviewEventAt,
+  reviewEventBounds,
+  reviewPointerMoved,
+  type MelodyReviewEvent,
+  type ReviewPointerStart,
+} from "@/features/melody/domain/result-review";
 
 export { melodyQuarterWidth } from "@/features/melody/domain/score-layout";
 export const stageScore = exerciseScore;
@@ -91,6 +98,9 @@ export default function ScoreViewport({
   provisionalFeedback = null,
   footerFeedback,
   footerFeedbackVisible = false,
+  reviewEvents = [],
+  selectedReviewId = null,
+  onReviewSelect,
 }: {
   stage: ExerciseDefinition;
   targets: readonly TargetEvent[];
@@ -113,8 +123,12 @@ export default function ScoreViewport({
   provisionalFeedback?: ProvisionalPitchFeedback | null;
   footerFeedback?: ReactNode;
   footerFeedbackVisible?: boolean;
+  reviewEvents?: readonly MelodyReviewEvent[];
+  selectedReviewId?: string | null;
+  onReviewSelect?: (stageEventId: string) => void;
 }) {
   const viewport = useRef<HTMLDivElement>(null);
+  const reviewPointer = useRef<ReviewPointerStart | null>(null);
   const [width, setWidth] = useState(320);
   const [render, setRender] = useState<NotationRenderResult | null>(null);
   const [systemReducedMotion, setSystemReducedMotion] = useState(false);
@@ -223,6 +237,14 @@ export default function ScoreViewport({
     () => JSON.parse(colorKey),
     [colorKey],
   );
+  const selectedBounds =
+    finished && reviewing
+      ? reviewEventBounds(
+          render,
+          reviewEvents.find((event) => event.stageEventId === selectedReviewId),
+          labelBandHeight,
+        )
+      : null;
   const description = stage.events
     .map(
       (event) =>
@@ -250,6 +272,74 @@ export default function ScoreViewport({
         aria-label={c.sheetMusic}
         aria-describedby="challenge-score-hint"
         className={`relative min-w-0 ${reviewing ? styles.review : "overflow-clip"}`}
+        onPointerDown={(event) => {
+          if (
+            !finished ||
+            !reviewing ||
+            !onReviewSelect ||
+            !event.isPrimary ||
+            event.button !== 0
+          )
+            return;
+          reviewPointer.current = {
+            id: event.pointerId,
+            x: event.clientX,
+            y: event.clientY,
+            scrollLeft: event.currentTarget.scrollLeft,
+            moved: false,
+          };
+        }}
+        onPointerMove={(event) => {
+          const start = reviewPointer.current;
+          if (start?.id === event.pointerId)
+            start.moved = reviewPointerMoved(
+              start,
+              event.clientX,
+              event.clientY,
+              event.currentTarget.scrollLeft,
+            );
+        }}
+        onScroll={(event) => {
+          const start = reviewPointer.current;
+          if (
+            start &&
+            Math.abs(event.currentTarget.scrollLeft - start.scrollLeft) > 4
+          )
+            start.moved = true;
+        }}
+        onPointerCancel={() => {
+          reviewPointer.current = null;
+        }}
+        onPointerUp={(event) => {
+          const start = reviewPointer.current;
+          reviewPointer.current = null;
+          if (
+            !start ||
+            start.id !== event.pointerId ||
+            !finished ||
+            !reviewing ||
+            !onReviewSelect ||
+            reviewPointerMoved(
+              start,
+              event.clientX,
+              event.clientY,
+              event.currentTarget.scrollLeft,
+            )
+          )
+            return;
+          const rail = event.currentTarget
+            .querySelector("[data-score-rail]")
+            ?.getBoundingClientRect();
+          if (!rail) return;
+          const selected = reviewEventAt(
+            reviewEvents,
+            render,
+            event.clientX - rail.left,
+            event.clientY - rail.top,
+            labelBandHeight,
+          );
+          if (selected) onReviewSelect(selected);
+        }}
         data-score-viewport
         data-score-review={reviewing}
         data-score-bar={position.barIndex + 1}
@@ -311,6 +401,19 @@ export default function ScoreViewport({
             }}
             onError={onError}
           />
+          {selectedBounds && (
+            <span
+              aria-hidden="true"
+              data-score-review-selection
+              className="pointer-events-none absolute rounded-sm outline outline-2 outline-offset-2 outline-violet-700"
+              style={{
+                left: selectedBounds.x,
+                top: selectedBounds.y,
+                width: selectedBounds.width,
+                height: selectedBounds.height,
+              }}
+            />
+          )}
           {labels.map(({ barIndex, label, x }) => (
             <span
               key={barIndex}

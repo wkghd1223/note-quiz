@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { createPitchAnalyzer } from "@/lib/music/estimatePitch";
+import { createInputQualityObserver } from "@/lib/music/input-quality";
 import { getScoringProfile } from "@/features/challenge/domain/instrument-profile";
 import type {
   InputFrame,
@@ -43,6 +45,39 @@ const confirmed = updateLivePitchFeedback(first, {
 });
 
 describe("provisional microphone pitch guidance", () => {
+  it("does not confirm alternating higher/lower observations as one wrong direction", () => {
+    let state = initialLivePitchFeedback;
+    for (let index = 0; index < 10; index++) {
+      state = updateLivePitchFeedback(state, {
+        ...input,
+        frame: frame(20 + index * 0.05, index % 2 ? -100 : 100),
+        elapsedSec: 1 + index * 0.05,
+      });
+      expect(state.feedback).toBeNull();
+    }
+    state = updateLivePitchFeedback(state, {
+      ...input,
+      frame: frame(20.5, -100),
+      elapsedSec: 1.5,
+    });
+    expect(state.feedback).toMatchObject({
+      direction: "lower",
+      pitchMatches: false,
+    });
+  });
+  it.each(["weak", "uncertain", "clipping", "inactive"] as const)(
+    "quality %s never confirms correctness even with a voiced frequency",
+    (inputQuality) => {
+      expect(
+        updateLivePitchFeedback(confirmed, {
+          ...input,
+          frame: { ...frame(20.1), inputQuality },
+          elapsedSec: 1.1,
+        }).feedback,
+      ).toBeNull();
+    },
+  );
+
   it("requires two distinct reliable frames; UI ticks cannot invent confirmation", () => {
     expect(first.feedback).toBeNull();
     expect(
@@ -51,6 +86,7 @@ describe("provisional microphone pitch guidance", () => {
     expect(confirmed.feedback).toEqual({
       stageEventId: target.stageEventId,
       pitchMatches: true,
+      direction: "match",
     });
     expect(input.frame).toEqual(frame());
     expect(target.targetConcertMidi).toBe(60);
@@ -280,5 +316,50 @@ describe("score feedback precedence", () => {
     ).toBeNull();
     expect(JSON.stringify(result)).toBe(before);
     expect(result.notes[0].status).toBe("missed");
+  });
+});
+
+// Real synthetic PCM -> shared production YIN -> supplied quality -> direction.
+// This covers DSP integration; it is not acoustic microphone/hardware evidence.
+describe("PCM-to-current-direction integration", () => {
+  it.each([
+    [60, "match"],
+    [62, "higher"],
+    [59, "lower"],
+  ] as const)("keeps measured MIDI %i as %s", (midi, direction) => {
+    const analyzer = createPitchAnalyzer(48000, 2048);
+    const quality = createInputQualityObserver();
+    let state = initialLivePitchFeedback;
+    const frequency = 440 * 2 ** ((midi - 69) / 12);
+    for (let index = 0; index < 2; index++) {
+      const pcm = Float32Array.from(
+        { length: 2048 },
+        (_, sample) =>
+          0.2 *
+          Math.sin(2 * Math.PI * frequency * (sample / 48000 + index * 0.05)),
+      );
+      const measured = analyzer.analyze(pcm);
+      expect(measured.hz).not.toBeNull();
+      expect(69 + 12 * Math.log2(measured.hz! / 440)).toBeCloseTo(midi, 1);
+      const time = 20 + index * 0.05;
+      state = updateLivePitchFeedback(state, {
+        ...input,
+        elapsedSec: 1 + index * 0.05,
+        frame: {
+          streamSampleIndex: Math.round(time * 48000),
+          audioTimeSec: time,
+          rms: measured.rms,
+          detectedHz: measured.hz,
+          confidence: measured.confidence,
+          isVoiced: measured.hz !== null,
+          inputQuality: quality.observe(measured, time, 0.008),
+        },
+      });
+    }
+    expect(state.feedback).toMatchObject({
+      direction,
+      pitchMatches: direction === "match",
+    });
+    expect(target.targetConcertMidi).toBe(60);
   });
 });

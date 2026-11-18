@@ -29,7 +29,7 @@ export default function MicrophoneSignalDisplay({
       if (now - lastDraw >= (reduced.matches ? 250 : 50)) {
         lastDraw = now;
         const value = signal.current;
-        const nextActive = listening && value.rms >= 0.003;
+        const nextActive = listening && value.inputQuality !== "inactive" && value.inputQuality !== "weak";
         if (nextActive !== previousActive) {
           previousActive = nextActive;
           setActive(nextActive);

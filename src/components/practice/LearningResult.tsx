@@ -2,6 +2,7 @@
 
 import React, { useEffect, useId, useRef } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { practiceControlSizeClassName } from "./SettingsControls";
 
 export interface LearningResultData {
   totalQuestions: number;
@@ -90,7 +91,7 @@ export default function LearningResult({
           type="button"
           onClick={onReview}
           disabled={!hasMistakes}
-          className="min-h-11 rounded-lg border border-[#ded6f7] bg-white px-3 py-2 text-sm font-bold text-[#5b21b6] disabled:cursor-not-allowed disabled:opacity-50"
+          className={`rounded-lg border border-[#ded6f7] bg-white font-bold text-[#5b21b6] disabled:cursor-not-allowed disabled:opacity-50 ${practiceControlSizeClassName}`}
         >
           {t.learning.review}
         </button>

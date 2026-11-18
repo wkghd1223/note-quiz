@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { practiceControlSizeClassName } from "./SettingsControls";
 import PracticeDialog from "./PracticeDialog";
 
 export function usePracticeResultSurface(
@@ -44,7 +45,7 @@ export default function PracticeResultSurface({
           type="button"
           data-minimize-results
           onClick={() => onOpenChange(false)}
-          className="mb-3 min-h-11 rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-[#5b21b6]"
+          className={`mb-3 rounded-lg border border-slate-200 font-bold text-[#5b21b6] ${practiceControlSizeClassName}`}
         >
           {t.practiceUi.minimizeResults}
         </button>

@@ -5,19 +5,34 @@ import { FaMicrophone } from "react-icons/fa";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useMicrophonePitch } from "@/hooks/useMicrophonePitch";
 import MicrophoneSignalDisplay from "./MicrophoneSignal";
+import { practiceControlSizeClassName } from "@/components/practice/SettingsControls";
 
 interface MicrophoneInputProps {
   onSubmit: (note: Note) => void;
   disabled?: boolean;
   selectedNote?: Note | null;
-  /** Session/question identity. Changing it cancels capture without submitting. */
+  /** A new question cancels hold; continuous keeps its voiced-segment latch. */
   captureKey?: string;
+  /** Feedback lock only disables submission; inactivity ends capture entirely. */
+  sessionActive?: boolean;
+  /** Explicit session ownership enables continuous input on integrated routes. */
+  sessionKey?: string | null;
+  canSubmit?: () => boolean;
+  /** App output may block hands-free capture while preserving hold behavior. */
+  continuousAllowed?: () => boolean;
+  /** The parent can end capture synchronously before intentional audio output. */
+  onContinuousChange?: (active: boolean, stop?: () => void) => void;
 }
 
 const MicrophoneInput: React.FC<MicrophoneInputProps> = ({
   onSubmit,
   disabled = false,
   captureKey,
+  sessionActive = !disabled,
+  sessionKey,
+  canSubmit,
+  continuousAllowed,
+  onContinuousChange,
 }) => {
   const { t } = useTranslation();
   const {
@@ -25,12 +40,15 @@ const MicrophoneInput: React.FC<MicrophoneInputProps> = ({
     isListening,
     detectedNote,
     detectedLabel,
+    inputQuality,
     signalRef,
     startListening,
     stopListening,
   } = useMicrophonePitch();
 
   const [isHolding, setIsHolding] = useState(false);
+  const [isContinuous, setIsContinuous] = useState(false);
+  const continuous = useRef(false);
   const held = useRef<{
     captureKey: string | undefined;
     gesture: "pointer" | "keyboard" | "click";
@@ -38,8 +56,26 @@ const MicrophoneInput: React.FC<MicrophoneInputProps> = ({
     target?: HTMLButtonElement;
     key?: string;
   } | null>(null);
-  const latest = useRef({ disabled, captureKey, onSubmit });
-  latest.current = { disabled, captureKey, onSubmit };
+  const latest = useRef({
+    disabled,
+    captureKey,
+    onSubmit,
+    sessionActive,
+    sessionKey,
+    canSubmit,
+    continuousAllowed,
+    onContinuousChange,
+  });
+  latest.current = {
+    disabled,
+    captureKey,
+    onSubmit,
+    sessionActive,
+    sessionKey,
+    canSubmit,
+    continuousAllowed,
+    onContinuousChange,
+  };
   const mounted = useRef(true);
   const generation = useRef(0);
   const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -65,6 +101,8 @@ const MicrophoneInput: React.FC<MicrophoneInputProps> = ({
       const canSubmit = () =>
         mounted.current &&
         !latest.current.disabled &&
+        latest.current.sessionActive &&
+        latest.current.canSubmit?.() !== false &&
         hold?.captureKey === latest.current.captureKey &&
         !document.hidden &&
         document.hasFocus();
@@ -80,15 +118,78 @@ const MicrophoneInput: React.FC<MicrophoneInputProps> = ({
     [stopListening],
   );
 
-  const cancelCapture = useCallback(() => endCapture(false), [endCapture]);
+  const cancelCapture = useCallback(() => {
+    endCapture(false);
+    if (continuous.current) {
+      continuous.current = false;
+      if (mounted.current) setIsContinuous(false);
+      latest.current.onContinuousChange?.(false);
+    }
+  }, [endCapture]);
   const beginCapture = (gesture: NonNullable<typeof held.current>) => {
-    if (latest.current.disabled || held.current || document.hidden) return;
+    if (
+      latest.current.disabled ||
+      !latest.current.sessionActive ||
+      held.current ||
+      document.hidden
+    )
+      return;
+    if (continuous.current) cancelCapture();
     if (blurTimer.current !== null) clearTimeout(blurTimer.current);
     blurTimer.current = null;
     generation.current++;
     held.current = gesture;
     setIsHolding(true);
     void startListening();
+  };
+  const toggleContinuous = () => {
+    if (continuous.current) {
+      cancelCapture();
+      return;
+    }
+    if (
+      !latest.current.sessionActive ||
+      latest.current.disabled ||
+      latest.current.continuousAllowed?.() === false ||
+      document.hidden ||
+      !document.hasFocus()
+    )
+      return;
+    cancelCapture();
+    const serial = generation.current;
+    const captureSession = latest.current.sessionKey;
+    continuous.current = true;
+    setIsContinuous(true);
+    // Parent cancels sounding/pending app output synchronously, before capture.
+    latest.current.onContinuousChange?.(true, cancelCapture);
+    const eligible = () =>
+      mounted.current &&
+      continuous.current &&
+      serial === generation.current &&
+      latest.current.sessionActive &&
+      latest.current.sessionKey === captureSession &&
+      !latest.current.disabled &&
+      !document.hidden &&
+      document.hasFocus() &&
+      latest.current.continuousAllowed?.() !== false &&
+      latest.current.canSubmit?.() !== false;
+    void startListening({
+      getContext: () => ({
+        eligible: eligible(),
+        questionKey: latest.current.captureKey,
+      }),
+      onSubmit: (note, questionKey) => {
+        if (eligible() && questionKey === latest.current.captureKey)
+          latest.current.onSubmit(note);
+      },
+    }).then((started) => {
+      if (
+        started === false &&
+        continuous.current &&
+        serial === generation.current
+      )
+        cancelCapture();
+    });
   };
   const finishGesture = () => {
     // Consume a browser's synthesized keyboard click; SR-only clicks still work.
@@ -101,11 +202,14 @@ const MicrophoneInput: React.FC<MicrophoneInputProps> = ({
   };
 
   useEffect(() => {
-    cancelCapture();
-  }, [captureKey, cancelCapture]);
+    if (!continuous.current) endCapture(false);
+  }, [captureKey, endCapture]);
   useEffect(() => {
-    if (disabled) cancelCapture();
-  }, [disabled, cancelCapture]);
+    if (disabled && !continuous.current) endCapture(false);
+  }, [disabled, endCapture]);
+  useEffect(() => {
+    cancelCapture();
+  }, [sessionKey, sessionActive, cancelCapture]);
   useEffect(() => {
     mounted.current = true;
     const onVisibility = () => {
@@ -171,25 +275,29 @@ const MicrophoneInput: React.FC<MicrophoneInputProps> = ({
               <div className="text-3xl font-black tracking-[-0.05em] text-slate-950 sm:text-4xl">
                 {detectedLabel}
               </div>
-              <p className="mt-2 grid text-sm text-slate-500">
-                <span
-                  className={`col-start-1 row-start-1 ${detectedNote ? "invisible" : ""}`}
-                  aria-hidden={!!detectedNote}
-                >
-                  {t.microphone.noNoteDetected}
-                </span>
-                <span
-                  className={`col-start-1 row-start-1 ${detectedNote ? "" : "invisible"}`}
-                  aria-hidden={!detectedNote}
-                >
-                  {t.microphone.quietRoomHint}
-                </span>
+              <p
+                className="mt-2 min-h-6 text-sm text-slate-500"
+                data-microphone-quality={inputQuality}
+              >
+                {isListening && inputQuality === "clipping"
+                  ? t.microphone.inputClipping
+                  : isListening && inputQuality === "weak"
+                    ? t.microphone.inputWeak
+                    : isListening &&
+                        (inputQuality === "uncertain" || !detectedNote)
+                      ? t.microphone.inputUncertain
+                      : detectedNote
+                        ? t.microphone.quietRoomHint
+                        : t.microphone.noNoteDetected}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="grid content-start gap-3">
+        <div
+          className={`grid items-stretch self-start gap-2 ${sessionKey !== undefined ? "grid-cols-2 md:min-w-80" : "grid-cols-1"}`}
+          data-microphone-controls
+        >
           <button
             type="button"
             data-microphone-hold
@@ -199,7 +307,7 @@ const MicrophoneInput: React.FC<MicrophoneInputProps> = ({
                 ? t.microphone.stopListening
                 : t.microphone.startListening
             }
-            disabled={disabled}
+            disabled={disabled || !sessionActive}
             onPointerDown={(event) => {
               if (
                 event.button !== 0 ||
@@ -271,9 +379,12 @@ const MicrophoneInput: React.FC<MicrophoneInputProps> = ({
             onContextMenu={(event) => {
               if (held.current) event.preventDefault();
             }}
-            className={`inline-flex min-h-12 min-w-0 touch-none select-none items-center justify-center gap-2 rounded-[1.2rem] px-4 py-3 text-center text-sm font-bold leading-5 text-white shadow-[0_12px_30px_rgba(76,29,149,0.12)] ${disabled ? "cursor-not-allowed bg-slate-300" : isHolding ? "bg-slate-900" : "bg-gradient-to-r from-[#5b21b6] to-[#7c3aed]"}`}
+            className={`inline-flex touch-none select-none items-center justify-center gap-1.5 rounded-xl text-center font-bold text-white ${practiceControlSizeClassName} ${disabled || !sessionActive ? "cursor-not-allowed bg-slate-300" : isHolding ? "bg-slate-900" : "bg-gradient-to-r from-[#5b21b6] to-[#7c3aed]"}`}
           >
-            <FaMicrophone aria-hidden="true" className="shrink-0" />
+            <FaMicrophone
+              aria-hidden="true"
+              className="hidden shrink-0 sm:block"
+            />
             <span className="grid min-w-0 [overflow-wrap:anywhere]">
               <span
                 className={`col-start-1 row-start-1 ${isHolding ? "invisible" : ""}`}
@@ -289,6 +400,24 @@ const MicrophoneInput: React.FC<MicrophoneInputProps> = ({
               </span>
             </span>
           </button>
+          {sessionKey !== undefined && (
+            <button
+              type="button"
+              data-microphone-continuous
+              aria-pressed={isContinuous}
+              disabled={
+                !isContinuous &&
+                (!sessionActive || disabled || continuousAllowed?.() === false)
+              }
+              onClick={toggleContinuous}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") cancelCapture();
+              }}
+              className={`inline-flex items-center justify-center rounded-xl border text-center font-bold ${practiceControlSizeClassName} ${isContinuous ? "border-slate-900 bg-slate-900 text-white" : "border-[#c4b5fd] bg-[#f5f3ff] text-[#5b21b6] disabled:border-slate-200 disabled:text-slate-400"}`}
+            >
+              {t.microphone.continuousListening}
+            </button>
+          )}
         </div>
       </div>
 

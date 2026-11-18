@@ -36,6 +36,7 @@ import ModeSwitcher, { type PracticeMode } from "./ModeSwitcher";
 import MusicNotation from "./MusicNotation";
 import LearningResult from "./LearningResult";
 import {
+  practiceControlSizeClassName,
   settingsCheckboxClassName,
   settingsLabelClassName,
   settingsSelectClassName,
@@ -235,8 +236,7 @@ export default function TheoryPracticeMode(props: Props) {
         : config.task === "inversion"
           ? c.inversionHelp
           : c.chordHelp;
-  const button =
-    "min-h-11 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-800";
+  const button = `${practiceControlSizeClassName} rounded-lg border border-slate-200 bg-white font-bold text-slate-800`;
   const settings = (
     <div className="grid gap-4">
       <label className={`grid gap-2 ${settingsLabelClassName}`}>
@@ -483,7 +483,7 @@ export default function TheoryPracticeMode(props: Props) {
           task={config.task}
         />
       )}
-      <div className="flex h-11 min-w-0 items-stretch gap-2">
+      <div className="flex min-h-11 min-w-0 items-stretch gap-2">
         {isIdle ? (
           <>
             <label className="min-w-0 flex-1">
@@ -528,7 +528,7 @@ export default function TheoryPracticeMode(props: Props) {
               <>
                 <button
                   type="button"
-                  className={`${button} h-11 min-w-0 flex-1 overflow-auto !px-1 !py-1 !text-xs leading-4 sm:!px-3 sm:!text-sm`}
+                  className={`${button} flex-1`}
                   onClick={() => question && void play(question, "chord")}
                   disabled={busy || !question || isFinished}
                 >
@@ -536,7 +536,7 @@ export default function TheoryPracticeMode(props: Props) {
                 </button>
                 <button
                   type="button"
-                  className={`${button} h-11 min-w-0 flex-1 overflow-auto !px-1 !py-1 !text-xs leading-4 sm:!px-3 sm:!text-sm`}
+                  className={`${button} flex-1`}
                   onClick={() => question && void play(question, "arpeggio")}
                   disabled={busy || !question || isFinished}
                 >
@@ -702,7 +702,7 @@ const TheoryAnswerControls = memo(function TheoryAnswerControls({
   return (
     <div
       data-practice-answer-options
-      className={`grid auto-rows-[4rem] gap-2 ${direction ? "grid-cols-3" : "grid-cols-2"}`}
+      className={`grid items-stretch gap-2 ${direction ? "grid-cols-3" : "grid-cols-2"}`}
     >
       {(direction
         ? ["higher", "same", "lower"].filter((answer) =>
@@ -713,7 +713,7 @@ const TheoryAnswerControls = memo(function TheoryAnswerControls({
         <button
           key={answer}
           type="button"
-          className="h-16 overflow-auto rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold leading-4 text-slate-800 [overflow-wrap:anywhere] disabled:opacity-50"
+          className={`${practiceControlSizeClassName} rounded-lg border border-slate-200 bg-white font-bold text-slate-800 disabled:opacity-50 sm:min-h-16`}
           disabled={disabled}
           onClick={() => onSubmit(answer)}
         >

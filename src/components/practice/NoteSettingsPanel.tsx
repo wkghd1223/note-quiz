@@ -163,7 +163,7 @@ export default function NoteSettingsPanel() {
         )}
       </section>
 
-      <div className="grid grid-cols-2 gap-2 border-t border-slate-200 pt-4">
+      <div className="grid grid-cols-1 gap-2 border-t border-slate-200 pt-4 sm:grid-cols-2">
         <button
           type="button"
           onClick={resetSettings}

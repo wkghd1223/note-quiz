@@ -1,5 +1,11 @@
 import type { InputFrame, PerformanceEvent } from "../domain/performance";
 import { frequencyPitch } from "./pitch";
+import { hasReliablePitch } from "@/lib/music/estimatePitch";
+
+export const microphoneEnergyGates = (noiseFloor: number) => ({
+  enter: Math.max(0.008, noiseFloor * 3),
+  exit: Math.max(0.004, noiseFloor * 1.7),
+});
 
 interface ActiveSound {
   onset: number;
@@ -7,6 +13,8 @@ interface ActiveSound {
   energySince: number;
   quietSince: number | null;
   pitchChangeSince: number | null;
+  /** Continuous departure from the retained anchor, independent of rounding. */
+  pitchDepartureSince: number | null;
   changedMidi: number | null;
   midi: number | null;
   attackConfidence: number;
@@ -51,12 +59,11 @@ export class NoteEventDetector {
     )
       return [];
     this.lastTime = frame.audioTimeSec;
-    const enter = Math.max(0.008, this.noiseFloor * 3);
-    const exit = Math.max(0.004, this.noiseFloor * 1.7);
+    const { enter, exit } = microphoneEnergyGates(this.noiseFloor);
     const pitch =
       frame.detectedHz === null ? null : frequencyPitch(frame.detectedHz);
     const reliable =
-      frame.isVoiced && pitch !== null && frame.confidence >= 0.8;
+      frame.isVoiced && pitch !== null && hasReliablePitch(frame.detectedHz, frame.confidence);
     // Only pitch evidence follows the analysis-window center. Energy onset
     // and offset retain the recent-hop clock instead of shifting every event.
     const pitchTime = Number.isFinite(frame.pitchAudioTimeSec)
@@ -145,6 +152,9 @@ export class NoteEventDetector {
       pitch.midi !== sound.midi &&
       Math.abs(pitch.midi + pitch.cents / 100 - sound.midi) >= 0.75;
     if (changedPitch) {
+      // Candidate rounding can restart the debounce while an attack is still
+      // finding its fundamental. Preserve when that recovery actually began.
+      sound.pitchDepartureSince ??= Math.max(sound.onset, pitchTime);
       if (sound.changedMidi !== pitch.midi) {
         sound.changedMidi = pitch.midi;
         sound.pitchChangeSince = Math.max(sound.onset, pitchTime);
@@ -156,9 +166,10 @@ export class NoteEventDetector {
         const changeTime = sound.pitchChangeSince;
         // A pitch settling during the physical attack must not discard that
         // measured onset as a sub-minimum fragment (or invent a second attack).
-        if (changeTime - sound.onset < 0.06) {
+        if (sound.pitchDepartureSince - sound.onset < 0.06) {
           sound.midi = pitch.midi;
           sound.pitchChangeSince = null;
+          sound.pitchDepartureSince = null;
           sound.changedMidi = null;
           sound.samples.push(sample);
           return result;
@@ -182,6 +193,7 @@ export class NoteEventDetector {
       }
     } else {
       sound.pitchChangeSince = null;
+      sound.pitchDepartureSince = null;
       sound.changedMidi = null;
     }
     sound.samples.push(sample);
@@ -202,6 +214,7 @@ export class NoteEventDetector {
       energySince: frame.audioTimeSec,
       quietSince: null,
       pitchChangeSince: null,
+      pitchDepartureSince: null,
       changedMidi: null,
       midi,
       attackConfidence: 1,
@@ -222,7 +235,7 @@ export class NoteEventDetector {
       )
       .sort((a, b) => a.audioTimeSec - b.audioTimeSec);
     const voiced = samples.filter(
-      (item) => item.midi !== null && item.confidence >= 0.8,
+      (item) => item.midi !== null && hasReliablePitch(440 * 2 ** ((item.midi - 69) / 12), item.confidence),
     );
     const exactMidi = voiced
       .map((item) => item.midi! + (item.cents ?? 0) / 100)

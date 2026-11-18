@@ -1,5 +1,6 @@
 "use client";
 import { useId } from "react";
+import { practiceControlSizeClassName } from "@/components/practice/SettingsControls";
 
 /** Native radio semantics preserve arrow-key selection and one tab stop. */
 export default function SegmentedControl<T extends string>({
@@ -31,7 +32,7 @@ export default function SegmentedControl<T extends string>({
         {options.map((option) => (
           <label
             key={option.value}
-            className="relative min-w-0 flex-1 cursor-pointer"
+            className="relative grid min-w-0 flex-1 cursor-pointer"
           >
             <input
               type="radio"
@@ -41,7 +42,9 @@ export default function SegmentedControl<T extends string>({
               onChange={() => onChange(option.value)}
               className="peer sr-only"
             />
-            <span className="choice-segment flex min-h-11 items-center justify-center rounded-lg px-3 py-2 text-center text-sm font-semibold leading-snug text-slate-600 peer-checked:bg-violet-100 peer-checked:text-violet-900 peer-checked:shadow-sm peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-violet-700 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
+            <span
+              className={`choice-segment flex items-center justify-center rounded-lg text-center font-semibold text-slate-600 peer-checked:bg-violet-100 peer-checked:text-violet-900 peer-checked:shadow-sm peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-violet-700 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 ${practiceControlSizeClassName}`}
+            >
               {option.label}
             </span>
           </label>

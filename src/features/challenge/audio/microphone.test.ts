@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { createContext, runInContext } from "node:vm";
 import { ChallengeAudioSession, classifyAudioError } from "./microphone";
 import { preparePianoBuffers, pianoNoteKey } from "./piano";
-import type { PerformanceEvent } from "../domain/performance";
+import { createPitchAnalyzer } from "./pitch";
+import type { InputFrame, PerformanceEvent } from "../domain/performance";
 
 vi.mock("./piano", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./piano")>()),
@@ -118,6 +122,274 @@ function send(time: number, rms: number, hz: number | null = 261.625565) {
   });
 }
 
+/** Real capture source/PCM/YIN/adapter; only browser device ownership is mocked. */
+function actualWorkletStream(rate: number, audioStart: number) {
+  const adapter = FakeWorklet.latest;
+  interface CaptureFrame {
+    buffer: ArrayBuffer;
+    audioTimeSec: number;
+    pitchAudioTimeSec: number;
+    rms: number;
+    sampleRate: number;
+    droppedHops: number;
+  }
+  interface CaptureProcessor {
+    port: { onmessage: (event: { data: unknown }) => void };
+    process(inputs: Float32Array[][]): boolean;
+  }
+  let Capture: new () => CaptureProcessor;
+  const analyzer = createPitchAnalyzer(rate, rate > 48000 ? 4096 : 2048);
+  const observations: Array<{
+    time: number;
+    rms: number;
+    voiced: boolean;
+    dropped: number;
+  }> = [];
+  class Processor {
+    port = {
+      onmessage: (event: { data: unknown }) => {
+        void event;
+      },
+      postMessage(value: CaptureFrame) {
+        const frame = structuredClone(value, { transfer: [value.buffer] });
+        const estimate = analyzer.analyze(new Float32Array(frame.buffer));
+        observations.push({
+          time: frame.audioTimeSec,
+          rms: frame.rms,
+          voiced: estimate.hz !== null,
+          dropped: frame.droppedHops,
+        });
+        adapter.port.onmessage?.({ data: frame });
+      },
+    };
+  }
+  const context = createContext({
+    AudioWorkletProcessor: Processor,
+    sampleRate: rate,
+    currentFrame: Math.round(audioStart * rate),
+    registerProcessor: (
+      _name: string,
+      implementation: new () => CaptureProcessor,
+    ) => {
+      Capture = implementation;
+    },
+  });
+  runInContext(
+    readFileSync(resolve("public/audio/challenge-capture.js"), "utf8"),
+    context,
+  );
+  const processor = new Capture!();
+  adapter.port.postMessage.mockImplementation(
+    (data: { buffer?: ArrayBuffer }) => {
+      processor.port.onmessage({
+        data: structuredClone(data, {
+          transfer: data.buffer ? [data.buffer] : [],
+        }),
+      });
+    },
+  );
+  let position = 0,
+    block = 0;
+  return {
+    observations,
+    until(seconds: number, sampleAt: (seconds: number) => number) {
+      const end = Math.round(seconds * rate),
+        quanta = [128, 256, 128, 128];
+      while (position < end) {
+        const length = Math.min(
+          quanta[block++ % quanta.length],
+          end - position,
+        );
+        const pcm = Float32Array.from({ length }, (_, i) =>
+          sampleAt((position + i) / rate),
+        );
+        context.currentFrame = Math.round(audioStart * rate) + position;
+        processor.process([[pcm]]);
+        position += length;
+      }
+    },
+  };
+}
+
+const calibrationState = (session: ChallengeAudioSession) =>
+  session as unknown as {
+    calibration: number[];
+    pendingCalibration?: Array<{ audioTimeSec: number; rms: number }>;
+    noiseFloor: number;
+  };
+
+describe("ambient calibration across real partial-signal analysis windows", () => {
+  async function setup(rate = 48000, audioStart = 100) {
+    environment();
+    const events: PerformanceEvent[] = [],
+      frames: InputFrame[] = [];
+    const session = new ChallengeAudioSession({
+      onEvent: (event) => events.push(event),
+      onFrame: (frame) => frames.push(frame),
+      onError: (error) => {
+        throw new Error(error);
+      },
+    });
+    Object.assign(session.context, {
+      sampleRate: rate,
+      currentTime: audioStart,
+    });
+    await session.connectMicrophone();
+    return {
+      session,
+      events,
+      frames,
+      stream: actualWorkletStream(rate, audioStart),
+    };
+  }
+
+  it.each([44100, 48000, 96000])(
+    "does not learn the startup C4 onset as ambient at %iHz with an absolute audio clock",
+    async (rate) => {
+      const { session, events, frames, stream } = await setup(rate);
+      session.beginCollection("startup", 100.6);
+      stream.until(1.2, (t) =>
+        t >= 0.03 && t < 1 ? 0.16 * Math.sin(2 * Math.PI * 261.625565 * t) : 0,
+      );
+      expect(stream.observations.some((f) => !f.voiced && f.rms > 0.08)).toBe(
+        true,
+      );
+      expect(stream.observations.every((f) => f.dropped === 0)).toBe(true);
+      expect(calibrationState(session).noiseFloor).toBe(0.003);
+      expect(events).toHaveLength(1);
+      expect(events[0].observedMidi).toBe(60);
+      expect(Math.abs(events[0].onsetAudioSec - 100.6)).toBeLessThan(
+        512 / rate,
+      );
+      expect(
+        frames.some(
+          (f) => f.audioTimeSec >= 100.6 && f.inputQuality === "stable",
+        ),
+      ).toBe(true);
+      session.dispose();
+    },
+  );
+
+  it("keeps confirmed quiet calibration when a voiced count-in onset follows it", async () => {
+    const { session, events, stream } = await setup();
+    session.beginCollection("after-quiet", 100.7);
+    stream.until(1.2, (t) =>
+      t >= 0.25 && t < 1 ? 0.16 * Math.sin(2 * Math.PI * 261.625565 * t) : 0,
+    );
+    expect(calibrationState(session).calibration.length).toBeGreaterThan(0);
+    expect(
+      calibrationState(session).calibration.every((rms) => rms === 0),
+    ).toBe(true);
+    expect(calibrationState(session).noiseFloor).toBe(0.001);
+    expect(events).toHaveLength(1);
+    expect(events[0].observedMidi).toBe(60);
+    session.dispose();
+  });
+
+  it("still learns sustained actual unpitched noise and rejects it during playing", async () => {
+    const { session, events, stream } = await setup();
+    let seed = 19;
+    session.beginCollection("ambient", 102);
+    stream.until(3.2, (t) => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      return t < 2.5
+        ? 0.02 * Math.sqrt(12) * (seed / 0xffffffff - 0.5)
+        : t < 3
+          ? 0.16 * Math.sin(2 * Math.PI * 261.625565 * t)
+          : 0;
+    });
+    expect(calibrationState(session).calibration).toHaveLength(70);
+    expect(calibrationState(session).noiseFloor).toBeGreaterThan(0.018);
+    expect(calibrationState(session).noiseFloor).toBeLessThan(0.022);
+    expect(events).toHaveLength(1);
+    expect(events[0].observedMidi).toBe(60);
+    expect(Math.abs(events[0].onsetAudioSec - 102.5)).toBeLessThan(0.025);
+    session.dispose();
+  });
+
+  it("does not permanently learn a short rising uncertain attack followed by periodic voice", async () => {
+    const { session, events, stream } = await setup();
+    let seed = 41;
+    session.beginCollection("rising", 100.6);
+    stream.until(1.2, (t) => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      return t < 0.03
+        ? (t / 0.03) * 0.16 * (seed / 0xffffffff - 0.5)
+        : t < 1
+          ? 0.16 * Math.sin(2 * Math.PI * 261.625565 * t)
+          : 0;
+    });
+    expect(calibrationState(session).noiseFloor).toBe(0.003);
+    expect(events).toHaveLength(1);
+    expect(events[0].observedMidi).toBe(60);
+    session.dispose();
+  });
+
+  it("learns sustained rising ambient noise with bounded pending metadata", async () => {
+    const { session, events, stream } = await setup();
+    let seed = 71;
+    const sample = (t: number) => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      return t < 1.6
+        ? (0.01 + 0.01 * Math.min(1, t / 0.3)) *
+            Math.sqrt(12) *
+            (seed / 0xffffffff - 0.5)
+        : t < 1.9
+          ? 0.16 * Math.sin(2 * Math.PI * 261.625565 * t)
+          : 0;
+    };
+    session.beginCollection("rising-ambient", 101.2);
+    stream.until(0.3, sample);
+    expect(
+      calibrationState(session).pendingCalibration!.length,
+    ).toBeLessThanOrEqual(2048 / 512 + 1);
+    stream.until(2.1, sample);
+    expect(calibrationState(session).calibration).toHaveLength(70);
+    expect(calibrationState(session).noiseFloor).toBeGreaterThan(0.014);
+    expect(calibrationState(session).noiseFloor).toBeLessThan(0.022);
+    expect(events).toHaveLength(1);
+    expect(Math.abs(events[0].onsetAudioSec - 101.6)).toBeLessThan(0.025);
+    session.dispose();
+  });
+
+  it("keeps the default when collection starts before ambient evidence is confirmed, without delaying events", async () => {
+    const { session, events, stream } = await setup();
+    session.beginCollection("short-count-in", 100.055);
+    stream.until(0.4, (t) =>
+      t >= 0.03 && t < 0.25 ? 0.16 * Math.sin(2 * Math.PI * 261.625565 * t) : 0,
+    );
+    expect(calibrationState(session).noiseFloor).toBe(0.003);
+    expect(events).toHaveLength(1);
+    expect(Math.abs(events[0].onsetAudioSec - 100.055)).toBeLessThan(
+      512 / 48000,
+    );
+    session.dispose();
+  });
+
+  it("clears pending calibration on collection reset, stop and reconnect", async () => {
+    const { session, stream } = await setup();
+    stream.until(0.045, (t) =>
+      t >= 0.03 ? 0.16 * Math.sin(2 * Math.PI * 261.625565 * t) : 0,
+    );
+    expect(
+      calibrationState(session).pendingCalibration?.length,
+    ).toBeGreaterThan(0);
+    session.beginCollection("reset", 101);
+    expect(calibrationState(session).pendingCalibration).toEqual([]);
+    stream.until(0.055, (t) => 0.16 * Math.sin(2 * Math.PI * 261.625565 * t));
+    session.endCollection(false);
+    expect(calibrationState(session).pendingCalibration).toEqual([]);
+    session.stopMicrophone();
+    expect(calibrationState(session).pendingCalibration).toEqual([]);
+    expect(await session.connectMicrophone()).toBe(true);
+    expect(calibrationState(session).pendingCalibration).toEqual([]);
+    const next = actualWorkletStream(48000, 200);
+    next.until(0.2, (t) => 0.16 * Math.sin(2 * Math.PI * 261.625565 * t));
+    expect(calibrationState(session).noiseFloor).toBe(0.003);
+    session.dispose();
+  });
+});
+
 describe("challenge microphone ownership (mocked devices, real frame analysis)", () => {
   it("reports analyzed input progress separately from output time and waits for a held event", async () => {
     environment();
@@ -209,9 +481,9 @@ describe("challenge microphone ownership (mocked devices, real frame analysis)",
     });
     expect(await session.connectMicrophone()).toBe(true);
     send(0, 0.9);
-    // The display level comes from analyser PCM (.1), not the frame's .9 RMS,
-    // while frequency is the real YIN estimate from that capture's worklet.
-    expect(session.signal.rms).toBeCloseTo(0.1);
+    // Quality and display level share the captured hop energy (.9), rather
+    // than combining a later analyser snapshot (.1) with this pitch window.
+    expect(session.signal.rms).toBeCloseTo(0.9);
     expect(session.signal.frequencyHz).toBeCloseTo(261.6, 0);
     expect(session.signal.bins).toHaveLength(24);
     expect(session.signal.bins[13]).toBe(1);

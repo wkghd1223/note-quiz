@@ -9,6 +9,7 @@ import type {
 export interface ProvisionalPitchFeedback {
   stageEventId: string;
   pitchMatches: boolean;
+  direction: "match" | "higher" | "lower";
 }
 
 export interface LivePitchFeedbackState {
@@ -82,6 +83,7 @@ export function updateLivePitchFeedback(
     target.targetConcertMidi! > 127 ||
     !frame ||
     !frame.isVoiced ||
+    (frame.inputQuality !== undefined && frame.inputQuality !== "stable") ||
     !Number.isFinite(frame.rms) ||
     frame.rms <= 0 ||
     !Number.isFinite(frame.confidence) ||
@@ -107,11 +109,12 @@ export function updateLivePitchFeedback(
       : state;
 
   const measuredMidi = 69 + 12 * Math.log2(frame.detectedHz / 440);
+  const cents = (measuredMidi - target.targetConcertMidi!) * 100;
+  const matches = Math.abs(cents) <= profile.pitchToleranceCents + 1e-9;
   const candidate: ProvisionalPitchFeedback = {
     stageEventId: target.stageEventId,
-    pitchMatches:
-      Math.abs((measuredMidi - target.targetConcertMidi!) * 100) <=
-      profile.pitchToleranceCents + 1e-9,
+    pitchMatches: matches,
+    direction: matches ? "match" : cents > 0 ? "higher" : "lower",
   };
   return {
     ...state,
@@ -120,7 +123,7 @@ export function updateLivePitchFeedback(
       sameTarget &&
       previous.frameSeenElapsedSec !== null &&
       elapsedSec - previous.frameSeenElapsedSec < staleAfterSec &&
-      previous.candidate?.pitchMatches === candidate.pitchMatches
+      previous.candidate?.direction === candidate.direction
         ? candidate
         : null,
   };

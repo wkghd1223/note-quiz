@@ -1073,17 +1073,66 @@ async function clean(p) {
             .then((v) => /sound detected/i.test(v)),
         "Actual microphone activity visible",
       );
-      await until(
+      // Read the real production observation behind the UI. Scalar diagnostics
+      // are intentionally absent from visible text, titles and accessible names.
+      const measuredObservation = () =>
+        p.evaluate(() => {
+          const host = document.querySelector("[data-score-viewport]");
+          let root =
+            host[
+              Object.keys(host).find((key) => key.startsWith("__reactFiber"))
+            ];
+          while (root?.return) root = root.return;
+          const stack = [root?.stateNode?.current || root];
+          let frame = null;
+          while (stack.length) {
+            const fiber = stack.pop();
+            if (!fiber) continue;
+            if (fiber.child) stack.push(fiber.child);
+            if (fiber.sibling) stack.push(fiber.sibling);
+            for (
+              let hook = fiber.memoizedState;
+              hook && typeof hook === "object";
+              hook = hook.next
+            ) {
+              const value = hook.memoizedState;
+              if (
+                value &&
+                typeof value.detectedHz === "number" &&
+                value.isVoiced
+              )
+                frame = value;
+            }
+          }
+          return frame;
+        });
+      await until(async () => {
+        const frame = await measuredObservation();
+        return frame?.detectedHz > 260 && frame.detectedHz < 263;
+      }, "Known C4 WAV produces a real production YIN observation");
+      const measuredPitch = await measuredObservation();
+      const diagnosticText = await p.evaluate(
         () =>
-          p
-            .locator("[data-pitch-feedback]")
-            .textContent()
-            .then((text) => /261\.\d Hz/.test(text)),
-        "Known C4 WAV displays measured frequency",
+          document.body.innerText +
+          " " +
+          [
+            ...document.querySelectorAll(
+              "[title], [aria-label], [aria-valuetext]",
+            ),
+          ]
+            .map((node) =>
+              [
+                node.title,
+                node.getAttribute("aria-label"),
+                node.getAttribute("aria-valuetext"),
+              ].join(" "),
+            )
+            .join(" "),
       );
-      const measuredPitch = await p
-        .locator("[data-pitch-feedback]")
-        .textContent();
+      assert.doesNotMatch(
+        diagnosticText,
+        /\d+(?:\.\d+)?\s*(?:Hz|cents?|¢)|confidence\s*:?\s*\d+%/i,
+      );
       await p.screenshot({ path: out + "/microphone-playing.png" });
       await p.keyboard.press("a");
       await p.keyboard.press("s");

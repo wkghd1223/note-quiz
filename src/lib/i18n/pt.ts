@@ -193,6 +193,10 @@ export const portugueseTranslations = {
     signal: "Sinal do microfone",
     signalQuiet: "Aguardando som",
     signalActive: "Som detectado",
+    inputWeak: "O som está baixo",
+    inputUncertain: "Identificando a nota",
+    inputClipping: "O som está alto demais",
+    continuousListening: "Escuta contínua",
     description:
       "Mantenha o botão pressionado e toque uma nota. Solte ou mova o foco para responder. Também funciona com Espaço ou Enter.",
     startListening: "Segure para detectar",

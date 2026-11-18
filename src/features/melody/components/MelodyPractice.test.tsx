@@ -15,6 +15,12 @@ import MelodyPractice from "./MelodyPractice";
 import MelodySettingsPanel from "./MelodySettingsPanel";
 import ScoreViewport from "@/features/challenge/components/ScoreViewport";
 import PracticeController from "@/components/practice/PracticeController";
+import type {
+  AttemptResult,
+  InputFrame,
+} from "@/features/challenge/domain/performance";
+import type { ProvisionalPitchFeedback } from "../domain/live-feedback";
+import MelodyResultReview from "./MelodyResultReview";
 
 type Effect = {
   run: () => void | (() => void);
@@ -30,11 +36,15 @@ const harness = vi.hoisted(() => ({
   refIndex: 0,
   effectIndex: 0,
   exercise: null as MelodyExercise | null,
+  resultsOpen: false,
+  setResultsOpen: vi.fn(),
+  pitchFeedback: null as ProvisionalPitchFeedback | null,
+  quality: "inactive",
   session: {
     state: {
       phase: "landing",
       attemptToken: 1,
-      result: null,
+      result: null as AttemptResult | null,
       liveResult: null,
     },
     previewing: false,
@@ -42,12 +52,15 @@ const harness = vi.hoisted(() => ({
     previewPreparing: false,
     elapsed: 0,
     scorePreRoll: null,
-    frame: null,
+    frame: null as InputFrame | null,
     reset: vi.fn(),
     start: vi.fn(),
     pause: vi.fn(),
     resume: vi.fn(),
     example: vi.fn(),
+    stopReview: vi.fn(),
+    reviewBar: vi.fn(),
+    reviewPlayback: "idle",
   },
 }));
 vi.mock("react", async (importOriginal) => ({
@@ -104,14 +117,18 @@ vi.mock("@/features/challenge/hooks/useChallengeSession", () => ({
 }));
 vi.mock("../hooks/useMelodyAnalytics", () => ({ useMelodyAnalytics: vi.fn() }));
 vi.mock("../hooks/useLivePitchFeedback", () => ({
-  useLivePitchFeedback: () => null,
+  useLivePitchFeedback: () => harness.pitchFeedback,
+  useFreshInputQuality: () => harness.quality,
 }));
 vi.mock("@/features/challenge/components/ScoreViewport", () => ({
   default: () => null,
 }));
 vi.mock("@/components/practice/PracticeResultSurface", () => ({
   default: () => null,
-  usePracticeResultSurface: () => ({ open: false, setOpen: vi.fn() }),
+  usePracticeResultSurface: () => ({
+    open: harness.resultsOpen,
+    setOpen: harness.setResultsOpen,
+  }),
 }));
 function render() {
   harness.stateIndex = harness.refIndex = harness.effectIndex = 0;
@@ -161,6 +178,11 @@ beforeEach(() => {
     harness.pending.length =
       0;
   harness.session.state.phase = "landing";
+  harness.session.state.result = null;
+  harness.session.frame = null;
+  harness.quality = "inactive";
+  harness.pitchFeedback = null;
+  harness.resultsOpen = false;
   harness.session.previewing = false;
   harness.session.busy = false;
   localStorage.clear();
@@ -308,5 +330,123 @@ describe("melody settings and exercise lifecycle", () => {
     });
     expect(harness.exercise!.keySignature).toBe("Eb");
     expect(harness.exercise!.harmony).toBeUndefined();
+  });
+});
+
+function allText(tree: ReactNode): string {
+  if (typeof tree === "string" || typeof tree === "number") return String(tree);
+  const element = tree as ReactElement<{ children?: ReactNode }>;
+  return element?.props
+    ? React.Children.toArray(element.props.children).map(allText).join(" ")
+    : "";
+}
+function finished() {
+  hydrate();
+  const stage = harness.exercise!;
+  harness.session.state.phase = "result";
+  harness.session.state.result = {
+    scoringVersion: 1,
+    score: 0,
+    stars: 0,
+    cleared: false,
+    notePassRate: 0,
+    unscorable: false,
+    notes: [
+      {
+        stageEventId: stage.events.find((event) => event.kind === "note")!.id,
+        eventId: null,
+        status: "missed",
+        pitchPass: false,
+        durationPass: false,
+        onsetPass: false,
+        distinctAttackPass: false,
+        reasons: ["missed"],
+        pitchScore: 0,
+        durationScore: 0,
+        onsetScore: null,
+      },
+    ],
+    restViolations: [],
+    breakdown: { pitch: 0, duration: 0, onset: null },
+  };
+  render();
+  flush();
+  return render();
+}
+describe("melody result-review integration", () => {
+  it("offers review only behind the minimized summary, uses stage identity, and cancels on summary reopen", () => {
+    let tree = finished();
+    const snapshot = JSON.stringify(harness.session.state.result);
+    const review = find<React.ComponentProps<typeof MelodyResultReview>>(
+      tree,
+      MelodyResultReview,
+    );
+    expect(review.events).toHaveLength(1);
+    const id = review.events[0].stageEventId;
+    harness.session.stopReview.mockClear();
+    review.onSelect(id);
+    expect(harness.session.stopReview).toHaveBeenCalledOnce();
+    tree = render();
+    expect(
+      find<{ selectedReviewId: string }>(tree, ScoreViewport).selectedReviewId,
+    ).toBe(id);
+    controller(tree)
+      .states.result.find((action) => action.id === "results")!
+      .onClick();
+    expect(harness.setResultsOpen).toHaveBeenCalledWith(true);
+    expect(harness.session.stopReview).toHaveBeenCalledTimes(2);
+    harness.resultsOpen = true;
+    tree = render();
+    flush();
+    expect(
+      find<{ reviewEvents: unknown[]; onReviewSelect?: unknown }>(
+        tree,
+        ScoreViewport,
+      ).reviewEvents,
+    ).toEqual([]);
+    expect(
+      find<{ onReviewSelect?: unknown }>(tree, ScoreViewport).onReviewSelect,
+    ).toBeUndefined();
+    expect(() => find(tree, MelodyResultReview)).toThrow();
+    expect(JSON.stringify(harness.session.state.result)).toBe(snapshot);
+  });
+  it("clears selection and stops review on settings edits", () => {
+    let tree = finished();
+    find<React.ComponentProps<typeof MelodyResultReview>>(
+      tree,
+      MelodyResultReview,
+    ).onSelect(harness.session.state.result!.notes[0].stageEventId);
+    tree = render();
+    harness.session.stopReview.mockClear();
+    panel(tree).onChange({ ...panel(tree).value, bpm: 90 });
+    expect(harness.session.stopReview).toHaveBeenCalledOnce();
+    tree = render();
+    expect(
+      find<{ selectedReviewId: unknown }>(tree, ScoreViewport).selectedReviewId,
+    ).toBeNull();
+  });
+  it("has no Hz/cents tooltip or numeric pitch details and uses one short current status", () => {
+    hydrate();
+    harness.session.state.phase = "playing";
+    harness.session.frame = {
+      audioTimeSec: 10,
+      streamSampleIndex: 480000,
+      rms: 0.1,
+      detectedHz: 293.6648,
+      confidence: 0.99,
+      isVoiced: true,
+      inputQuality: "stable",
+    };
+    harness.quality = "stable";
+    harness.pitchFeedback = {
+      stageEventId: harness.exercise!.events[0].id,
+      pitchMatches: false,
+      direction: "higher",
+    };
+    const text = allText(render());
+    expect(text).toMatch(/Current pitch\s*:\s*Higher/);
+    expect(text).not.toMatch(/Hz|¢|cents|The line shows pitch only/);
+    harness.quality = "weak";
+    expect(allText(render())).toContain("Input is quiet");
   });
 });

@@ -107,7 +107,11 @@ describe("complete supported-language dictionaries", () => {
     expect(russianChallenge.duration).toBe("Длительность");
     expect(russianTranslations.solfege.notes.B).toBe("Си");
     expect(russianLearning.interval_TT).toBe("Тритон");
-    expect(russianMelody.livePitchHint).toContain("после каждой ноты");
+    expect(russianMelody.livePitchLabel).toBe("Текущая высота");
+    expect(russianMelody.reasonPitchCorrectTooShort).toContain(
+      "но нота слишком короткая",
+    );
+    expect(russianMelody.reasonNoSignal).toContain("надёжно определить");
   });
   it.each(SUPPORTED_LOCALES)(
     "provides complete melody and challenge copy in %s",

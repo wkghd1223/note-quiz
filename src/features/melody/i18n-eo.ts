@@ -1,6 +1,30 @@
 import type { MelodyCopy } from "./i18n";
 
 export const esperantoMelody: MelodyCopy = {
+  livePitchLabel: "Nuna tonalto",
+  pitchHigher: "Pli alta",
+  pitchLower: "Pli malalta",
+  pitchMatch: "Ĝusta tonalto",
+  reviewSelect: "Elekti eraron",
+  reviewPrompt: "Elektu noton aŭ silenton",
+  reviewPosition: "Takto {bar} · {ordinal} · {note}",
+  reviewListen: "Aŭskulti ĉi tiun takton",
+  reviewStop: "Ĉesigi la aŭskultadon",
+  reviewError: "Ne eblis sonigi ĉi tiun takton. Reprovu.",
+  reasonUnsupportedInput: "Ĉi tiu enigo ne povis esti taksita.",
+  reasonNoSignal: "La enigo ne povis esti fidinde konfirmita.",
+  reasonMissed: "La noto ne povis esti konfirmita.",
+  reasonMissingAttack: "La komenco de la sekva noto ne povis esti distingita.",
+  reasonWrongPitch: "Alia tonalto estis detektita.",
+  reasonTooShort: "La noto estis tro mallonga.",
+  reasonTooLong: "La noto estis tro longa.",
+  reasonEarly: "La noto komenciĝis tro frue.",
+  reasonLate: "La noto komenciĝis tro malfrue.",
+  reasonRestViolation: "Sono estis detektita dum la silento.",
+  reasonPitchCorrectTooShort:
+    "La tonalto ĝustis, sed la noto estis tro mallonga.",
+  reasonPitchCorrectTooLong: "La tonalto ĝustis, sed la noto estis tro longa.",
+
   tonality: "Tonaleco",
   major: "Maĵora",
   minor: "Minora",
@@ -16,8 +40,6 @@ export const esperantoMelody: MelodyCopy = {
   invalidRange: "Elektu registron kun skaltonoj, de malalta ĝis alta.",
   invalidRhythm: "Elektu notlongon, kiu taŭgas por ĉi tiu takto.",
 
-  livePitchHint:
-    "La linio montras nur la tonalton: ✓ ĝusta, × malĝusta. La komenca momento kaj daŭro estas taksataj post ĉiu noto.",
   preparingAudio: "Preparante pianan sonon…",
   previewError:
     "Ne eblis sonigi la ekzemplon. Kontrolu vian konekton kaj reprovu.",
@@ -27,10 +49,6 @@ export const esperantoMelody: MelodyCopy = {
   beatSoundsHint:
     "Validas por la ekzemplo kaj ekzercado. En 6/8, la metronomo markas du punktitajn kvaronojn en ĉiu takto.",
   headphones: "Uzu kapaŭskultilojn, por ke la sonigo ne eniru la mikrofonon.",
-  pitchListening: "Atendante klaran tonon",
-  pitchMeasuring: "Mezurante la tonalton",
-  centsHint:
-    "Devio en cendoj de la plej proksima noto. 0 signifas la ĝustan tonalton.",
   scoreReady: "La notskribo ruliĝas aŭtomate dum ekzercado.",
   rhythm: "Ritmaj variaĵoj",
   triplets: "Trioloj el okonoj",

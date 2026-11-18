@@ -199,6 +199,10 @@ export const georgianTranslations = {
     signal: "მიკროფონის სიგნალი",
     signalQuiet: "ხმის მოლოდინში",
     signalActive: "ხმა აღმოჩენილია",
+    inputWeak: "ხმა სუსტია",
+    inputUncertain: "ნოტის ამოცნობა",
+    inputClipping: "ხმა მეტისმეტად მაღალია",
+    continuousListening: "უწყვეტი მოსმენა",
     description:
       "გეჭიროთ ღილაკი და დაუკარით ერთი ბგერა. პასუხის გასაგზავნად გაუშვით ღილაკს ხელი ან გადაიტანეთ ფოკუსი. ასევე შეგიძლიათ გეჭიროთ ჰარი ან Enter.",
     startListening: "ამოსაცნობად გეჭიროთ",

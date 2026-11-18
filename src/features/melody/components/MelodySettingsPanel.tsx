@@ -4,6 +4,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { CLEFS } from "@/lib/music/constants";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import {
+  practiceControlSizeClassName,
   settingsSelectClassName,
   settingsCheckboxClassName,
 } from "@/components/practice/SettingsControls";
@@ -203,7 +204,7 @@ function MelodySettingsPanel({
           ).map(([duration, label]) => (
             <label
               key={duration}
-              className={`choice-segment flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold ${value.durations.includes(duration) ? "border-violet-300 bg-violet-50 text-violet-900" : "border-slate-200"}`}
+              className={`choice-segment flex cursor-pointer items-center gap-2 rounded-lg border font-semibold ${practiceControlSizeClassName} ${value.durations.includes(duration) ? "border-violet-300 bg-violet-50 text-violet-900" : "border-slate-200"}`}
             >
               <input
                 type="checkbox"
@@ -228,7 +229,7 @@ function MelodySettingsPanel({
         {(["dotted", "triplets"] as const).map((key) => (
           <label
             key={key}
-            className={`choice-segment flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold ${value[key] ? "border-violet-300 bg-violet-50 text-violet-900" : "border-slate-200"}`}
+            className={`choice-segment flex cursor-pointer items-center gap-2 rounded-lg border font-semibold ${practiceControlSizeClassName} ${value[key] ? "border-violet-300 bg-violet-50 text-violet-900" : "border-slate-200"}`}
           >
             <input
               type="checkbox"
@@ -248,7 +249,7 @@ function MelodySettingsPanel({
         {(["metronome", "barBell"] as const).map((key) => (
           <label
             key={key}
-            className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold"
+            className={`flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 font-semibold ${practiceControlSizeClassName}`}
           >
             <input
               type="checkbox"
@@ -277,7 +278,7 @@ function MelodySettingsPanel({
             durations: [...defaultMelodySettings.durations],
           })
         }
-        className="min-h-11 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold"
+        className={`rounded-lg border border-slate-200 font-semibold ${practiceControlSizeClassName}`}
       >
         {t.settingsLabels.resetToDefault}
       </button>

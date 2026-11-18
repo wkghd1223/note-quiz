@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import MicrophoneInput from "./MicrophoneInput";
 import { getTranslation } from "@/lib/i18n/translations";
 import { SUPPORTED_LOCALES } from "@/lib/i18n/locale";
+import type { MicrophoneInputQuality } from "@/lib/music/input-quality";
+import type { ContinuousMicrophoneCapture } from "@/hooks/useMicrophonePitch";
 
 type Slot = { value?: unknown; deps?: unknown[]; cleanup?: () => void };
 const h = vi.hoisted(() => ({
@@ -15,6 +17,7 @@ const h = vi.hoisted(() => ({
   pitch: {
     permissionState: "granted",
     isListening: false,
+    inputQuality: "inactive" as MicrophoneInputQuality,
     detectedNote: null as Note | null,
     detectedLabel: "--",
     signalRef: { current: {} },
@@ -22,6 +25,7 @@ const h = vi.hoisted(() => ({
   },
   start: vi.fn(),
   stop: vi.fn(),
+  continuousCapture: undefined as ContinuousMicrophoneCapture | undefined,
 }));
 // A persistent node-only hook harness dispatches actual JSX event handlers and
 // cleanup effects. Browser geometry/pointer delivery are verified by root QA.
@@ -93,6 +97,8 @@ function render(overrides: Partial<Props> = {}) {
   const tree = MicrophoneInput({
     onSubmit: submit,
     captureKey: "q1",
+    sessionActive: true,
+    sessionKey: "s1",
     ...overrides,
   }) as React.ReactElement;
   for (const effect of h.effects.splice(0)) effect();
@@ -160,18 +166,24 @@ beforeEach(() => {
   h.focused = true;
   Object.assign(h.pitch, {
     isListening: false,
+    inputQuality: "inactive",
     detectedNote: null,
     currentNote: null,
     detectedLabel: "--",
   });
   h.start.mockReset();
   h.stop.mockReset();
-  h.start.mockImplementation(async () => {
-    h.pitch.currentNote = null;
-    h.pitch.detectedNote = null;
-    h.pitch.detectedLabel = "--";
-    h.pitch.isListening = true;
-  });
+  h.continuousCapture = undefined;
+  h.start.mockImplementation(
+    async (continuous?: ContinuousMicrophoneCapture) => {
+      h.continuousCapture = continuous;
+      h.pitch.currentNote = null;
+      h.pitch.detectedNote = null;
+      h.pitch.detectedLabel = "--";
+      h.pitch.isListening = true;
+      return true;
+    },
+  );
   h.stop.mockImplementation(() => {
     const note = h.pitch.currentNote;
     h.pitch.currentNote = null;
@@ -354,6 +366,27 @@ describe("hold-to-detect microphone input", () => {
   });
 
   it.each(SUPPORTED_LOCALES)(
+    "shows shared input status without numeric pitch diagnostics in %s",
+    (language) => {
+      h.language = language;
+      h.pitch.isListening = true;
+      const t = getTranslation(language).microphone;
+      for (const [quality, text] of [
+        ["weak", t.inputWeak],
+        ["uncertain", t.inputUncertain],
+        ["clipping", t.inputClipping],
+      ] as const) {
+        h.pitch.isListening = true;
+        h.pitch.inputQuality = quality;
+        const markup = renderToStaticMarkup(render());
+        expect(markup).toContain(text);
+        expect(markup).toContain(`data-microphone-quality="${quality}"`);
+        expect(markup).not.toMatch(/Hz|cents|¢|confidence/i);
+      }
+    },
+  );
+
+  it.each(SUPPORTED_LOCALES)(
     "reserves both status/control label heights without truncation in %s",
     (language) => {
       h.language = language;
@@ -364,7 +397,18 @@ describe("hold-to-detect microphone input", () => {
       const listening = render();
       for (const tree of [ready, listening]) {
         const markup = renderToStaticMarkup(tree);
-        expect(markup.match(/<button\b/g)).toHaveLength(1);
+        expect(markup.match(/<button\b/g)).toHaveLength(2);
+        expect(
+          find(tree, "data-microphone-controls")!.props.className,
+        ).toContain("grid-cols-2");
+        expect(
+          find(tree, "data-microphone-controls")!.props.className,
+        ).toContain("items-stretch");
+        const toggle = find(tree, "data-microphone-continuous")!;
+        expect(renderToStaticMarkup(toggle)).toContain(
+          getTranslation(language).microphone.continuousListening,
+        );
+        expect(toggle.props["aria-pressed"]).toBe(false);
         expect(markup).not.toContain(
           getTranslation(language).microphone.submitDetectedNote,
         );
@@ -387,4 +431,128 @@ describe("hold-to-detect microphone input", () => {
       );
     },
   );
+});
+
+function toggle(tree = render()) {
+  return find(tree, "data-microphone-continuous")!
+    .props as React.ButtonHTMLAttributes<HTMLButtonElement>;
+}
+describe("continuous microphone ownership", () => {
+  it("preserves legacy hold-only consumers until they provide explicit session/output ownership", () => {
+    const tree = render({ sessionKey: undefined });
+    expect(find(tree, "data-microphone-continuous")).toBeUndefined();
+    controls(tree).onKeyDown!(keyboard("Enter"));
+    const note = detect();
+    controls(tree).onKeyUp!(keyboard("Enter"));
+    expect(submit).toHaveBeenCalledExactlyOnceWith(note);
+  });
+  it("blocks hands-free ON during app output while retaining hold's focused button-blur submission", () => {
+    const tree = render({ continuousAllowed: () => false });
+    expect(toggle(tree).disabled).toBe(true);
+    toggle(tree).onClick!(click());
+    expect(h.start).not.toHaveBeenCalled();
+    const hold = controls(tree);
+    hold.onKeyDown!(keyboard("Enter"));
+    const note = detect();
+    hold.onBlur!({} as React.FocusEvent<HTMLButtonElement>);
+    vi.runOnlyPendingTimers();
+    expect(submit).toHaveBeenCalledExactlyOnceWith(note);
+  });
+  it("uses a stable toggle label, retains one capture across questions/locks and rejects stale question callbacks", () => {
+    const change = vi.fn();
+    toggle(render({ onContinuousChange: change })).onClick!(click());
+    const capture = h.continuousCapture!;
+    expect(capture.getContext()).toEqual({ eligible: true, questionKey: "q1" });
+    render({ disabled: true, captureKey: "q1", onContinuousChange: change });
+    expect(capture.getContext().eligible).toBe(false);
+    expect(h.pitch.isListening).toBe(true);
+    const next = render({ captureKey: "q2", onContinuousChange: change });
+    expect(capture.getContext()).toEqual({ eligible: true, questionKey: "q2" });
+    capture.onSubmit(detect(), "q1");
+    expect(submit).not.toHaveBeenCalled();
+    const note = detect();
+    capture.onSubmit(note, "q2");
+    expect(submit).toHaveBeenCalledExactlyOnceWith(note);
+    expect(toggle(next)["aria-pressed"]).toBe(true);
+    expect(h.start).toHaveBeenCalledOnce();
+    expect(change).toHaveBeenCalledExactlyOnceWith(true, expect.any(Function));
+  });
+  it.each(["off", "pause", "session", "hidden", "windowblur", "unmount"])(
+    "%s cancels continuous capture and late submissions",
+    (reason) => {
+      toggle().onClick!(click());
+      const capture = h.continuousCapture!;
+      if (reason === "off")
+        toggle(render({ disabled: true })).onClick!(click());
+      if (reason === "pause") render({ sessionActive: false });
+      if (reason === "session") render({ sessionKey: "s2" });
+      if (reason === "hidden") {
+        doc.hidden = true;
+        doc.dispatchEvent(new Event("visibilitychange"));
+      }
+      if (reason === "windowblur") {
+        h.focused = false;
+        win.dispatchEvent(new Event("blur"));
+      }
+      if (reason === "unmount") unmount();
+      capture.onSubmit({ name: "A", octave: 4, accidental: null }, "q1");
+      expect(capture.getContext().eligible).toBe(false);
+      expect(submit).not.toHaveBeenCalled();
+      expect(h.pitch.isListening).toBe(false);
+    },
+  );
+  it("switches hold→continuous→hold without releasing a stale answer or owning two captures", () => {
+    const hold = controls();
+    hold.onPointerDown!(pointer());
+    detect();
+    toggle().onClick!(click());
+    expect(submit).not.toHaveBeenCalled();
+    const old = h.continuousCapture!;
+    controls().onKeyDown!(keyboard("Enter"));
+    expect(old.getContext().eligible).toBe(false);
+    expect(submit).not.toHaveBeenCalled();
+    expect(h.start).toHaveBeenCalledTimes(3);
+    const note = detect();
+    controls().onKeyUp!(keyboard("Enter"));
+    expect(submit).toHaveBeenCalledExactlyOnceWith(note);
+  });
+  it("keeps OFF available while permission is pending or feedback is locked", async () => {
+    let resolve!: (started: boolean) => void;
+    h.start.mockImplementation(
+      () =>
+        new Promise<boolean>((yes) => {
+          resolve = yes;
+        }),
+    );
+    toggle().onClick!(click());
+    const locked = toggle(render({ disabled: true }));
+    expect(locked.disabled).toBe(false);
+    expect(locked["aria-pressed"]).toBe(true);
+    locked.onClick!(click());
+    resolve(false);
+    await Promise.resolve();
+    expect(toggle()["aria-pressed"]).toBe(false);
+    expect(submit).not.toHaveBeenCalled();
+  });
+  it("turns OFF after a failed/denied start without changing focus guards", async () => {
+    h.start.mockResolvedValue(false);
+    const change = vi.fn();
+    toggle(render({ onContinuousChange: change })).onClick!(click());
+    await Promise.resolve();
+    expect(toggle()["aria-pressed"]).toBe(false);
+    expect(change.mock.calls).toEqual([[true, expect.any(Function)], [false]]);
+    h.focused = false;
+    toggle().onClick!(click());
+    expect(h.start).toHaveBeenCalledOnce();
+  });
+  it("reads the authoritative submit guard without restarting capture or assuming stale props are eligible", () => {
+    let eligible = true;
+    toggle(render({ canSubmit: () => eligible })).onClick!(click());
+    const capture = h.continuousCapture!;
+    eligible = false;
+    capture.onSubmit(detect(), "q1");
+    expect(capture.getContext().eligible).toBe(false);
+    expect(submit).not.toHaveBeenCalled();
+    expect(h.pitch.isListening).toBe(true);
+  });
 });

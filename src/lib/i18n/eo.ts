@@ -197,6 +197,10 @@ export const esperantoTranslations: Translations = {
     signal: "Mikrofona signalo",
     signalQuiet: "Atendante sonon",
     signalActive: "Sono detektita",
+    inputWeak: "La sono estas mallaŭta",
+    inputUncertain: "Identigante la tonon",
+    inputClipping: "La sono estas tro laŭta",
+    continuousListening: "Daŭra aŭskultado",
     description:
       "Tenu la butonon premita kaj ludu unu noton. Malpremu ĝin aŭ movu la fokuson aliloken por sendi la respondon. Vi ankaŭ povas teni la spacoklavon aŭ Enter premita.",
     startListening: "Tenu premita por detekti",
