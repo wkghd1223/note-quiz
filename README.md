@@ -33,7 +33,7 @@ This project started as a focused practice tool for learning to recognize notes 
 ### General
 
 - Responsive layout for desktop and mobile
-- 6 languages: English, Korean, Japanese, Spanish, German, French
+- Available in English, Korean, Japanese, Spanish, German, French, Simplified Chinese, Brazilian Portuguese, Russian, Georgian, and Esperanto ([11 supported languages](src/lib/i18n/locale.ts))
 - Google Analytics event tracking
 - Advertising partner support
 
