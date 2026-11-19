@@ -1,9 +1,5 @@
-import {
-  decodeXml,
-  MAX_FILE_BYTES,
-  MAX_XML_BYTES,
-  openArchive,
-} from "./archive";
+import { readScoreDocument } from "./formats/read-document";
+import { readXml, MAX_SCORE_ELEMENTS } from "./formats/xml";
 import type {
   ImportedBar,
   ImportedEvent,
@@ -108,50 +104,26 @@ const navigationMarks = [
   "fine",
 ] as const;
 const metadata = new WeakMap<XMLDocument, BarPerformance[]>();
+// Editors use score time rather than XML order: a backup can put an attribute
+// written after voice one back at the opening of the very same measure.
+const positions = new WeakMap<Element, number>();
+export function scoreBeatOf(node: Element) {
+  const beat = positions.get(node);
+  if (beat === undefined) throw new Error("staleSelection");
+  return beat;
+}
 export function playbackBars(score: ImportedScore): readonly BarPerformance[] {
   const cached = metadata.get(score.document);
   if (!cached) throw new Error("invalidFile");
   return cached;
 }
 
-function readXml(text: string): XMLDocument {
-  if (text.length > MAX_XML_BYTES) throw new Error("fileTooLarge");
-  // Keep standard MusicXML PUBLIC doctypes. Imported entity definitions are unnecessary.
-  if (/<!ENTITY\s/i.test(text)) throw new Error("unsupportedFile");
-  const doc = new DOMParser().parseFromString(text, "application/xml");
-  if (
-    !doc.documentElement ||
-    doc.documentElement.localName === "parsererror" ||
-    doc.getElementsByTagNameNS("*", "parsererror").length
-  )
-    throw new Error("invalidFile");
-  return doc;
-}
-
 export async function readScoreFile(
   file: File,
   signal?: AbortSignal,
 ): Promise<ImportedScore> {
-  signal?.throwIfAborted();
-  if (file.size > MAX_FILE_BYTES) throw new Error("fileTooLarge");
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  signal?.throwIfAborted();
-  let xml: string;
-  if (bytes[0] === 0x50 && bytes[1] === 0x4b) {
-    const zip = openArchive(bytes);
-    const container = readXml(
-      decodeXml(await zip.read("META-INF/container.xml", signal)),
-    ).documentElement;
-    const roots = child(container, "rootfiles");
-    const path = roots && child(roots, "rootfile")?.getAttribute("full-path");
-    if (container.localName !== "container" || !path)
-      throw new Error("invalidFile");
-    xml = decodeXml(await zip.read(path, signal));
-  } else {
-    xml = decodeXml(bytes);
-  }
-  signal?.throwIfAborted();
-  return Object.assign(parseScoreXml(xml), { file });
+  const { document, format } = await readScoreDocument(file, signal);
+  return { ...parseScoreDocument(document), file, sourceFormat: format };
 }
 
 export function parseScoreXml(text: string): ImportedScore {
@@ -218,7 +190,17 @@ function meterOf(time: Element): ScoreMeter | null {
     (el.textContent ?? "").split("+").map((n) => number(n)),
   );
   if (groups.some((n) => !Number.isSafeInteger(n) || n < 1)) return null;
-  return { beats: groups.reduce((a, b) => a + b, 0), beatType: base };
+  const count = groups.reduce((a, b) => a + b, 0);
+  const symbol = time.getAttribute("symbol");
+  return {
+    beats: count,
+    beatType: base,
+    ...(groups.length > 1 && { displayBeats: groups.join("+") }),
+    ...((symbol === "common" && count === 4 && base === 4) ||
+    (symbol === "cut" && count === 2 && base === 2)
+      ? { symbol }
+      : {}),
+  };
 }
 
 function readAttribute(el: Element, issue: Issue): Partial<Context> | null {
@@ -481,6 +463,7 @@ function readMeasure(
     const div = currentDivision();
     switch (el.localName) {
       case "attributes": {
+        positions.set(el, clock);
         for (const attr of Array.from(el.children)) {
           const value = readAttribute(attr, issue);
           if (!value) continue;
@@ -511,6 +494,9 @@ function readMeasure(
         lastNote = undefined;
         break;
       }
+      case "harmony":
+        positions.set(el, clock + number(content(el, "offset"), 0) / div);
+        break;
       case "direction":
       case "sound": {
         const isDirection = el.localName === "direction";
@@ -549,6 +535,7 @@ function readMeasure(
         break;
       }
       case "note": {
+        positions.set(el, child(el, "chord") && lastNote ? lastNote.at : clock);
         const staff = content(el, "staff") || "1",
           voice = content(el, "voice") || "1";
         const scoped = (code: string, blocking = true) =>
@@ -580,6 +567,14 @@ function readMeasure(
         extent = Math.max(extent, at + d);
         if (child(el, "cue") || el.getAttribute("pizzicato") === "yes")
           scoped(child(el, "cue") ? "cue" : "pizzicato", !!child(el, "cue"));
+        const play = child(el, "play");
+        if (
+          play &&
+          elements(play, "other-play").some(
+            (mark) => mark.getAttribute("type") === "midi-pitch-change",
+          )
+        )
+          scoped("pitch");
         if (
           ["attack", "release", "time-only"].some((name) =>
             el.hasAttribute(name),
@@ -658,6 +653,7 @@ function readMeasure(
           : {}),
         divisions: ctx.divisions,
         fifths: ctx.fifths,
+        keyMode: ctx.keyMode,
         transpose: ctx.transpose,
         clef: ctx.clef,
       });
@@ -722,7 +718,7 @@ function readMeasure(
 }
 
 export function parseScoreDocument(document: XMLDocument): ImportedScore {
-  if (document.getElementsByTagName("*").length > 350000)
+  if (document.getElementsByTagName("*").length > MAX_SCORE_ELEMENTS)
     throw new Error("fileTooLarge");
   const root = document.documentElement;
   const parts = sourceParts(root);

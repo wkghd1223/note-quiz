@@ -4,7 +4,7 @@
 
 ## 남은 개발 기능
 
-- [내 악보 불러오기와 연습](design/uploaded-score-practice.md) — `/melody/upload`에서 MusicXML/MXL 읽기, 한 줄 편집·전체 보기, 조옮김과 겹음 동시 연습. 사진/PDF 인식은 후속 설계다.
+- [내 악보 불러오기와 연습](design/uploaded-score-practice.md) — `/melody/upload`에서 MusicXML/MXL, MuseScore, MIDI 읽기, 한 줄 편집·전체 보기, 조옮김과 겹음 동시 연습. 사진/PDF 인식은 후속 설계다.
 
 코드 진행 옵션은 구현·검증을 마쳐 설계 목록에서 제외했다. 장단조·랜덤/고정 진행과 코드 구성음 단선율, 마디 위 코드명은 현재 멜로디 연습에서 제공한다.
 

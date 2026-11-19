@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import { acceptedScoreFiles } from "./formats/read-document";
 import { settingsActionClassName } from "@/components/practice/SettingsControls";
 
 export const openScoreLabel: Record<Language, string> = {
@@ -41,7 +42,7 @@ export default function ScoreFileButton({
         ref={picker}
         type="file"
         hidden
-        accept=".musicxml,.xml,.mxl"
+        accept={acceptedScoreFiles}
         aria-label={label}
         onChange={(event) => {
           const file = event.currentTarget.files?.[0];

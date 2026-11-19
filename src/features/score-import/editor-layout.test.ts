@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { layoutScoreLine, lineBarAt, lineCursorX } from "./editor-layout";
+import { meterGlyphs } from "@/lib/notation/meter-glyphs";
 import type { ImportedBar, ImportedEvent, ImportedLane } from "./types";
 
 const source = {} as Element;
@@ -47,6 +48,29 @@ function line(bars: ImportedBar[]) {
 }
 
 describe("the continuous imported staff", () => {
+  it("centers the Bravura meter and reserves space for both digits of 12/8", () => {
+    const meter = { beats: 12, beatType: 8 };
+    const figure = meterGlyphs(meter, 12);
+    expect(figure.rows).toEqual(["\uE081\uE082", "\uE088"]);
+    const { bars } = line([bar(0, [0, 1], { meter })]);
+    expect(bars[0].meterX! + figure.width).toBeLessThan(
+      bars[0].anchors[0] - 14,
+    );
+  });
+
+  it("shows the changed notation even if a common or additive meter has the same duration", () => {
+    const common = { beats: 4, beatType: 4, symbol: "common" as const };
+    const additive = { beats: 4, beatType: 4, displayBeats: "2+2" };
+    expect(meterGlyphs(common, 12).rows).toEqual(["\uE08A"]);
+    expect(meterGlyphs(additive, 12).rows[0]).toBe("\uE082\uE08C\uE082");
+    const { bars } = line([
+      bar(0, [], { meter: common }),
+      bar(1, []),
+      bar(2, [], { meter: additive }),
+    ]);
+    expect(bars.every((item) => item.meterX !== undefined)).toBe(true);
+  });
+
   it("prints opening signatures and their changes with no gap between measures", () => {
     const { bars } = line([
       bar(0, [0, 1], { fifths: 2 }),

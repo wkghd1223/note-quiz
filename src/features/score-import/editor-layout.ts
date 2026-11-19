@@ -16,6 +16,7 @@ import {
   type Spelling,
 } from "./editor-pitch";
 import { direct, tupletSpan, writtenRhythm } from "./score-edits";
+import { meterGlyphs } from "@/lib/notation/meter-glyphs";
 
 export const space = 12,
   bottom = 118;
@@ -74,14 +75,23 @@ export const noteRank = [
 ];
 export const restGlyph = (type: string) =>
   String.fromCodePoint(0xe4e0 + Math.max(0, noteRank.indexOf(type)));
-function isContextChanged(a: ImportedEvent | undefined, b: ImportedEvent) {
-  return (
-    !!a &&
-    (a.clef.sign !== b.clef.sign ||
-      a.clef.line !== b.clef.line ||
-      a.clef.octaveChange !== b.clef.octaveChange ||
-      a.fifths !== b.fifths)
+/** Inline signatures can precede the first sounding note after written silence. */
+function inlineSignature(
+  previous: ImportedBar | ImportedEvent,
+  event: ImportedEvent,
+  semitones: number,
+) {
+  const clefChanged = !sameClef(previous.clef, event.clef);
+  const oldKey = shiftedKey(
+    previous.fifths,
+    (previous.transpose ?? 0) + semitones,
   );
+  const key = shiftedKey(event.fifths, (event.transpose ?? 0) + semitones);
+  if (!clefChanged && oldKey === key) return null;
+  const cancelled = !key && oldKey !== key;
+  const signs = oldKey === key ? 0 : key || oldKey;
+  const width = (clefChanged ? 30 : 0) + Math.min(7, Math.abs(signs)) * 10 + 8;
+  return { clefChanged, signs, cancelled, width };
 }
 
 export interface LayoutHead {
@@ -144,10 +154,12 @@ export function layoutScoreLine(
     if (
       !previous ||
       previous.meter.beats !== bar.meter.beats ||
-      previous.meter.beatType !== bar.meter.beatType
+      previous.meter.beatType !== bar.meter.beatType ||
+      previous.meter.symbol !== bar.meter.symbol ||
+      previous.meter.displayBeats !== bar.meter.displayBeats
     ) {
       meterX = x + 4;
-      x += 31;
+      x = meterX + meterGlyphs(bar.meter, space).width + 4;
     }
     const firstNoteX = x + 23;
     x = firstNoteX;
@@ -155,20 +167,8 @@ export function layoutScoreLine(
       const before = bar.events[i - 1];
       if (before) {
         x += Math.max(42, Math.min(105, (event.start - before.start) * 58));
-        if (isContextChanged(before, event))
-          x +=
-            45 +
-            Math.min(
-              7,
-              Math.abs(
-                shiftedKey(
-                  event.fifths,
-                  soundingShift(event.heads[0], semitones),
-                ),
-              ),
-            ) *
-              10;
       } else if (event.start > 0) x += Math.min(105, event.start * 58);
+      x += inlineSignature(before ?? bar, event, semitones)?.width ?? 0;
       for (const head of event.heads) {
         const shown = displayedPitch(
           head,
@@ -273,7 +273,11 @@ export function layoutBar(
       ? soundingShift(event.heads[0], semitones)
       : startingShift;
     const fifths = shiftedKey(event.fifths, eventShift);
-    const contextChange = isContextChanged(bar.events[eventIndex - 1], event);
+    const contextChange = inlineSignature(
+      bar.events[eventIndex - 1] ?? bar,
+      event,
+      semitones,
+    );
     if (fifths !== measureKey) {
       measureKey = fifths;
       accidentals = new Map();

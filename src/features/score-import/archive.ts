@@ -127,6 +127,7 @@ export function openArchive(bytes: Uint8Array<ArrayBuffer>) {
   }
   if (pos !== directoryEnd) invalid();
   return {
+    paths: [...members.keys()],
     async read(
       name: string,
       signal?: AbortSignal,

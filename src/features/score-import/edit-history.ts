@@ -19,5 +19,5 @@ export function editScore(
     if (!copy) throw new Error("staleSelection");
     return copy;
   });
-  return { ...parseScoreDocument(document), file: score.file };
+  return { ...parseScoreDocument(document), file: score.file, sourceFormat: score.sourceFormat };
 }

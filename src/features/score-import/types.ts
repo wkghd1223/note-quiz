@@ -5,6 +5,8 @@ export type ScoreStep = "C" | "D" | "E" | "F" | "G" | "A" | "B";
 export interface ScoreMeter {
   beats: number;
   beatType: number;
+  displayBeats?: string;
+  symbol?: "common" | "cut";
 }
 
 export interface ScoreClef {
@@ -39,6 +41,7 @@ export interface ImportedEvent {
   /** Written attributes in force at the event, including mid-measure changes. */
   divisions: number;
   fifths: number;
+  keyMode?: string;
   /** Instrument transposition at this written slot, including rests. */
   transpose?: number;
   clef: ScoreClef;
@@ -78,9 +81,12 @@ export interface ScoreIssue {
   blocksPractice: boolean;
 }
 
+export type ScoreFormat = "musicxml" | "musescore" | "midi";
+
 export interface ImportedScore {
   document: XMLDocument;
   file?: File;
+  sourceFormat?: ScoreFormat;
   title: string;
   lanes: ImportedLane[];
   issues: ScoreIssue[];

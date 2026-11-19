@@ -13,6 +13,7 @@ import {
   MelodyTempoField,
 } from "@/features/melody/components/MelodyPlaybackFields";
 import { importCopy, type ImportWords } from "./copy";
+import KeySignatureField from "./KeySignatureField";
 import { clefEdit, meterEdit, writtenRhythm } from "./score-edits";
 import {
   clefs,
@@ -20,14 +21,13 @@ import {
   clefValue,
   meters,
   signatureText,
+  keyName,
 } from "./signature-options";
 import {
   displayedPitch,
-  keyAlter,
   pitchLabel,
   shiftedKey,
   soundingShift,
-  steps,
 } from "./editor-pitch";
 import type { ScoreChange } from "./edit-history";
 import type {
@@ -42,39 +42,6 @@ import type {
 const fieldClass = "grid min-w-0 gap-1 text-sm font-semibold";
 const hintClass = "text-xs font-normal text-slate-600";
 const mod = (v: number, m: number) => ((v % m) + m) % m;
-
-function keyName(
-  fifths: number,
-  mode: string | undefined,
-  m: ReturnType<typeof melodyCopy>,
-) {
-  const tonic = (degree: number) => {
-    const step = steps[mod(fifths * 4 + degree, 7)];
-    const alter = keyAlter(step, fifths);
-    return step + (alter === 1 ? "♯" : alter === -1 ? "♭" : "");
-  };
-  if (mode === "minor" || mode === "aeolian")
-    return m.minorTonality.replace("{key}", tonic(5));
-  if (mode === "major" || mode === "ionian")
-    return m.majorTonality.replace("{key}", tonic(0));
-  const signature = fifths
-    ? `${Math.abs(fifths)}${fifths > 0 ? "♯" : "♭"}`
-    : "♮";
-  const modes = [
-    "ionian",
-    "dorian",
-    "phrygian",
-    "lydian",
-    "mixolydian",
-    "aeolian",
-    "locrian",
-  ];
-  if (mode) {
-    const degree = modes.indexOf(mode);
-    return degree >= 0 ? tonic(degree) + " · " + mode : signature;
-  }
-  return signature + " · " + tonic(0) + " / " + tonic(5) + "m";
-}
 
 function MeterField({
   value,
@@ -338,9 +305,26 @@ function ImportedScoreSettings({
         ))}
       </div>
       <fieldset className="grid gap-2 border-t border-slate-200 pt-2">
-        <legend className="px-1 font-semibold">
-          {w.bar} {bar.label} · {w.fromHere}
-        </legend>
+        <legend className="px-1 font-semibold">{w.signatures}</legend>
+        <label className={fieldClass}>
+          {w.fromHere}
+          <select
+            className={settingsSelectClassName}
+            value={bar.index}
+            onChange={(e) => onBar(Number(e.target.value))}
+          >
+            {barOptions}
+          </select>
+        </label>
+        <KeySignatureField
+          key={[lane.id, bar.index, bar.fifths, bar.keyMode].join("/")}
+          score={score}
+          lane={lane}
+          bar={bar}
+          semitones={options.semitones}
+          words={w}
+          onEdit={revise}
+        />
         <label className={fieldClass}>
           {w.clef}
           <select
@@ -380,7 +364,7 @@ function ImportedScoreSettings({
         )}
       </fieldset>
       <label className={fieldClass}>
-        {m.tonality}
+        {w.practiceKey}
         <select
           className={settingsSelectClassName}
           value={mod(interval, 12)}

@@ -13,6 +13,7 @@ const { pathToFileURL } = require("node:url");
 
 function verify({
   edits,
+  keyEdit,
   moves,
   parseScoreXml,
   editScore,
@@ -70,6 +71,200 @@ function verify({
     song.lanes[0].bars[i].events
       .map((e) => [e.start, e.duration, midi(e)])
       .join("|");
+  {
+    const key = (fifths, mode = "major") =>
+      `<attributes><key><fifths>${fifths}</fifths><mode>${mode}</mode></key></attributes>`;
+    const chordName =
+      "<harmony><root><root-step>C</root-step></root><kind>major</kind><bass><bass-step>G</bass-step></bass></harmony>";
+    const firstVoice =
+      note("C") + chordName + note("F") + note("A", 1, "quarter", "<chord/>");
+    const backupTwo = "<backup><duration>2</duration></backup>";
+    const secondVoice = (note("C") + note("G")).replaceAll(
+      "<voice>1",
+      "<voice>2",
+    );
+    const lowerStaff = (note("D") + note("E")).replaceAll(
+      "</note>",
+      "<staff>2</staff></note>",
+    );
+    const partBars = [
+      "<attributes><divisions>1</divisions><staves>2</staves><transpose><chromatic>-2</chromatic></transpose></attributes>" +
+        key(0) +
+        firstVoice +
+        backupTwo +
+        secondVoice +
+        backupTwo +
+        lowerStaff,
+      note("C") + key(0) + note("D"),
+    ];
+    for (const kind of ["partwise", "timewise"]) {
+      const wrapped =
+        kind === "partwise"
+          ? '<part id="P">' +
+            partBars
+              .map((text, i) => `<measure number="${i + 1}">${text}</measure>`)
+              .join("") +
+            "</part>"
+          : partBars
+              .map(
+                (text, i) =>
+                  `<measure number="${i + 1}"><part id="P">${text}</part></measure>`,
+              )
+              .join("");
+      const base = parseScoreXml(
+        `<score-${kind}><part-list><score-part id="P"><part-name>Piano</part-name></score-part></part-list>${wrapped}</score-${kind}>`,
+      );
+      const lane = base.lanes[1],
+        first = lane.bars[0],
+        selection = first.events[1];
+      const toD = { fifths: 2, mode: "major" };
+      const changed = editScore(
+        base,
+        keyEdit(base, lane, first, toD, true, selection),
+      );
+      const upper = changed.lanes[0],
+        otherVoice = changed.lanes[1],
+        lower = changed.lanes[2];
+      check(
+        kind +
+          " key at a beat moves both voices, chord heads and harmony until the next explicit key",
+        upper.bars[0].fifths === 0 &&
+          upper.bars[0].events.map((e) => e.fifths).join() === "0,2" &&
+          upper.bars[0].events
+            .flatMap((e) => e.heads.map((h) => h.midi))
+            .join() === "58,65,69" &&
+          otherVoice.bars[0].events
+            .flatMap((e) => e.heads.map((h) => h.midi))
+            .join() === "58,67" &&
+          lower.bars[0].events
+            .flatMap((e) => e.heads.map((h) => h.midi))
+            .join() === "60,62" &&
+          lower.bars.every((b) => b.fifths === 0) &&
+          upper.bars[1].events
+            .map((e) => [e.fifths, e.heads[0].midi].join("/"))
+            .join() === "2/60,0/60" &&
+          changed.document.querySelector("root-step").textContent === "D" &&
+          changed.document.querySelector("bass-step").textContent === "A",
+      );
+      const signatureOnly = editScore(
+        base,
+        keyEdit(base, lane, first, toD, false),
+      );
+      check(
+        kind +
+          " signature only and undo preserve pitches, the other staff and original",
+        signatureOnly.lanes[0].bars[0].fifths === 2 &&
+          signatureOnly.lanes[2].bars[0].fifths === 0 &&
+          timeline(signatureOnly)
+            .notes.map((n) => n.midi)
+            .join() ===
+            timeline(base)
+              .notes.map((n) => n.midi)
+              .join() &&
+          first.fifths === 0 &&
+          selection.fifths === 0,
+      );
+      const clef = editScore(
+        changed,
+        edits.clefEdit(
+          otherVoice.bars[0],
+          otherVoice,
+          { sign: "F", line: 4 },
+          otherVoice.bars[0].events[1],
+        ),
+      );
+      check(
+        kind +
+          " clef at a beat updates both voices of one staff, preserving sound",
+        clef.lanes[0].bars[0].events.map((e) => e.clef.sign).join() === "G,F" &&
+          clef.lanes[1].bars[0].events.map((e) => e.clef.sign).join() ===
+            "G,F" &&
+          clef.lanes[2].bars[0].events.every((e) => e.clef.sign === "G") &&
+          timeline(clef)
+            .notes.map((n) => n.midi)
+            .join() ===
+            timeline(changed)
+              .notes.map((n) => n.midi)
+              .join(),
+      );
+    }
+    const tiedHead = (type) =>
+      note(
+        "C",
+        1,
+        "quarter",
+        "",
+        type.map((t) => `<tie type="${t}"/>`).join(""),
+      );
+    const chain = score(
+      [
+        tiedHead(["start"]),
+        tiedHead(["stop", "start"]),
+        tiedHead(["stop", "start"]),
+        key(1) + tiedHead(["stop"]),
+      ],
+      1,
+    );
+    const chainLane = chain.lanes[0];
+    const modulated = editScore(
+      chain,
+      keyEdit(
+        chain,
+        chainLane,
+        chainLane.bars[1],
+        { fifths: 2, mode: "major" },
+        true,
+      ),
+    );
+    check(
+      "ties across a modulation boundary reattack, internal ties keep their duration",
+      timeline(modulated)
+        .notes.map((n) => n.midi)
+        .join() === "60,62,60" &&
+        modulated.document.querySelectorAll("tie").length === 2 &&
+        chain.document.querySelectorAll("tie").length === 6,
+    );
+    const enharmonic = score([
+      key(6) + note("F").replace("<octave>", "<alter>1</alter><octave>"),
+    ]);
+    const enhLane = enharmonic.lanes[0];
+    const flats = editScore(
+      enharmonic,
+      keyEdit(
+        enharmonic,
+        enhLane,
+        enhLane.bars[0],
+        { fifths: -6, mode: "major" },
+        true,
+      ),
+    );
+    check(
+      "enharmonic F-sharp major to G-flat major respells and keeps sounding pitch",
+      event(flats, 0).heads[0].step === "G" &&
+        event(flats, 0).heads[0].alter === -1 &&
+        midi(event(flats, 0)) === "66",
+    );
+    const respellChain = score(
+      [key(6) + tiedHead(["start"]), tiedHead(["stop"])],
+      1,
+    );
+    const respellLane = respellChain.lanes[0];
+    const held = editScore(
+      respellChain,
+      keyEdit(
+        respellChain,
+        respellLane,
+        respellLane.bars[1],
+        { fifths: -6, mode: "major" },
+        true,
+      ),
+    );
+    check(
+      "an enharmonic signature across a tie keeps a single attack",
+      timeline(held).notes.length === 1 &&
+        held.document.querySelectorAll("tie").length === 2,
+    );
+  }
   const sourceChord = score([
     note("C", 2, "half") +
       note("E", 1, "quarter", "<chord/>") +
@@ -685,13 +880,14 @@ const output = fs.mkdtempSync(
 try {
   const entry = `
     import * as edits from './src/features/score-import/score-edits';
+    import {keyEdit} from './src/features/score-import/signature-edit';
     import * as moves from './src/features/score-import/move-note';
     import {parseScoreXml} from './src/features/score-import/model';
     import {editScore} from './src/features/score-import/edit-history';
     import {prepareScore} from './src/features/score-import/timeline';
     import {layoutBar,layoutScoreLine} from './src/features/score-import/editor-layout';
     try {
-      const checks = (${verify.toString()})({edits,moves,parseScoreXml,editScore,prepareScore,layoutBar,layoutScoreLine});
+      const checks = (${verify.toString()})({edits,keyEdit,moves,parseScoreXml,editScore,prepareScore,layoutBar,layoutScoreLine});
       document.body.textContent = JSON.stringify({checks});
     } catch(error) { document.body.textContent = JSON.stringify({error:error.stack}); }
   `;

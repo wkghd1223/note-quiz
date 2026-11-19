@@ -14,11 +14,12 @@ const xml = `<score-partwise version="4.0"><part-list><score-part id="p"><part-n
 
 async function verify(browser, width, height) {
   const mobile = width < 768;
+  const reduced = width === 320;
   const page = await browser.newPage({
     viewport: { width, height },
     hasTouch: mobile,
     isMobile: mobile,
-    reducedMotion: "reduce",
+    reducedMotion: reduced ? "reduce" : "no-preference",
   });
   try {
     await page.route("**/*", (route) =>
@@ -45,10 +46,20 @@ async function verify(browser, width, height) {
       );
     const press = (target) => (mobile ? target.tap() : target.click());
     const panel = page.locator("[data-edit-panel]");
+    const meter = editor.locator('[data-edit-symbol="meter"]');
+    assert.deepEqual(await meter.locator("text").allTextContents(), ["\uE084", "\uE084"]);
+    await page.evaluate(() => document.fonts.ready);
+    assert(await meter.locator("text").first().evaluate(node => {
+      const font = getComputedStyle(node);
+      return font.fontFamily.includes("ScoreEditorBravura") &&
+        document.fonts.check(font.fontSize + " ScoreEditorBravura", node.textContent);
+    }), "Score should use the loaded Bravura time-signature glyphs");
     await hit(0).scrollIntoViewIfNeeded();
     const before = await editor.boundingBox();
     await press(hit(0));
     await panel.waitFor();
+    assert.equal(await panel.evaluate(node => getComputedStyle(node).animationName === "none"), reduced);
+    await panel.evaluate(node => Promise.all(node.getAnimations().map(motion => motion.finished)));
     const after = await editor.boundingBox();
     assert.equal(
       after.height,
@@ -77,7 +88,6 @@ async function verify(browser, width, height) {
     );
     await page.keyboard.press("Escape");
 
-    const meter = editor.locator('[data-edit-symbol="meter"]');
     await meter.focus();
     await page.keyboard.press("Enter");
     await page.waitForFunction(() =>
@@ -105,6 +115,7 @@ async function verify(browser, width, height) {
             ),
           ) >= 92,
       );
+      await panel.evaluate(node => Promise.all(node.getAnimations().map(motion => motion.finished)));
       const dock = await panel.boundingBox();
       assert(dock.y + dock.height <= height - 92);
       const head = await hit(0).boundingBox();
@@ -133,6 +144,19 @@ async function verify(browser, width, height) {
         return head && Number(head.getAttribute("data-midi")) > 60;
       });
       const header = await panel.locator("header").boundingBox();
+      await touch.send("Input.dispatchTouchEvent", {
+        type: "touchStart", touchPoints: [{ x: header.x + 40, y: header.y + 8 }],
+      });
+      await touch.send("Input.dispatchTouchEvent", {
+        type: "touchMove", touchPoints: [{ x: header.x + 40, y: header.y + 32 }],
+      });
+      const dragged = await panel.boundingBox();
+      assert(dragged.y - dock.y > 12, "The sheet must follow the finger before dismissing");
+      await touch.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+      await page.waitForFunction((y) =>
+        Math.abs(document.querySelector("[data-edit-panel]").getBoundingClientRect().y - y) < 1,
+        dock.y,
+      );
       await slide(header.x + 40, header.y + 8, 65);
       await panel.waitFor({ state: "detached" });
     }

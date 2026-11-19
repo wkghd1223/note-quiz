@@ -62,6 +62,33 @@ async function check(browser, viewport) {
     );
     await page.goto(new URL(generated, base).href);
     await page.locator("[data-melody-phase]").waitFor();
+    await page.getByRole("button", { name: "악보 편집", exact: true }).click();
+    const generatedHead = page
+      .locator('[data-edit-bar="0"] [data-edit-head="0"]')
+      .first();
+    const firstMidi = Number(await generatedHead.getAttribute("data-midi"));
+    await generatedHead.press("ArrowUp");
+    await page.waitForFunction(
+      (pitch) =>
+        Number(
+          document.querySelector('[data-edit-bar="0"] [data-edit-head="0"]')
+            .dataset.midi,
+        ) > pitch,
+      firstMidi,
+    );
+    const editedMidi = Number(await generatedHead.getAttribute("data-midi"));
+    await generatedHead.press("Escape");
+    await page
+      .getByRole("button", { name: "이 마디 듣기", exact: true })
+      .click();
+    await page.locator("[data-import-phase=preview]").waitFor();
+    await page.locator("[data-import-phase=ready]").waitFor();
+    await page.getByRole("button", { name: "생성 원본 보기" }).click();
+    await page.getByRole("button", { name: "편집한 악보 열기" }).click();
+    assert.equal(
+      Number(await generatedHead.getAttribute("data-midi")),
+      editedMidi,
+    );
     await source(upload).click();
     await urlIs(upload);
     await page
@@ -97,6 +124,15 @@ async function check(browser, viewport) {
     await head.press("Escape");
     await source(generated).click();
     await urlIs(generated);
+    assert.equal(
+      Number(await generatedHead.getAttribute("data-midi")),
+      editedMidi,
+    );
+    await page.getByRole("button", { name: "실행 취소", exact: true }).click();
+    assert.equal(
+      Number(await generatedHead.getAttribute("data-midi")),
+      firstMidi,
+    );
     await page.goBack();
     await urlIs(upload);
     await page.getByRole("heading", { name: title }).waitFor();
@@ -177,7 +213,7 @@ async function check(browser, viewport) {
     );
     assert.deepEqual(errors, []);
     console.log(
-      `${viewport.width}×${viewport.height} · source links, history, document, undo, editor height, settings, meter overflow, language switch and SEO passed`,
+      `${viewport.width}×${viewport.height} · generated score editing, preview, independent histories, source links, undo, editor height, settings, meter overflow, language switch and SEO passed`,
     );
   } finally {
     await context.close();

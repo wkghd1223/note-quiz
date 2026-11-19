@@ -3,18 +3,28 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
+import { preload } from "react-dom";
 import { useTranslation } from "@/hooks/useTranslation";
 import { localizedHref, stripLocale } from "@/lib/i18n/locale";
 import { melodySourceCopy, melodySources } from "../sources";
-import { getScoreDraft } from "../score-draft";
+import {
+  getScoreDraft,
+  getGeneratedScoreDraft,
+  hasScoreEdits,
+} from "../score-draft";
 
 export default function MelodyLayout({ children }: { children: ReactNode }) {
+  preload("/alphatab/font/Bravura.woff2", {
+    as: "font",
+    type: "font/woff2",
+    crossOrigin: "anonymous",
+  });
   const { t, locale, language } = useTranslation();
   const pathname = stripLocale(usePathname());
   useEffect(() => {
     const draft = getScoreDraft();
     const beforeUnload = (event: BeforeUnloadEvent) => {
-      if (!draft.current || draft.current.original === draft.current.score)
+      if (!hasScoreEdits(draft) && !hasScoreEdits(getGeneratedScoreDraft()))
         return;
       event.preventDefault();
       event.returnValue = "";

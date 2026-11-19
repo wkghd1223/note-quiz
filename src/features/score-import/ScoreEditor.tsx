@@ -68,7 +68,10 @@ import {
   staffPosition,
   type Spelling,
 } from "./editor-pitch";
-import ScoreToolPopover from "./ScoreToolPopover";
+import ScoreToolPopover, { ScoreToolPresence } from "./ScoreToolPopover";
+import { meterGlyphs } from "@/lib/notation/meter-glyphs";
+import KeySignatureField from "./KeySignatureField";
+import BarHarmonyLabels from "./BarHarmonyLabels";
 import {
   clefs,
   clefKeys,
@@ -90,7 +93,15 @@ export interface ScoreEditorProps {
   onEdit: (change: Edit) => boolean | void;
   words: ImportWords;
 }
-type Tool = "note" | "meter" | "clef" | "tuplet" | "repeat" | "move" | null;
+type SignatureTool = "key" | "clef" | "meter";
+type Tool =
+  | "note"
+  | SignatureTool
+  | "signatures"
+  | "tuplet"
+  | "repeat"
+  | "move"
+  | null;
 type Selection = { event: number; head: number };
 const presets = ["3:2", "4:3", "5:4", "7:4", "2:3"];
 
@@ -342,7 +353,7 @@ function ScoreLine({
               {barOptions}
             </select>
           </label>
-          <span ref={setRepeatHost} />
+          <span className="inline-flex flex-wrap gap-1.5" ref={setRepeatHost} />
         </nav>
       </header>
       <div
@@ -446,6 +457,9 @@ function EditorBar({
   repeats,
 }: EditorBarProps) {
   const [tool, setTool] = useState<Tool>(null);
+  const [menuAnchor, setMenuAnchor] = useState<
+    "header" | "number" | "event" | "inline" | null
+  >(null);
   const [selected, setSelected] = useState<Selection>({ event: 0, head: 0 });
   const [rangeFrom, setRangeFrom] = useState<number | null>(null);
   const [rangeEnd, setRangeEnd] = useState<number | null>(null);
@@ -522,15 +536,28 @@ function EditorBar({
   const visible = locked || !selectedBar ? null : tool;
   const eventSelector = `[data-edit-event="${eventIndex}"]`;
   const barSelector = `[data-edit-bar="${barIndex}"] `;
-  const anchorSelector =
-    visible === "repeat"
-      ? '[data-edit-symbol="repeat"]'
-      : barSelector +
-        (visible === "clef" || visible === "meter"
-          ? `[data-edit-symbol="${visible}"]`
-          : head
-            ? eventSelector + `[data-edit-head="${headIndex}"]`
-            : eventSelector);
+  const signatureEvent =
+    menuAnchor === "event" || menuAnchor === "inline" ? event : undefined;
+  const signatureContext = signatureEvent ?? bar;
+  const isSignatureTool =
+    visible === "clef" || visible === "meter" || visible === "key";
+  const eventAnchor =
+    barSelector +
+    eventSelector +
+    (head ? `[data-edit-head="${headIndex}"]` : "");
+  const menuAnchors = {
+    event: eventAnchor,
+    inline: barSelector + `[data-edit-context="${eventIndex}"]`,
+    number: barSelector + '[data-edit-symbol="number"]',
+    header: '[data-edit-symbol="signatures"]',
+  };
+  let anchorSelector = eventAnchor;
+  if (visible === "repeat") anchorSelector = '[data-edit-symbol="repeat"]';
+  if (visible === "signatures" || isSignatureTool) {
+    anchorSelector = menuAnchor
+      ? menuAnchors[menuAnchor]
+      : barSelector + `[data-edit-symbol="${visible}"]`;
+  }
   function focusTools() {
     requestAnimationFrame(() => {
       const panel = focusPanel.current;
@@ -563,13 +590,18 @@ function EditorBar({
   }, [selectedBar, locked, barIndex, keyboardTarget]);
   useEffect(() => () => drag.current?.cancel(), [bar]);
   useEffect(() => {
-    setClef(clefValue(bar.clef));
+    setClef(clefValue(signatureContext.clef));
     setMeter(signatureText(bar.meter.beats, bar.meter.beatType));
     setCustomBeats(String(bar.meter.beats));
     setCustomBeatType(bar.meter.beatType);
-  }, [bar.clef, bar.meter.beats, bar.meter.beatType]);
-  function open(t: Tool) {
+  }, [signatureContext.clef, bar.meter.beats, bar.meter.beatType]);
+  function open(t: Tool, anchor: typeof menuAnchor = null) {
     if (locked) return;
+    if (t === "clef") {
+      const at = anchor === "event" || anchor === "inline" ? event : undefined;
+      setClef(clefValue((at ?? bar).clef));
+    }
+    setMenuAnchor(anchor);
     setTool(t);
     setIssue(false);
   }
@@ -820,6 +852,8 @@ function EditorBar({
     open("repeat");
   }
   const meterX = layout.meterX ?? 0;
+  const writtenMeter =
+    layout.meterX === undefined ? undefined : meterGlyphs(bar.meter, space);
   function keyGlyphs(fifths: number, c: ScoreClef, x: number) {
     return keyPositions(fifths, c).map((y, i) => (
       <g key={i}>{glyph(accidentalGlyph(Math.sign(fifths)), x + 10 * i, y)}</g>
@@ -887,7 +921,7 @@ function EditorBar({
         {ledger(h.x, y)}
         {focused && (
           <ellipse
-            className={styles.ink}
+            className={styles.selectionRing}
             cx={h.x}
             cy={y}
             rx="10"
@@ -953,19 +987,38 @@ function EditorBar({
       {selectedBar &&
         repeatHost &&
         createPortal(
-          <button
-            type="button"
-            data-edit-symbol="repeat"
-            aria-haspopup="dialog"
-            aria-expanded={visible === "repeat"}
-            disabled={locked}
-            onClick={(e) => {
-              repeatPanel();
-              if (e.detail === 0) focusTools();
-            }}
-          >
-            {w.repeat}
-          </button>,
+          <>
+            <button
+              type="button"
+              data-edit-symbol="signatures"
+              aria-haspopup="dialog"
+              aria-expanded={
+                !!visible &&
+                menuAnchor === "header" &&
+                (visible === "signatures" || isSignatureTool)
+              }
+              disabled={locked}
+              onClick={(e) => {
+                open("signatures", "header");
+                if (!e.detail) focusTools();
+              }}
+            >
+              {w.signatures}
+            </button>
+            <button
+              type="button"
+              data-edit-symbol="repeat"
+              aria-haspopup="dialog"
+              aria-expanded={visible === "repeat"}
+              disabled={locked}
+              onClick={(e) => {
+                repeatPanel();
+                if (e.detail === 0) focusTools();
+              }}
+            >
+              {w.repeat}
+            </button>
+          </>,
           repeatHost,
         )}
       <svg
@@ -985,6 +1038,13 @@ function EditorBar({
         role="group"
         aria-label={`${w.bar} ${bar.label}`}
       >
+        <BarHarmonyLabels
+          bar={bar}
+          staff={lane.staff}
+          layout={layout}
+          semitones={semitones}
+          top={lineTop}
+        />
         {[0, 1, 2, 3, 4].map((i) => (
           <line
             key={i}
@@ -1000,14 +1060,46 @@ function EditorBar({
           d={`${barIndex === 0 ? `M8 ${bottom - 4 * space}v${space * 4}` : ""} M${drawing.width - 0.5} ${bottom - 4 * space}v${space * 4}`}
           stroke="#334155"
         />
-        <text
-          x={barIndex === 0 ? 9 : 4}
-          y={bottom - 5 * space - 3}
-          fontSize="10"
-          fill="#64748b"
+        <g
+          role="button"
+          data-edit-symbol="number"
+          aria-label={`${w.bar} ${bar.label} · ${w.signatures}`}
+          className={styles.symbol}
+          tabIndex={locked ? -1 : 0}
+          aria-disabled={locked}
+          aria-haspopup="dialog"
+          aria-expanded={
+            !!visible &&
+            menuAnchor === "number" &&
+            (visible === "signatures" || isSignatureTool)
+          }
+          onClick={() => open("signatures", "number")}
+          onKeyDown={(e) =>
+            buttonKey(e, () => {
+              open("signatures", "number");
+              focusTools();
+            })
+          }
         >
-          {bar.label}
-        </text>
+          <rect
+            x={barIndex === 0 ? 4 : 0}
+            y={bottom - 5 * space - 20}
+            width={Math.max(30, bar.label.length * 7 + 20)}
+            height="24"
+            className={styles.hit}
+          />
+          <text
+            x={barIndex === 0 ? 9 : 4}
+            y={bottom - 5 * space - 3}
+            fontSize="10"
+            fill="#64748b"
+          >
+            {bar.label}
+            <tspan dx="3" fontSize="9">
+              ⌄
+            </tspan>
+          </text>
+        </g>
         {!!repeats.bars[barIndex]?.forward.length && (
           <g aria-hidden="true" fill="currentColor">
             <circle cx="16" cy={bottom - 1.5 * space} r="2" />
@@ -1062,15 +1154,45 @@ function EditorBar({
             )}
           </g>
         )}
-        {layout.keyX !== undefined &&
-          (layout.cancelledKey
-            ? keyPositions(layout.cancelledKey, bar.clef).map((y, i) => (
-                <g key={i}>
-                  {glyph(accidentalGlyph(0), layout.keyX! + 10 * i, y)}
-                </g>
-              ))
-            : keyGlyphs(drawing.key, bar.clef, layout.keyX))}
-        {layout.meterX !== undefined && (
+        {layout.keyX !== undefined && (
+          <g
+            role="button"
+            aria-label={w.key}
+            data-edit-symbol="key"
+            className={styles.symbol}
+            tabIndex={locked ? -1 : 0}
+            aria-disabled={locked}
+            aria-expanded={visible === "key"}
+            aria-haspopup="dialog"
+            onClick={() => open("key")}
+            onKeyDown={(e) =>
+              buttonKey(e, () => {
+                open("key");
+                focusTools();
+              })
+            }
+          >
+            <rect
+              className={styles.hit}
+              x={layout.keyX - 3}
+              y={bottom - 5 * space}
+              width={Math.max(
+                14,
+                10 * Math.min(7, Math.abs(layout.cancelledKey || drawing.key)) +
+                  4,
+              )}
+              height={space * 6}
+            />
+            {layout.cancelledKey
+              ? keyPositions(layout.cancelledKey, bar.clef).map((y, i) => (
+                  <g key={i}>
+                    {glyph(accidentalGlyph(0), layout.keyX! + 10 * i, y)}
+                  </g>
+                ))
+              : keyGlyphs(drawing.key, bar.clef, layout.keyX)}
+          </g>
+        )}
+        {writtenMeter && (
           <g
             role="button"
             aria-label={w.meter}
@@ -1092,28 +1214,30 @@ function EditorBar({
               className={styles.hit}
               x={meterX - 4}
               y={bottom - 54}
-              width="35"
+              width={writtenMeter.width + 8}
               height="63"
             />
-            {[bar.meter.beats, bar.meter.beatType].map((v, i) => (
+            {writtenMeter.rows.map((row, i) => (
               <text
                 key={i}
-                className={styles.ink}
-                x={meterX + 9}
-                y={bottom - 2 * space + 1 + i * space * 1.7}
+                aria-hidden="true"
+                className={styles.glyph}
+                x={meterX + writtenMeter.width / 2}
+                y={
+                  bottom -
+                  (writtenMeter.rows.length === 1 ? 2 : 3 - 2 * i) * space
+                }
                 textAnchor="middle"
                 fill="currentColor"
-                fontFamily="serif"
-                fontWeight="bold"
-                fontSize="25"
+                fontSize={4 * space}
               >
-                {v}
+                {row}
               </text>
             ))}
           </g>
         )}
         {drawing.events.map(
-          ({ event: e, eventIndex: i, x, heads, contextChange, fifths }) => (
+          ({ event: e, eventIndex: i, x, heads, contextChange }) => (
             <g key={e.id} data-edit-slot={i} data-slot-x={x}>
               <rect
                 className={styles.dropMark}
@@ -1136,18 +1260,55 @@ function EditorBar({
                 />
               )}
               {contextChange && (
-                <g>
-                  {glyph(
-                    clefGlyph(e.clef),
-                    x - 36 - Math.abs(fifths) * 10,
-                    bottom - (e.clef.line - 1) * space,
-                    34,
-                  )}
-                  {keyGlyphs(
-                    fifths,
-                    e.clef,
-                    x - 18 - Math.min(7, Math.abs(fifths)) * 10,
-                  )}
+                <g
+                  data-edit-context={i}
+                  role="button"
+                  aria-label={w.signatures}
+                  className={styles.symbol}
+                  tabIndex={locked ? -1 : 0}
+                  aria-disabled={locked}
+                  aria-haspopup="dialog"
+                  onClick={() => {
+                    setSelected({ event: i, head: 0 });
+                    open("signatures", "inline");
+                  }}
+                  onKeyDown={(ev) =>
+                    buttonKey(ev, () => {
+                      setSelected({ event: i, head: 0 });
+                      open("signatures", "inline");
+                      focusTools();
+                    })
+                  }
+                >
+                  <rect
+                    className={styles.hit}
+                    x={x - 14 - contextChange.width}
+                    y={bottom - 5 * space}
+                    width={contextChange.width}
+                    height={space * 6}
+                  />
+                  {contextChange.clefChanged &&
+                    glyph(
+                      clefGlyph(e.clef),
+                      x - 12 - contextChange.width,
+                      bottom - (e.clef.line - 1) * space,
+                      34,
+                    )}
+                  {keyPositions(contextChange.signs, e.clef).map((y, k) => (
+                    <g key={k}>
+                      {glyph(
+                        accidentalGlyph(
+                          contextChange.cancelled
+                            ? 0
+                            : Math.sign(contextChange.signs),
+                        ),
+                        x -
+                          18 +
+                          (k - Math.min(7, Math.abs(contextChange.signs))) * 10,
+                        y,
+                      )}
+                    </g>
+                  ))}
                 </g>
               )}
               {rangeFrom !== null &&
@@ -1284,466 +1445,524 @@ function EditorBar({
           </g>
         )}
       </svg>
-      {visible && (
-        <ScoreToolPopover
-          editor={editor}
-          activeGesture={drag}
-          panel={focusPanel}
-          anchorSelector={anchorSelector}
-          revision={bar}
-          tool={visible}
-          title={
-            visible === "note"
-              ? currentHead
-                ? pitchLabel(currentHead.shown)
-                : editable
-                  ? w.rest
-                  : w.editor
-              : w[visible]
-          }
-          measure={`${w.bar} ${bar.label}`}
-          closeLabel={w.close}
-          onClose={close}
-        >
-          {visible === "note" && event && !editable && (
-            <p role="status">{w.editConflict}</p>
-          )}
-          {visible === "note" && editable && event && (
-            <div className={styles.toolbar}>
-              {event.heads.length > 1 && (
-                <label>
-                  {w.pitch}
-                  <select
-                    value={headIndex}
-                    onChange={(ev) =>
-                      setSelected({
-                        event: eventIndex,
-                        head: Number(ev.target.value),
-                      })
-                    }
-                  >
-                    {current.heads.map((h) => (
-                      <option key={h.head.id} value={h.index}>
-                        {pitchLabel(h.shown)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
-              {currentHead && (
-                <>
-                  <button
-                    type="button"
-                    aria-label={w.pitch + " ↓"}
-                    onClick={() => nudge(currentHead, -1)}
-                  >
-                    ↓
-                  </button>
-                  <button
-                    type="button"
-                    aria-label={w.pitch + " ↑"}
-                    onClick={() => nudge(currentHead, 1)}
-                  >
-                    ↑
-                  </button>
+      <ScoreToolPresence>
+        {visible && (
+          <ScoreToolPopover
+            editor={editor}
+            activeGesture={drag}
+            panel={focusPanel}
+            anchorSelector={anchorSelector}
+            revision={bar}
+            tool={visible}
+            title={
+              visible === "note"
+                ? currentHead
+                  ? pitchLabel(currentHead.shown)
+                  : editable
+                    ? w.rest
+                    : w.editor
+                : w[visible]
+            }
+            measure={`${w.bar} ${bar.label}${signatureEvent && (isSignatureTool || visible === "signatures") ? " · " + w.fromNote : ""}`}
+            closeLabel={w.close}
+            onClose={close}
+          >
+            {visible === "note" && event && !editable && (
+              <p role="status">{w.editConflict}</p>
+            )}
+            {visible === "note" && editable && event && (
+              <div className={styles.toolbar}>
+                {event.heads.length > 1 && (
                   <label>
-                    {w.accidental}
+                    {w.pitch}
                     <select
-                      value={currentHead.shown.alter}
+                      value={headIndex}
                       onChange={(ev) =>
-                        change(
-                          pitchEdit(
-                            event,
-                            head,
-                            sourcePitch(
-                              {
-                                ...currentHead.shown,
-                                alter: Number(ev.target.value),
-                              },
-                              event.fifths,
-                              currentHead.shift,
-                            ),
-                            true,
-                          ),
-                        )
+                        setSelected({
+                          event: eventIndex,
+                          head: Number(ev.target.value),
+                        })
                       }
                     >
-                      {[-2, -1, 0, 1, 2].map((v, i) => (
-                        <option key={v} value={v}>
-                          {["𝄫", "♭", "♮", "♯", "𝄪"][i]}
+                      {current.heads.map((h) => (
+                        <option key={h.head.id} value={h.index}>
+                          {pitchLabel(h.shown)}
                         </option>
                       ))}
                     </select>
                   </label>
-                </>
-              )}
-              <label>
-                {w.length}
-                <select
-                  value={rhythm?.type}
-                  disabled={!!event.tuplet}
-                  onChange={(ev) =>
-                    change(
-                      durationEdit(
-                        bar,
-                        event,
-                        ev.target.value,
-                        rhythm?.dots ?? 0,
-                      ),
-                    )
-                  }
-                >
-                  {!lengthChoices.some(([t]) => t === rhythm?.type) && (
-                    <option value={rhythm?.type}>{rhythm?.type || "—"}</option>
-                  )}
-                  {lengthChoices.map(([t, s]) => (
-                    <option key={t} value={t}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button
-                type="button"
-                aria-pressed={!!rhythm?.dots}
-                disabled={!!event.tuplet || !rhythm?.type}
-                onClick={() =>
-                  change(
-                    durationEdit(
-                      bar,
-                      event,
-                      rhythm!.type,
-                      rhythm?.dots ? 0 : 1,
-                    ),
-                  )
-                }
-              >
-                {w.dot}
-              </button>
-              {head ? (
-                <>
-                  {tie && (
-                    <button type="button" onClick={() => change(tie.change)}>
-                      {tie.linked ? w.untie : w.tie}
-                    </button>
-                  )}
-                  <button type="button" onClick={() => change(restEdit(event))}>
-                    {event.heads.length > 1 ? w.chordRest : w.rest}
-                  </button>
-                  {event.heads.length > 1 && (
+                )}
+                {currentHead && (
+                  <>
                     <button
                       type="button"
-                      onClick={() => change(restEdit(event, head))}
+                      aria-label={w.pitch + " ↓"}
+                      onClick={() => nudge(currentHead, -1)}
                     >
-                      {w.removeHead}
+                      ↓
                     </button>
-                  )}
-                  <button type="button" onClick={() => open("move")}>
-                    {w.move}
-                  </button>
-                </>
-              ) : (
-                <button type="button" onClick={add}>
-                  {w.addNote}
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => {
-                  setRangeFrom(null);
-                  setRangeEnd(null);
-                  open("tuplet");
-                }}
-              >
-                {w.tuplet}
-              </button>
-              <button
-                type="button"
-                aria-pressed={rangeFrom !== null}
-                onClick={() => {
-                  setRangeFrom(eventIndex);
-                  setRangeEnd(null);
-                }}
-              >
-                {w.range}
-              </button>
-              {rangeFrom !== null && rangeEnd === null && (
-                <span role="status">{w.selectEnd}</span>
-              )}
-            </div>
-          )}
-          {visible === "move" && event && (
-            <div className={styles.toolbar}>
-              {[-1, 1].map((dir) => {
-                const candidate = adjacentEvent(eventIndex, dir, event);
-                return (
-                  <button
-                    key={dir}
-                    type="button"
-                    disabled={!candidate}
-                    aria-label={dir < 0 ? w.previous : w.next}
-                    onClick={() => {
-                      if (candidate)
-                        dropAt(
-                          eventIndex,
-                          headIndex,
-                          candidate.barIndex,
-                          candidate.eventIndex,
-                        );
-                    }}
-                  >
-                    {dir < 0 ? "←" : "→"}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-          {visible === "tuplet" && event && (
-            <>
-              <div className={styles.toolbar}>
-                <label>
-                  {w.tuplet}
-                  <select
-                    value={preset}
-                    onChange={(ev) => setPreset(ev.target.value)}
-                  >
-                    {presets.map((p) => (
-                      <option key={p}>{p}</option>
-                    ))}
-                    <option value="custom">{w.custom}</option>
-                  </select>
-                </label>
-                {preset === "custom" && (
-                  <>
-                    <input
-                      type="number"
-                      aria-label={w.tuplet}
-                      value={customActual}
-                      min="1"
-                      max="128"
-                      onChange={(ev) => setCustomActual(ev.target.value)}
-                    />
-                    <span>{w.of}</span>
-                    <input
-                      type="number"
-                      aria-label={w.of}
-                      value={customNormal}
-                      min="1"
-                      max="128"
-                      onChange={(ev) => setCustomNormal(ev.target.value)}
-                    />
+                    <button
+                      type="button"
+                      aria-label={w.pitch + " ↑"}
+                      onClick={() => nudge(currentHead, 1)}
+                    >
+                      ↑
+                    </button>
+                    <label>
+                      {w.accidental}
+                      <select
+                        value={currentHead.shown.alter}
+                        onChange={(ev) =>
+                          change(
+                            pitchEdit(
+                              event,
+                              head,
+                              sourcePitch(
+                                {
+                                  ...currentHead.shown,
+                                  alter: Number(ev.target.value),
+                                },
+                                event.fifths,
+                                currentHead.shift,
+                              ),
+                              true,
+                            ),
+                          )
+                        }
+                      >
+                        {[-2, -1, 0, 1, 2].map((v, i) => (
+                          <option key={v} value={v}>
+                            {["𝄫", "♭", "♮", "♯", "𝄪"][i]}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
                   </>
                 )}
-                <output>
-                  {validRatio && unit
-                    ? `${a} × ${unitLabel} → ${n} × ${unitLabel}`
-                    : w.tupletFit}
-                </output>
-                <button
-                  type="button"
-                  disabled={!unit || !validRatio}
-                  onClick={() => {
-                    if (
-                      !change(
-                        range.length
-                          ? groupTupletEdit(bar, range, a, n)
-                          : divideTupletEdit(event, a, n),
-                      )
-                    )
-                      return;
-                    setRangeFrom(null);
-                    setRangeEnd(null);
-                    setTool("note");
-                  }}
-                >
-                  {range.length ? w.group : w.divide}
-                </button>
-                {event.tuplet && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (change(ungroupEdit(lane, event))) setTool("note");
-                    }}
-                  >
-                    {w.ungroup}
-                  </button>
-                )}
-              </div>
-            </>
-          )}
-          {visible === "clef" && (
-            <div className={styles.toolbar}>
-              <label>
-                {w.clef}
-                <select
-                  value={clef}
-                  onChange={(ev) => setClef(ev.target.value)}
-                >
-                  {!clefs.some((c) => clefValue(c) === clefValue(bar.clef)) && (
-                    <option value={clefValue(bar.clef)}>
-                      {[bar.clef.sign, bar.clef.line, bar.clef.octaveChange]
-                        .filter((v) => v !== undefined)
-                        .join(" · ")}
-                    </option>
-                  )}
-                  {clefs.map((c, i) => (
-                    <option key={c.sign + c.line} value={clefValue(c)}>
-                      {w.clefNames[clefKeys[i]]}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <span>{w.fromHere}</span>
-              <button
-                type="button"
-                onClick={() => {
-                  const c = clefs.find((v) => clefValue(v) === clef);
-                  if (
-                    c &&
-                    clef !== clefValue(bar.clef) &&
-                    !change(clefEdit(bar, lane, c))
-                  )
-                    return;
-                  close();
-                }}
-              >
-                {w.apply}
-              </button>
-            </div>
-          )}
-          {visible === "meter" && (
-            <div className={styles.toolbar}>
-              <label>
-                {w.meter}
-                <select
-                  value={meter}
-                  onChange={(ev) => setMeter(ev.target.value)}
-                >
-                  {Array.from(
-                    new Set([
-                      signatureText(bar.meter.beats, bar.meter.beatType),
-                      ...meters,
-                    ]),
-                  ).map((m) => (
-                    <option key={m}>{m}</option>
-                  ))}
-                  <option value="custom">{w.custom}</option>
-                </select>
-              </label>
-              {meter === "custom" && (
                 <label>
-                  <input
-                    aria-label={w.meter + " 𝅘𝅥"}
-                    type="number"
-                    min={1}
-                    max={32}
-                    value={customBeats}
-                    onChange={(ev) => setCustomBeats(ev.target.value)}
-                  />{" "}
-                  /{" "}
+                  {w.length}
                   <select
-                    aria-label={w.length}
-                    value={customBeatType}
+                    value={rhythm?.type}
+                    disabled={!!event.tuplet}
                     onChange={(ev) =>
-                      setCustomBeatType(Number(ev.target.value))
+                      change(
+                        durationEdit(
+                          bar,
+                          event,
+                          ev.target.value,
+                          rhythm?.dots ?? 0,
+                        ),
+                      )
                     }
                   >
-                    {[1, 2, 4, 8, 16, 32].map((v) => (
-                      <option key={v}>{v}</option>
-                    ))}
-                  </select>
-                </label>
-              )}
-              <span>{w.fromHere}</span>
-              <button
-                type="button"
-                disabled={
-                  meter === "custom" &&
-                  (!Number.isInteger(Number(customBeats)) ||
-                    Number(customBeats) < 1 ||
-                    Number(customBeats) > 32)
-                }
-                onClick={() => {
-                  const [beats, beatType] =
-                    meter === "custom"
-                      ? [Number(customBeats), customBeatType]
-                      : meter.split("/").map(Number);
-                  if (
-                    (beats !== bar.meter.beats ||
-                      beatType !== bar.meter.beatType) &&
-                    !change(meterEdit(score, lane, bar, { beats, beatType }))
-                  )
-                    return;
-                  close();
-                }}
-              >
-                {w.apply}
-              </button>
-            </div>
-          )}
-          {visible === "repeat" && (
-            <div className={styles.toolbar}>
-              {(
-                [
-                  ["from", firstBar, setFirstBar],
-                  ["to", lastBar, setLastBar],
-                ] as const
-              ).map(([name, v, setter]) => (
-                <label key={name}>
-                  {w[name]}
-                  <select
-                    value={v}
-                    onChange={(ev) => setter(Number(ev.target.value))}
-                  >
-                    {lane.bars.map((b) => (
-                      <option key={b.index} value={b.index}>
-                        {b.label}
+                    {!lengthChoices.some(([t]) => t === rhythm?.type) && (
+                      <option value={rhythm?.type}>
+                        {rhythm?.type || "—"}
+                      </option>
+                    )}
+                    {lengthChoices.map(([t, s]) => (
+                      <option key={t} value={t}>
+                        {s}
                       </option>
                     ))}
                   </select>
                 </label>
-              ))}
-              <label>
-                ×{" "}
-                <input
-                  type="number"
-                  min={1}
-                  max={MAX_SCORE_REPEAT_PASSES}
-                  value={repeatCount}
-                  aria-label={w.repeat}
-                  onChange={(ev) => setRepeatCount(Number(ev.target.value))}
-                />
-              </label>
-              <button
-                disabled={lastBar < firstBar}
-                type="button"
-                onClick={() =>
-                  change(
-                    repeatEdit(score, firstBar, lastBar, repeatCount, false),
-                  )
-                }
-              >
-                {w.apply}
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  change(
-                    repeatEdit(score, firstBar, lastBar, repeatCount, true),
-                  )
-                }
-              >
-                {w.remove}
-              </button>
-            </div>
-          )}
-          {issue && (
-            <p role="alert" className={styles.status}>
-              {w.editConflict}
-            </p>
-          )}
-        </ScoreToolPopover>
-      )}
+                <button
+                  type="button"
+                  aria-pressed={!!rhythm?.dots}
+                  disabled={!!event.tuplet || !rhythm?.type}
+                  onClick={() =>
+                    change(
+                      durationEdit(
+                        bar,
+                        event,
+                        rhythm!.type,
+                        rhythm?.dots ? 0 : 1,
+                      ),
+                    )
+                  }
+                >
+                  {w.dot}
+                </button>
+                {head ? (
+                  <>
+                    {tie && (
+                      <button type="button" onClick={() => change(tie.change)}>
+                        {tie.linked ? w.untie : w.tie}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => change(restEdit(event))}
+                    >
+                      {event.heads.length > 1 ? w.chordRest : w.rest}
+                    </button>
+                    {event.heads.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => change(restEdit(event, head))}
+                      >
+                        {w.removeHead}
+                      </button>
+                    )}
+                    <button type="button" onClick={() => open("move")}>
+                      {w.move}
+                    </button>
+                  </>
+                ) : (
+                  <button type="button" onClick={add}>
+                    {w.addNote}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRangeFrom(null);
+                    setRangeEnd(null);
+                    open("tuplet");
+                  }}
+                >
+                  {w.tuplet}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    open("signatures", "event");
+                    focusTools();
+                  }}
+                >
+                  {w.signatures}
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={rangeFrom !== null}
+                  onClick={() => {
+                    setRangeFrom(eventIndex);
+                    setRangeEnd(null);
+                  }}
+                >
+                  {w.range}
+                </button>
+                {rangeFrom !== null && rangeEnd === null && (
+                  <span role="status">{w.selectEnd}</span>
+                )}
+              </div>
+            )}
+            {visible === "move" && event && (
+              <div className={styles.toolbar}>
+                {[-1, 1].map((dir) => {
+                  const candidate = adjacentEvent(eventIndex, dir, event);
+                  return (
+                    <button
+                      key={dir}
+                      type="button"
+                      disabled={!candidate}
+                      aria-label={dir < 0 ? w.previous : w.next}
+                      onClick={() => {
+                        if (candidate)
+                          dropAt(
+                            eventIndex,
+                            headIndex,
+                            candidate.barIndex,
+                            candidate.eventIndex,
+                          );
+                      }}
+                    >
+                      {dir < 0 ? "←" : "→"}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            {visible === "tuplet" && event && (
+              <>
+                <div className={styles.toolbar}>
+                  <label>
+                    {w.tuplet}
+                    <select
+                      value={preset}
+                      onChange={(ev) => setPreset(ev.target.value)}
+                    >
+                      {presets.map((p) => (
+                        <option key={p}>{p}</option>
+                      ))}
+                      <option value="custom">{w.custom}</option>
+                    </select>
+                  </label>
+                  {preset === "custom" && (
+                    <>
+                      <input
+                        type="number"
+                        aria-label={w.tuplet}
+                        value={customActual}
+                        min="1"
+                        max="128"
+                        onChange={(ev) => setCustomActual(ev.target.value)}
+                      />
+                      <span>{w.of}</span>
+                      <input
+                        type="number"
+                        aria-label={w.of}
+                        value={customNormal}
+                        min="1"
+                        max="128"
+                        onChange={(ev) => setCustomNormal(ev.target.value)}
+                      />
+                    </>
+                  )}
+                  <output>
+                    {validRatio && unit
+                      ? `${a} × ${unitLabel} → ${n} × ${unitLabel}`
+                      : w.tupletFit}
+                  </output>
+                  <button
+                    type="button"
+                    disabled={!unit || !validRatio}
+                    onClick={() => {
+                      if (
+                        !change(
+                          range.length
+                            ? groupTupletEdit(bar, range, a, n)
+                            : divideTupletEdit(event, a, n),
+                        )
+                      )
+                        return;
+                      setRangeFrom(null);
+                      setRangeEnd(null);
+                      setTool("note");
+                    }}
+                  >
+                    {range.length ? w.group : w.divide}
+                  </button>
+                  {event.tuplet && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (change(ungroupEdit(lane, event))) setTool("note");
+                      }}
+                    >
+                      {w.ungroup}
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+            {visible === "signatures" && (
+              <div className="grid min-w-48 grid-flow-col auto-cols-fr gap-2">
+                {(signatureEvent
+                  ? (["key", "clef"] as const)
+                  : (["key", "clef", "meter"] as const)
+                ).map((item) => (
+                  <button
+                    type="button"
+                    key={item}
+                    onClick={() => {
+                      open(item, menuAnchor);
+                      focusTools();
+                    }}
+                  >
+                    {w[item]}
+                  </button>
+                ))}
+              </div>
+            )}
+            {visible === "key" && (
+              <KeySignatureField
+                key={[
+                  signatureEvent?.id,
+                  signatureContext.fifths,
+                  signatureContext.keyMode,
+                ].join("/")}
+                score={score}
+                lane={lane}
+                bar={bar}
+                event={signatureEvent}
+                semitones={semitones}
+                words={w}
+                onEdit={change}
+                onApplied={close}
+              />
+            )}
+            {visible === "clef" && (
+              <div className={styles.toolbar}>
+                <label>
+                  {w.clef}
+                  <select
+                    value={clef}
+                    onChange={(ev) => setClef(ev.target.value)}
+                  >
+                    {!clefs.some(
+                      (c) => clefValue(c) === clefValue(signatureContext.clef),
+                    ) && (
+                      <option value={clefValue(signatureContext.clef)}>
+                        {[
+                          signatureContext.clef.sign,
+                          signatureContext.clef.line,
+                          signatureContext.clef.octaveChange,
+                        ]
+                          .filter((v) => v !== undefined)
+                          .join(" · ")}
+                      </option>
+                    )}
+                    {clefs.map((c, i) => (
+                      <option key={c.sign + c.line} value={clefValue(c)}>
+                        {w.clefNames[clefKeys[i]]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <span>{signatureEvent ? w.fromNote : w.fromHere}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const c = clefs.find((v) => clefValue(v) === clef);
+                    if (
+                      c &&
+                      clef !== clefValue(signatureContext.clef) &&
+                      !change(clefEdit(bar, lane, c, signatureEvent))
+                    )
+                      return;
+                    close();
+                  }}
+                >
+                  {w.apply}
+                </button>
+              </div>
+            )}
+            {visible === "meter" && (
+              <div className={styles.toolbar}>
+                <label>
+                  {w.meter}
+                  <select
+                    value={meter}
+                    onChange={(ev) => setMeter(ev.target.value)}
+                  >
+                    {Array.from(
+                      new Set([
+                        signatureText(bar.meter.beats, bar.meter.beatType),
+                        ...meters,
+                      ]),
+                    ).map((m) => (
+                      <option key={m}>{m}</option>
+                    ))}
+                    <option value="custom">{w.custom}</option>
+                  </select>
+                </label>
+                {meter === "custom" && (
+                  <label>
+                    <input
+                      aria-label={w.meter + " 𝅘𝅥"}
+                      type="number"
+                      min={1}
+                      max={32}
+                      value={customBeats}
+                      onChange={(ev) => setCustomBeats(ev.target.value)}
+                    />{" "}
+                    /{" "}
+                    <select
+                      aria-label={w.length}
+                      value={customBeatType}
+                      onChange={(ev) =>
+                        setCustomBeatType(Number(ev.target.value))
+                      }
+                    >
+                      {[1, 2, 4, 8, 16, 32].map((v) => (
+                        <option key={v}>{v}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                <span>{w.fromHere}</span>
+                <button
+                  type="button"
+                  disabled={
+                    meter === "custom" &&
+                    (!Number.isInteger(Number(customBeats)) ||
+                      Number(customBeats) < 1 ||
+                      Number(customBeats) > 32)
+                  }
+                  onClick={() => {
+                    const [beats, beatType] =
+                      meter === "custom"
+                        ? [Number(customBeats), customBeatType]
+                        : meter.split("/").map(Number);
+                    if (
+                      (beats !== bar.meter.beats ||
+                        beatType !== bar.meter.beatType) &&
+                      !change(meterEdit(score, lane, bar, { beats, beatType }))
+                    )
+                      return;
+                    close();
+                  }}
+                >
+                  {w.apply}
+                </button>
+              </div>
+            )}
+            {visible === "repeat" && (
+              <div className={styles.toolbar}>
+                {(
+                  [
+                    ["from", firstBar, setFirstBar],
+                    ["to", lastBar, setLastBar],
+                  ] as const
+                ).map(([name, v, setter]) => (
+                  <label key={name}>
+                    {w[name]}
+                    <select
+                      value={v}
+                      onChange={(ev) => setter(Number(ev.target.value))}
+                    >
+                      {lane.bars.map((b) => (
+                        <option key={b.index} value={b.index}>
+                          {b.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ))}
+                <label>
+                  ×{" "}
+                  <input
+                    type="number"
+                    min={1}
+                    max={MAX_SCORE_REPEAT_PASSES}
+                    value={repeatCount}
+                    aria-label={w.repeat}
+                    onChange={(ev) => setRepeatCount(Number(ev.target.value))}
+                  />
+                </label>
+                <button
+                  disabled={lastBar < firstBar}
+                  type="button"
+                  onClick={() =>
+                    change(
+                      repeatEdit(score, firstBar, lastBar, repeatCount, false),
+                    )
+                  }
+                >
+                  {w.apply}
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    change(
+                      repeatEdit(score, firstBar, lastBar, repeatCount, true),
+                    )
+                  }
+                >
+                  {w.remove}
+                </button>
+              </div>
+            )}
+            {issue && (
+              <p role="alert" className={styles.status}>
+                {w.editConflict}
+              </p>
+            )}
+          </ScoreToolPopover>
+        )}
+      </ScoreToolPresence>
     </div>
   );
 }

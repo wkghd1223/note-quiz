@@ -1,7 +1,8 @@
 @font-face {
   font-family: ScoreEditorBravura;
   src: url("/alphatab/font/Bravura.woff2") format("woff2");
-  font-display: swap;
+  /* The SMuFL code points have no readable fallback in a text font. */
+  font-display: block;
 }
 .editor {
   min-width: 0;
@@ -88,6 +89,16 @@
   fill: transparent;
   cursor: pointer;
 }
+.symbol > .hit,
+.head [data-notehead-hit] {
+  transition: fill 130ms var(--motion-ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  .symbol:not([aria-disabled="true"]):hover > .hit,
+  .head:not([aria-disabled="true"]):hover [data-notehead-hit] {
+    fill: rgb(124 58 237 / 8%);
+  }
+}
 .head,
 .head [data-notehead-hit] {
   touch-action: pinch-zoom;
@@ -101,17 +112,18 @@
   stroke-width: 2;
 }
 .dropMark {
-  display: none;
+  opacity: 0;
   pointer-events: none;
+  transition: opacity 100ms var(--motion-ease);
 }
 [data-drop-state="ready"] > .dropMark {
-  display: block;
+  opacity: 1;
   fill: #ede9fe;
   stroke: #7c3aed;
   stroke-width: 2;
 }
 [data-drop-state="blocked"] > .dropMark {
-  display: block;
+  opacity: 1;
   fill: #fff1f2;
   stroke: #be123c;
   stroke-dasharray: 3 3;
@@ -121,6 +133,31 @@
 }
 .ink {
   pointer-events: none;
+}
+.selectionRing {
+  pointer-events: none;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: select-head 170ms var(--motion-ease);
+}
+@keyframes select-head {
+  from {
+    opacity: 0.35;
+    transform: scale(0.78);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+:is(.editor, .panel) button {
+  transition:
+    background-color 130ms var(--motion-ease),
+    border-color 130ms var(--motion-ease),
+    transform 110ms var(--motion-ease);
+}
+:is(.editor, .panel) button:active:not(:disabled) {
+  transform: scale(0.97);
 }
 .symbol:focus-visible,
 .head:focus-visible {
@@ -133,6 +170,7 @@
   position: fixed;
   z-index: 40;
   pointer-events: none;
+  overflow: clip;
   top: var(--practice-viewport-top, 0px);
   left: var(--practice-viewport-left, 0px);
   width: calc(
@@ -144,6 +182,7 @@
   );
 }
 .panel {
+  --panel-travel: -6px;
   position: absolute;
   visibility: hidden;
   pointer-events: auto;
@@ -158,6 +197,16 @@
   background: white;
   color: #172033;
   box-shadow: 0 8px 24px rgb(15 23 42 / 14%);
+  animation: panel-in 175ms var(--motion-ease);
+}
+@media (min-width: 768px) {
+  .panel[data-placement="above"] {
+    --panel-travel: 6px;
+  }
+}
+.panel[data-exiting] {
+  pointer-events: none;
+  animation: panel-out 130ms ease-in both;
 }
 .panelHeader {
   display: flex;
@@ -215,7 +264,12 @@
     border-radius: 1rem 1rem 0 0;
     border-bottom-width: 0;
     box-shadow: 0 -4px 24px rgb(15 23 42 / 12%);
-    animation: sheet-in 160ms ease-out;
+    --panel-travel: 24px;
+    transform: translateY(var(--drag-y, 0px));
+    transition: transform 190ms cubic-bezier(0.18, 0.82, 0.24, 1);
+  }
+  .panel[data-swiping] {
+    transition: none;
   }
   .panelHeader {
     position: relative;
@@ -236,18 +290,33 @@
     min-height: 2.75rem;
   }
 }
-@keyframes sheet-in {
+@keyframes panel-in {
   from {
-    transform: translateY(0.8rem);
+    transform: translateY(var(--panel-travel));
     opacity: 0;
   }
   to {
-    transform: translateY(0);
+    transform: translateY(var(--drag-y, 0px));
     opacity: 1;
   }
 }
+@keyframes panel-out {
+  from {
+    opacity: 1;
+    transform: translateY(var(--drag-y, 0px));
+  }
+  to {
+    opacity: 0;
+    transform: translateY(calc(var(--drag-y, 0px) + var(--panel-travel)));
+  }
+}
 @media (prefers-reduced-motion: reduce) {
-  .panel {
+  .panel,
+  .panel[data-exiting],
+  .selectionRing {
     animation: none;
+  }
+  :is(.editor, .panel) button:active:not(:disabled) {
+    transform: none;
   }
 }

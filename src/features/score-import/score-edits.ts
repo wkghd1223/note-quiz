@@ -20,6 +20,7 @@ import {
 } from "./score-xml";
 export { direct, typeLength, dottedLength, writtenLength } from "./score-xml";
 import { MAX_SCORE_REPEAT_PASSES } from "./model";
+import { attributesAtBeat, signatureAttributes } from "./signature-position";
 import type {
   ImportedBar,
   ImportedEvent,
@@ -106,7 +107,7 @@ export function canEditEvent(event: ImportedEvent) {
   return !next || next.localName !== "note" || !first(next, "chord");
 }
 
-function notePitch(note: Element): Spelling | null {
+export function notePitch(note: Element): Spelling | null {
   const pitch = first(note, "pitch");
   if (!pitch) return null;
   const step = value(pitch, "step") as Spelling["step"];
@@ -124,7 +125,7 @@ function allTies(note: Element) {
   ];
 }
 
-function ties(note: Element, direction: "start" | "stop") {
+export function ties(note: Element, direction: "start" | "stop") {
   return allTies(note).filter(
     (t) =>
       t.getAttribute("type") === direction ||
@@ -132,7 +133,7 @@ function ties(note: Element, direction: "start" | "stop") {
   );
 }
 
-function clearTie(note: Element, direction: "start" | "stop") {
+export function clearTie(note: Element, direction: "start" | "stop") {
   for (const t of ties(note, direction)) {
     if (t.getAttribute("type") === "continue")
       t.setAttribute("type", direction === "start" ? "stop" : "start");
@@ -147,7 +148,7 @@ type TieEnd = "start" | "stop";
 
 /** Unison layers, alternate-pass ties, and conflicting sound/print marks
  * cannot be identified by a single selected head and time boundary. */
-function ordinaryTieEnds(note: Element) {
+export function ordinaryTieEnds(note: Element) {
   const marks = allTies(note);
   if (
     marks.some(
@@ -897,13 +898,17 @@ export function clefEdit(
   bar: ImportedBar,
   lane: ImportedLane,
   choice: ScoreClef,
+  event?: ImportedEvent,
 ): Edit {
   return (copy) => {
-    const attr = attributesAtStart(copy(bar.source));
-    const clef =
-      direct(attr, "clef").find(
-        (c) => (c.getAttribute("number") || "1") === lane.staff,
-      ) ?? insertOrdered(attr, element(attr, "clef"));
+    const original = attributesAtBeat(bar, event)
+      .flatMap((a) => direct(a, "clef"))
+      .filter((c) => (c.getAttribute("number") || "1") === lane.staff)
+      .at(-1);
+    const attr = signatureAttributes(copy, bar, event);
+    const clef = original
+      ? copy(original)
+      : insertOrdered(attr, element(attr, "clef"));
     if (Number(lane.staff) > 1) clef.setAttribute("number", lane.staff);
     remove(clef, "sign", "line", "clef-octave-change");
     for (const [tag, text] of [
@@ -914,6 +919,8 @@ export function clefEdit(
       child.textContent = String(text);
       clef.appendChild(child);
     }
+    if (choice.octaveChange)
+      set(clef, "clef-octave-change", choice.octaveChange);
   };
 }
 

@@ -1,4 +1,5 @@
 "use client";
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FaListOl, FaMicrophone, FaMusic } from "react-icons/fa";
 import PracticeController from "@/components/practice/PracticeController";
@@ -35,6 +36,14 @@ import {
   type MelodySettings,
 } from "../domain/settings";
 import { melodyCopy } from "../i18n";
+import { melodySourceCopy } from "../sources";
+import {
+  getGeneratedScoreDraft,
+  setGeneratedScoreDraft,
+  hasScoreEdits,
+  type GeneratedScoreDraft,
+} from "../score-draft";
+import { importCopy } from "@/features/score-import/copy";
 import {
   MelodyHeading,
   MelodySettingsButton,
@@ -43,6 +52,11 @@ import {
 import MelodySettingsPanel, { pitchName } from "./MelodySettingsPanel";
 
 const secondaryButton = `${practiceControlSizeClassName} inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white text-center font-semibold text-slate-800 hover:bg-violet-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-700 disabled:cursor-not-allowed disabled:opacity-50`;
+
+const GeneratedScoreWorkspace = dynamic(
+  () => import("./GeneratedScoreWorkspace"),
+  { ssr: false },
+);
 
 const newSeed = () => crypto.getRandomValues(new Uint32Array(1))[0];
 const voice = getInstrumentProfile("voice")!;
@@ -55,6 +69,9 @@ export default function MelodyPractice() {
     if (!initial.ok) throw new Error(initial.issue.code);
     return { active: initial, attempt: initial as MelodyGeneration, seed: 1 };
   });
+  const [editor, setEditor] = useState<GeneratedScoreDraft | null>(null);
+  const sourceWords = melodySourceCopy[language];
+  const editLabel = useMemo(() => importCopy(language).editor, [language]);
   const settings = generation.active.settings;
   const exercise = generation.active.exercise;
   const [draft, setDraft] = useState<MelodySettings>(defaultMelodySettings);
@@ -74,10 +91,11 @@ export default function MelodyPractice() {
     s.attemptToken,
   );
   const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null);
+  const stopReview = session.stopReview;
   const clearReview = useCallback(() => {
-    session.stopReview();
+    stopReview();
     setSelectedReviewId(null);
-  }, [session.stopReview]);
+  }, [stopReview]);
   useEffect(() => {
     clearReview();
   }, [clearReview, exercise.id, s.attemptToken, s.phase, results.open]);
@@ -170,6 +188,18 @@ export default function MelodyPractice() {
       ? Math.round(69 + 12 * Math.log2(session.frame.detectedHz / 440))
       : null;
   useEffect(() => {
+    const saved = getGeneratedScoreDraft();
+    if (saved) {
+      setGeneration({
+        active: saved.generation,
+        attempt: saved.generation,
+        seed: saved.seed,
+      });
+      setDraft(saved.generation.settings);
+      setEditor(saved.open ? saved : null);
+      setHydrated(true);
+      return;
+    }
     try {
       const restored = sanitizeMelodySettings(
         JSON.parse(localStorage.getItem(melodySettingsStorageKey) ?? "null"),
@@ -217,11 +247,40 @@ export default function MelodyPractice() {
       inputOffsetMs: 0,
     });
   };
+  const openEditor = () => {
+    if (!hydrated || !settingsValid || locked) return;
+    clearReview();
+    setReadyId(null);
+    setSettingsOpen(false);
+    const saved = getGeneratedScoreDraft();
+    const edit =
+      saved?.generation.exercise === exercise
+        ? saved
+        : {
+            generation: generation.active,
+            seed: generation.seed,
+            current: null,
+            open: true,
+          };
+    edit.open = true;
+    setGeneratedScoreDraft(edit);
+    setEditor(edit);
+  };
+  const discardDraft = useCallback(() => {
+    if (
+      hasScoreEdits(getGeneratedScoreDraft()) &&
+      !window.confirm(sourceWords.replaceMelody)
+    )
+      return false;
+    setGeneratedScoreDraft(null);
+    return true;
+  }, [sourceWords.replaceMelody]);
   const next = () => {
     if (!hydrated || locked || !settingsValid) return;
     clearReview();
     const seed = (generation.seed + 1) >>> 0;
     const result = createMelody(draft, seed);
+    if (result.ok && !discardDraft()) return;
     setGeneration((previous) => ({
       active: result.ok ? result : previous.active,
       attempt: result,
@@ -251,6 +310,14 @@ export default function MelodyPractice() {
         }));
         return;
       }
+      if (!discardDraft()) {
+        setDraft(settings);
+        setGeneration((previous) => ({
+          ...previous,
+          attempt: previous.active,
+        }));
+        return;
+      }
       resetSession();
       setDraft(result.settings);
       setGeneration({ active: result, attempt: result, seed });
@@ -261,7 +328,15 @@ export default function MelodyPractice() {
         setStorageWarning(true);
       }
     },
-    [hydrated, locked, resetSession, generation.seed, settings, clearReview],
+    [
+      hydrated,
+      locked,
+      resetSession,
+      generation.seed,
+      settings,
+      clearReview,
+      discardDraft,
+    ],
   );
   const error = session.audioError;
   const errorText = session.previewFailed
@@ -273,10 +348,32 @@ export default function MelodyPractice() {
         : error === "unsupported"
           ? m.unsupported
           : m.audioError;
+  if (editor)
+    return (
+      <GeneratedScoreWorkspace
+        draft={editor}
+        onOriginal={() => {
+          editor.open = false;
+          setEditor(null);
+        }}
+      />
+    );
   return (
     <div data-melody-scroll data-melody-phase={s.phase}>
       <div className="grid min-w-0 gap-4">
-        <MelodyHeading title={m.title} description={m.intro} />
+        <MelodyHeading title={m.title} description={m.intro}>
+          <button
+            type="button"
+            data-edit-generated
+            disabled={!hydrated || !settingsValid || locked}
+            className={secondaryButton}
+            onClick={openEditor}
+          >
+            {hydrated && hasScoreEdits(getGeneratedScoreDraft())
+              ? sourceWords.reopenScore
+              : editLabel}
+          </button>
+        </MelodyHeading>
         <MelodyWorkspace>
           <section
             ref={player}

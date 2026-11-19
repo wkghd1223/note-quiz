@@ -1,9 +1,12 @@
 "use client";
 
 import {
+  cloneElement,
   useId,
   useLayoutEffect,
   useRef,
+  useState,
+  type ReactElement,
   type ReactNode,
   type RefObject,
 } from "react";
@@ -22,8 +25,51 @@ type Props = {
   measure: string;
   closeLabel: string;
   onClose: (restoreFocus?: boolean) => void;
+  exiting?: boolean;
   children: ReactNode;
 };
+
+const exitMs = 130;
+
+/** The closing surface is immediately inert. Keeping its last contents for the
+ * short exit lets focus and the next editing gesture move on independently. */
+export function ScoreToolPresence({
+  children,
+}: {
+  children: ReactElement<Props> | false | null;
+}) {
+  const last = useRef<ReactElement<Props> | null>(null);
+  const [present, setPresent] = useState(false);
+  const open = !!children;
+  useLayoutEffect(() => {
+    if (children) last.current = children;
+  }, [children]);
+  useLayoutEffect(() => {
+    if (open) {
+      setPresent(true);
+      return;
+    }
+    const clear = () => {
+      last.current = null;
+      setPresent(false);
+    };
+    if (
+      !present ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      clear();
+      return;
+    }
+    const timer = window.setTimeout(clear, exitMs);
+    return () => window.clearTimeout(timer);
+  }, [open, present]);
+  return (
+    children ||
+    (present && last.current
+      ? cloneElement(last.current, { exiting: true })
+      : null)
+  );
+}
 
 /** Keep the score interactive while the tool follows its glyph or docks below it. */
 export default function ScoreToolPopover({
@@ -37,6 +83,7 @@ export default function ScoreToolPopover({
   measure,
   closeLabel,
   onClose,
+  exiting,
   children,
 }: Props) {
   const titleId = useId();
@@ -45,7 +92,8 @@ export default function ScoreToolPopover({
     const surface = editor.current;
     const box = panel.current;
     const boundary = box?.parentElement;
-    if (!surface || !box || !boundary) return;
+    if (!surface || !box || !boundary || exiting) return;
+    if (swipe.current === null) box.style.removeProperty("--drag-y");
     const mobile = window.matchMedia("(max-width: 767px)");
     const anchor = surface.querySelector(anchorSelector);
     const position = () => {
@@ -69,7 +117,8 @@ export default function ScoreToolPopover({
         box.style.visibility = "hidden";
         return;
       }
-      const panelBounds = box.getBoundingClientRect();
+      // Layout uses the final box even during its entrance or a swipe.
+      const panelBounds = { width: box.offsetWidth, height: box.offsetHeight };
       const score = surface.getBoundingClientRect();
       // Prefer the score column, with the selected glyph near the panel edge.
       const span = Math.max(
@@ -93,6 +142,7 @@ export default function ScoreToolPopover({
       );
       box.style.left = origin - bounds.left + left + "px";
       box.style.top = top + "px";
+      box.dataset.placement = bounds.top + top < glyph.top ? "above" : "below";
       box.style.visibility = "visible";
     };
     const scrollOwner = surface.closest<HTMLElement>("[data-practice-scroll]");
@@ -152,7 +202,25 @@ export default function ScoreToolPopover({
       document.removeEventListener("pointercancel", finishGesture, true);
       cancelAnimationFrame(frame);
     };
-  }, [editor, activeGesture, panel, anchorSelector, onClose, tool, revision]);
+  }, [
+    editor,
+    activeGesture,
+    panel,
+    anchorSelector,
+    onClose,
+    tool,
+    revision,
+    exiting,
+  ]);
+
+  function releaseSwipe(distance: number) {
+    const box = panel.current;
+    if (!box || swipe.current === null) return;
+    swipe.current = null;
+    delete box.dataset.swiping;
+    if (distance > 48) onClose();
+    else box.style.removeProperty("--drag-y");
+  }
 
   return createPortal(
     <div className={styles.overlay}>
@@ -161,7 +229,11 @@ export default function ScoreToolPopover({
         className={styles.panel}
         role="dialog"
         aria-labelledby={titleId}
-        data-edit-panel={tool}
+        inert={exiting}
+        aria-hidden={exiting}
+        data-edit-panel={exiting ? undefined : tool}
+        data-exiting={exiting || undefined}
+        style={exiting ? { animationDuration: exitMs + "ms" } : undefined}
       >
         <header
           className={styles.panelHeader}
@@ -169,20 +241,33 @@ export default function ScoreToolPopover({
             if (
               event.pointerType !== "touch" ||
               !event.isPrimary ||
+              !window.matchMedia("(max-width: 767px)").matches ||
               (event.target as Element).closest("button")
             )
               return;
             swipe.current = event.clientY;
+            const box = panel.current;
+            if (box) {
+              for (const animation of box.getAnimations()) animation.finish();
+              box.dataset.swiping = "";
+            }
             event.currentTarget.setPointerCapture(event.pointerId);
           }}
+          onPointerMove={(event) => {
+            const box = panel.current;
+            if (!box || swipe.current === null || !event.isPrimary) return;
+            const distance = Math.max(0, event.clientY - swipe.current);
+            box.style.setProperty(
+              "--drag-y",
+              Math.min(box.offsetHeight, distance) + "px",
+            );
+          }}
           onPointerUp={(event) => {
-            if (swipe.current !== null && event.clientY - swipe.current > 48)
-              onClose();
-            swipe.current = null;
+            if (swipe.current !== null)
+              releaseSwipe(event.clientY - swipe.current);
           }}
-          onPointerCancel={() => {
-            swipe.current = null;
-          }}
+          onPointerCancel={() => releaseSwipe(0)}
+          onLostPointerCapture={() => releaseSwipe(0)}
         >
           <strong id={titleId}>{title}</strong>
           <span>{measure}</span>

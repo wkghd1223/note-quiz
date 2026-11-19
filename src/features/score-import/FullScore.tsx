@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { AlphaTabApi, model, rendering } from "@coderline/alphatab";
 import { child, elements } from "./model";
+import {
+  fullScoreSignatures,
+  staffBarId,
+  type EngravedBar,
+} from "./full-score-signatures";
 import { displayedPitch, shiftedKey } from "./editor-pitch";
 import type { ImportWords } from "./copy";
 import type { ImportedLane, ImportedScore, ScoreStep } from "./types";
@@ -34,6 +39,7 @@ export function fullScoreBarRegions(
   lookup: rendering.BoundsLookup,
   partIds: string[],
   lanes: ImportedLane[],
+  engraving: EngravedBar[] = [],
 ): BarRegion[] {
   const byStaff = new Map<string, ImportedLane[]>();
   for (const lane of lanes) {
@@ -44,7 +50,9 @@ export function fullScoreBarRegions(
   }
   const regions: BarRegion[] = [];
   for (const system of lookup.staffSystems) {
+    const written = new Map<string, BarRegion>();
     for (const master of system.bars) {
+      const index = engraving[master.index]?.original ?? master.index;
       for (const bound of master.bars) {
         const { staff } = bound.bar;
         const key = JSON.stringify([
@@ -53,7 +61,7 @@ export function fullScoreBarRegions(
         ]);
         const candidates = byStaff.get(key) ?? [];
         const inBar = candidates.filter(
-          (lane) => lane.bars[master.index]?.events.length,
+          (lane) => lane.bars[index]?.events.length,
         );
         const lane =
           candidates.length === 1
@@ -63,19 +71,32 @@ export function fullScoreBarRegions(
               : undefined;
         const { x, y, w, h } = bound.realBounds;
         if (w > 0 && h > 0) {
-          regions.push({
-            index: master.index,
+          const identity = staffBarId(
+            staff.track.index.toString(),
+            staff.index,
+            index,
+          );
+          const previous = written.get(identity);
+          if (previous) {
+            previous.w = Math.max(previous.x + previous.w, x + w) - previous.x;
+            const bottom = Math.max(previous.y + previous.h, y + h);
+            previous.y = Math.min(previous.y, y);
+            previous.h = bottom - previous.y;
+            continue;
+          }
+          const region = {
+            index,
             partId: partIds[staff.track.index],
             staff: staff.index + 1,
-            number:
-              candidates[0]?.bars[master.index]?.label ??
-              String(master.index + 1),
+            number: candidates[0]?.bars[index]?.label ?? String(index + 1),
             lane,
             x,
             y,
             w,
             h,
-          });
+          };
+          regions.push(region);
+          written.set(identity, region);
         }
       }
     }
@@ -83,10 +104,9 @@ export function fullScoreBarRegions(
   return regions;
 }
 
-function localNotationBytes(document: XMLDocument): Uint8Array {
+function localNotationBytes(root: Element): Uint8Array {
   // Serialize just the music element. DTDs and stylesheet instructions on the
   // document, as well as linked artwork/resources, never reach the renderer.
-  const root = document.documentElement.cloneNode(true) as Element;
   for (const node of Array.from(root.getElementsByTagName("*"))) {
     if (["credit-image", "image", "opus", "link"].includes(node.localName)) {
       node.remove();
@@ -112,6 +132,7 @@ export function transposeFullScore(
   lanes: ImportedLane[],
   semitones: number,
   Chord: typeof model.Chord,
+  engraving: EngravedBar[] = [],
 ) {
   for (const track of parsed.tracks) {
     for (const staff of track.staves) {
@@ -124,7 +145,8 @@ export function transposeFullScore(
       let instrumentOffset = lane ? 0 : staff.displayTranspositionPitch;
       staff.displayTranspositionPitch = -semitones;
       for (const bar of staff.bars) {
-        const source = lane?.bars[bar.index]?.source;
+        const source =
+          lane?.bars[engraving[bar.index]?.original ?? bar.index]?.source;
         if (source) {
           for (const attributes of elements(source, "attributes")) {
             for (const trans of elements(attributes, "transpose")) {
@@ -228,6 +250,7 @@ export default function FullScore({
   const [attempt, setAttempt] = useState(0);
   const { document: source, lanes } = score;
   const credits = useMemo(() => pageCredits(source), [source]);
+  const engraving = useMemo(() => fullScoreSignatures(score), [score]);
   const current =
     view?.source === source && view.semitones === semitones ? view : undefined;
   const status = current?.status ?? "loading";
@@ -326,7 +349,7 @@ export default function FullScore({
         api = new alphaTab.AlphaTabApi(surface, settings);
         api.error.on(fail);
         const parsed = alphaTab.importer.ScoreLoader.loadScoreFromBytes(
-          localNotationBytes(source),
+          localNotationBytes(engraving.root),
           settings,
         );
         if (!parsed.tracks.length || !parsed.masterBars.length) return fail();
@@ -337,6 +360,50 @@ export default function FullScore({
             )
           : [];
         const partIds = parts.length === parsed.tracks.length ? parts : [];
+        for (const track of parsed.tracks) {
+          for (const staff of track.staves) {
+            const lane = lanes.find(
+              (l) =>
+                l.partId === partIds[track.index] &&
+                Number(l.staff) === staff.index + 1,
+            );
+            for (const bar of staff.bars) {
+              const piece = engraving.map[bar.index];
+              if (!piece) continue;
+              // A display-only boundary has no printed barline or measure number.
+              if (piece.beat) {
+                bar.barLineLeft = alphaTab.model.BarLineStyle.None;
+                bar.barNumberDisplay = alphaTab.model.BarNumberDisplay.Hide;
+              }
+              if (piece.continues)
+                bar.barLineRight = alphaTab.model.BarLineStyle.None;
+              // Restore the real opening after an earlier unsupported change.
+              const original = lane?.bars[piece.original];
+              if (!piece.beat && original) {
+                const { fifths, keyMode, clef } = original;
+                if (Number.isInteger(fifths) && Math.abs(fifths) <= 7)
+                  bar.keySignature = fifths;
+                bar.keySignatureType =
+                  keyMode === "minor"
+                    ? alphaTab.model.KeySignatureType.Minor
+                    : alphaTab.model.KeySignatureType.Major;
+                const c = alphaTab.model.Clef;
+                const signs: Record<string, model.Clef> = {
+                  G2: c.G2,
+                  F4: c.F4,
+                  C3: c.C3,
+                  C4: c.C4,
+                };
+                const actual = signs[clef.sign + clef.line];
+                if (actual !== undefined) {
+                  bar.clef = actual;
+                  const octave = 2 - (clef.octaveChange ?? 0);
+                  if (octave >= 0 && octave <= 4) bar.clefOttava = octave;
+                }
+              }
+            }
+          }
+        }
         if (semitones !== undefined) {
           transposeFullScore(
             parsed,
@@ -344,6 +411,7 @@ export default function FullScore({
             lanes,
             semitones,
             alphaTab.model.Chord,
+            engraving.map,
           );
         }
         api.renderStarted.on(loading);
@@ -355,7 +423,9 @@ export default function FullScore({
             source,
             semitones,
             status: "ready",
-            regions: lookup ? fullScoreBarRegions(lookup, partIds, lanes) : [],
+            regions: lookup
+              ? fullScoreBarRegions(lookup, partIds, lanes, engraving.map)
+              : [],
             viewportHeight: lookup
               ? fullScoreViewportHeight(lookup)
               : undefined,
@@ -370,7 +440,7 @@ export default function FullScore({
       })
       .catch(fail);
     return stop;
-  }, [source, lanes, attempt, semitones]);
+  }, [source, lanes, attempt, semitones, engraving]);
 
   return (
     <section
@@ -397,6 +467,9 @@ export default function FullScore({
             {words.retry}
           </button>
         </div>
+      )}
+      {engraving.marked.size > 0 && (
+        <p className="text-sm text-amber-900">{words.fullInlineHint}</p>
       )}
       <div
         ref={viewport}
@@ -429,12 +502,37 @@ export default function FullScore({
               }}
             />
           ))}
+          {status === "ready" &&
+            current?.regions.map((region) => {
+              const key = staffBarId(
+                region.partId ?? "",
+                region.staff,
+                region.index,
+              );
+              if (!engraving.marked.has(key)) return null;
+              return (
+                <span
+                  key={key}
+                  aria-hidden="true"
+                  data-inline-signature-warning
+                  className="pointer-events-none absolute rounded bg-amber-50 px-1 text-[10px] font-semibold text-amber-950 ring-1 ring-inset ring-amber-300"
+                  style={{ top: region.y, left: region.x }}
+                >
+                  {words.signatures}
+                </span>
+              );
+            })}
           {onBar &&
             status === "ready" &&
             current?.regions.map((region, i) => {
+              const marked = engraving.marked.get(
+                staffBarId(region.partId ?? "", region.staff, region.index),
+              );
+              const lane = region.lane ?? marked;
               const label = [
-                region.lane?.label,
+                lane?.label,
                 words.bar + " " + region.number,
+                marked && words.fullInlineHint,
               ]
                 .filter(Boolean)
                 .join(" · ");
@@ -451,7 +549,7 @@ export default function FullScore({
                     width: region.w,
                     height: region.h,
                   }}
-                  onClick={() => onBar(region.index, region.lane?.id)}
+                  onClick={() => onBar(region.index, lane?.id)}
                 />
               );
             })}
