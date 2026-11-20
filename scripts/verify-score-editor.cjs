@@ -46,11 +46,11 @@ function verify({
   }
   const bar = (s) => s.lanes[0].bars[0];
   const event = (s, i) => bar(s).events[i];
-  const timeline = (s) =>
+  const timeline = (s, semitones = 0) =>
     prepareScore(s, s.lanes[0].id, {
       fromBar: 0,
       toBar: s.lanes[0].bars.length - 1,
-      semitones: 0,
+      semitones,
       speed: 1,
       repeats: true,
     });
@@ -704,6 +704,61 @@ function verify({
         beatType: type,
       }),
     );
+  {
+    const song = score([
+      '<direction><sound tempo="60"/></direction>' +
+        note("C", 4, "whole") +
+        note("E", 4, "whole", "<chord/>") +
+        note("G", 4, "whole", "<chord/>"),
+      rest(1, "quarter") +
+        note("D") +
+        note("F", 2, "half") +
+        note("A", 2, "half", "<chord/>"),
+    ]);
+    const chord = event(song, 0);
+    song.practiceHeads = new Set([chord.heads[1].source]);
+    song.sourceExcerpt = { image: new Blob(), page: 2 };
+    const plan = timeline(song, 2);
+    const targets = plan.targets.map(({ startSec, endSec, midis }) => [
+      startSec,
+      endSec,
+      midis,
+    ]);
+    check(
+      "transpose the selected chord tone, standalone note and full chord and keep the intervening rest",
+      JSON.stringify(targets) ===
+        JSON.stringify([
+          [0, 4, [66]],
+          [4, 5, []],
+          [5, 6, [64]],
+          [6, 8, [67, 71]],
+        ]) &&
+        plan.notes.map((n) => n.midi).join() === "66,64,67,71" &&
+        midi(chord) === "60,64,67",
+    );
+    const edited = editScore(
+      song,
+      edits.pitchEdit(chord, chord.heads[1], {
+        step: "F",
+        octave: 4,
+        alter: 0,
+      }),
+    );
+    check(
+      "keep the selected tone and source image through a pitch edit and preserve the undo revision",
+      edited.sourceExcerpt === song.sourceExcerpt &&
+        midi(event(edited, 0)) === "60,65,67" &&
+        timeline(edited).targets[0].midis.join() === "65" &&
+        timeline(song).targets[0].midis.join() === "64",
+    );
+    const split = changeMeter(song, 2);
+    check(
+      "keep the selected chord tone across both tied halves after changing the meter",
+      performance(split) === performance(song) &&
+        timeline(split).targets[0].midis.join() === "64" &&
+        timeline(split).targets[0].endSec === 4,
+    );
+  }
   const attributes =
     "<attributes><divisions>4</divisions><key><fifths>0</fifths></key><time><beats>4</beats><beat-type>4</beat-type></time></attributes>";
   const ids =

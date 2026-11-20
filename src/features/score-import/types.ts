@@ -89,6 +89,8 @@ export interface ImportedScore {
   sourceFormat?: ScoreFormat;
   /** Printed excerpt retained for comparison with the editable recognition draft. */
   sourceExcerpt?: { image: Blob; page: number };
+  /** A chosen melody head for each recognized chord the learner reduced. */
+  practiceHeads?: ReadonlySet<Element>;
   title: string;
   lanes: ImportedLane[];
   issues: ScoreIssue[];

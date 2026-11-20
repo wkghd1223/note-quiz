@@ -15,6 +15,16 @@ import type {
   ScoreOptions,
 } from "./types";
 
+/** Only recognized chords with a chosen melody head are reduced for practice. */
+export function practiceEventHeads(
+  heads: ImportedHead[],
+  choices?: ReadonlySet<Element>,
+) {
+  if (!choices?.size) return heads;
+  const chosen = heads.find((head) => choices.has(head.source));
+  return chosen ? [chosen] : heads;
+}
+
 const EPS = 1e-8;
 // A count-in is a cue before the score, including when the file encodes
 // an unusually long measure. Bound the number of scheduled audio nodes.
@@ -366,8 +376,9 @@ export function prepareScore(
         startSec: onset,
         endSec: at(event.start + event.duration),
       });
-      let allTied = event.heads.length > 0;
-      for (const head of event.heads) {
+      const heads = practiceEventHeads(event.heads, score.practiceHeads);
+      let allTied = heads.length > 0;
+      for (const head of heads) {
         const midi = head.midi + semitones;
         if (!Number.isInteger(midi) || midi < 0 || midi > 127)
           throw new Error("invalidRange");
@@ -386,10 +397,10 @@ export function prepareScore(
         else ties.delete(midi);
       }
       const offsets = [
-        ...new Set([0, event.duration, ...event.heads.map((h) => h.duration)]),
+        ...new Set([0, event.duration, ...heads.map((h) => h.duration)]),
       ].sort((a, b) => a - b);
       for (let i = 0; i < offsets.length - 1; i++) {
-        const sounding = event.heads
+        const sounding = heads
           .filter((head) => head.duration > offsets[i] + EPS)
           .map((head) => head.midi + semitones);
         append(

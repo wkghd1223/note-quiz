@@ -13,6 +13,7 @@ import {
   MelodyTempoField,
 } from "@/features/melody/components/MelodyPlaybackFields";
 import { importCopy, type ImportWords } from "./copy";
+import { practiceEventHeads } from "./timeline";
 import KeySignatureField from "./KeySignatureField";
 import { clefEdit, meterEdit, writtenRhythm } from "./score-edits";
 import {
@@ -147,6 +148,7 @@ function passageSummary(
   from: number,
   to: number,
   semitones: number,
+  practiceHeads?: ReadonlySet<Element>,
 ) {
   let min = Infinity,
     max = -Infinity,
@@ -155,7 +157,7 @@ function passageSummary(
   const rhythms = new Set<string>();
   for (let i = from; i <= to; i++)
     for (const event of lane.bars[i].events) {
-      for (const head of event.heads) {
+      for (const head of practiceEventHeads(event.heads, practiceHeads)) {
         const rhythm = writtenRhythm(event, head);
         if (rhythm.type) {
           const denominator = parseInt(rhythm.type, 10);
@@ -245,8 +247,8 @@ function ImportedScoreSettings({
     : null;
   const percent = Math.round(options.speed * 10000) / 100;
   const summary = useMemo(
-    () => passageSummary(lane, from, to, interval),
-    [lane, from, to, interval],
+    () => passageSummary(lane, from, to, interval, score.practiceHeads),
+    [lane, from, to, interval, score.practiceHeads],
   );
   const barOptions = useMemo(
     () =>
