@@ -43,7 +43,13 @@ const pdfAssets = {
 
 const nextConfig: NextConfig = {
   webpack(config, { isServer }) {
-    if (!isServer) config.plugins.push(pdfAssets);
+    if (!isServer) {
+      // The unminified PDF.js bundle shadows the Next dev runtime's
+      // __webpack_exports__ binding. Its matching minified ESM build doesn't.
+      config.resolve.alias["pdfjs-dist/legacy/build/pdf.mjs$"] =
+        require.resolve("pdfjs-dist/legacy/build/pdf.min.mjs");
+      config.plugins.push(pdfAssets);
+    }
     config.plugins.push(
       new AlphaTabWebPackPlugin({ assetOutputDir: "public/alphatab" }),
     );
