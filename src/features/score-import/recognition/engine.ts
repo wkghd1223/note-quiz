@@ -1,36 +1,13 @@
-/** An intentionally small OMR vocabulary for reviewing a single printed treble staff. */
-export interface RecognizedNote {
-  step: "C" | "D" | "E" | "F" | "G" | "A" | "B";
-  octave: number;
-  beats: 1 | 2 | 4;
-}
-
-interface Span {
-  start: number;
-  end: number;
-}
-
-interface Staff {
-  top: number;
-  bottom: number;
-  gap: number;
-  lines: Span[];
-}
-
-function unsupported(): never {
-  throw new Error("unsupportedNotation");
-}
-
-function runs(count: number, active: (index: number) => boolean): Span[] {
-  const spans: Span[] = [];
-  for (let i = 0; i < count; i++) {
-    if (!active(i)) continue;
-    const start = i;
-    while (i + 1 < count && active(i + 1)) i++;
-    spans.push({ start, end: i });
-  }
-  return spans;
-}
+import {
+  measureGlyph,
+  runs,
+  unsupported,
+  type Glyph,
+  type Staff,
+} from "./geometry";
+import { readSignatures, readPlacedAccidental } from "./signatures";
+import { isAugmentationDot, matchesChordDots, readEvents } from "./read-events";
+import type { StaffReading, WrittenEvent } from "./reading";
 
 // Otsu's threshold adapts to dim paper, antialiasing and off-black print.
 function inkMask(gray: Uint8Array) {
@@ -69,7 +46,11 @@ function locateStaff(ink: Uint8Array, width: number, height: number): Staff {
       if (run > rows[y]) rows[y] = run;
     }
   }
-  const lines = runs(height, (y) => rows[y] >= width * 0.27);
+  // A short melody may occupy only a small fraction of a scanned page.
+  // Scale the continuity requirement to the longest printed horizontal line.
+  const longest = rows.reduce((max, length) => Math.max(max, length), 0);
+  const minimumRun = Math.max(32, Math.min(width * 0.27, longest * 0.7));
+  const lines = runs(height, (y) => rows[y] >= minimumRun);
   if (lines.length !== 5) unsupported();
   const centers = lines.map(({ start, end }) => (start + end) / 2);
   const [top, , , , bottom] = centers;
@@ -139,42 +120,14 @@ function stripLines(
           end = next.end;
           i++;
         }
-        if (end - start + 1 >= staff.gap * 1.55)
+        if (
+          end - start + 1 >= staff.gap * 1.55 &&
+          end - start + 1 <= staff.gap * 3
+        )
           ink.fill(0, y * width + start, y * width + end + 1);
       }
     }
   }
-}
-
-interface Glyph {
-  rows: Uint32Array;
-  columns: Uint32Array;
-  top: number;
-  bottom: number;
-}
-
-function measureGlyph(
-  ink: Uint8Array,
-  width: number,
-  span: Span,
-  first: number,
-  last: number,
-): Glyph {
-  const rows = new Uint32Array(last - first + 1);
-  const columns = new Uint32Array(span.end - span.start + 1);
-  let top = last,
-    bottom = first;
-  for (let y = first; y <= last; y++) {
-    for (let x = span.start; x <= span.end; x++) {
-      if (ink[y * width + x]) {
-        columns[x - span.start]++;
-        rows[y - first]++;
-        top = Math.min(top, y);
-        bottom = Math.max(bottom, y);
-      }
-    }
-  }
-  return { rows, columns, top, bottom };
 }
 
 function isBarline(glyph: Glyph, staff: Staff) {
@@ -187,162 +140,52 @@ function isBarline(glyph: Glyph, staff: Staff) {
   );
 }
 
-// Only ignore a tall clef at the beginning, or two matching stacked time digits.
-// The user confirms treble, no key signature, and 4/4 before accepting this mode.
-function isClef(glyph: Glyph, { top, bottom, gap }: Staff) {
-  return (
-    glyph.top < top - gap * 0.45 &&
-    glyph.bottom > bottom + gap * 0.45 &&
-    glyph.columns.length >= gap * 1.25 &&
-    glyph.columns.length <= gap * 3.4
-  );
-}
-
-function isStackedTime(glyph: Glyph, first: number, staff: Staff) {
-  const { top, bottom, gap } = staff;
-  if (
-    Math.abs(glyph.top - top) > gap * 0.4 ||
-    Math.abs(glyph.bottom - bottom) > gap * 0.4 ||
-    glyph.columns.length < gap * 0.6 ||
-    glyph.columns.length > gap * 2.3
-  )
-    return false;
-  let difference = 0,
-    mass = 0;
-  const half = Math.round(gap * 2);
-  for (let i = 0; i < half; i++) {
-    const row = Math.round(top) - first + i;
-    const a = glyph.rows[row] ?? 0,
-      b = glyph.rows[row + half] ?? 0;
-    difference += Math.abs(a - b);
-    mass += Math.max(a, b);
-  }
-  return mass > 0 && difference < mass * 0.25;
-}
-
-const steps = ["C", "D", "E", "F", "G", "A", "B"] as const;
-
-// A hollow head has a gap enclosed by ink on both sides across multiple rows.
-// Staff and ledger rows removed during segmentation are excluded from the vote.
-function headFill(
+// Text outside the staff (chord names or lyrics) is disconnected from the
+// notation. Preserve strokes crossing the boundary, including stems and beams.
+function clearAnnotations(
   ink: Uint8Array,
   width: number,
-  span: Span,
-  headY: number,
-  gap: number,
-): "solid" | "hollow" {
-  let examined = 0,
-    hollow = 0,
-    solid = 0;
-  const center = (span.start + span.end) / 2;
-  for (
-    let y = Math.ceil(headY - gap * 0.29);
-    y <= Math.floor(headY + gap * 0.29);
-    y++
-  ) {
-    const strokes = runs(
-      span.end - span.start + 1,
-      (x) => ink[y * width + span.start + x] === 1,
-    );
-    if (!strokes.length) continue;
-    examined++;
-    if (
-      strokes.length === 1 &&
-      span.start + strokes[0].start < center - gap * 0.19 &&
-      span.start + strokes[0].end > center + gap * 0.19
-    )
-      solid++;
-    if (
-      strokes.length === 2 &&
-      strokes[1].start - strokes[0].end - 1 >= Math.max(1, gap * 0.1) &&
-      span.start + strokes[0].end < center + gap * 0.35 &&
-      span.start + strokes[1].start > center - gap * 0.35
-    )
-      hollow++;
+  edge: number,
+  limit: number,
+) {
+  const first = Math.min(edge, limit),
+    last = Math.max(edge, limit);
+  if (first === last) return;
+  const queue = new Int32Array((last + 1 - first) * width);
+  let start = 0,
+    end = 0;
+  function visit(pixel: number) {
+    if (ink[pixel] === 1) {
+      ink[pixel] = 2;
+      queue[end++] = pixel;
+    }
   }
-  if (examined >= 2 && solid >= examined * 0.85) return "solid";
-  if (examined >= 2 && hollow >= examined * 0.6) return "hollow";
-  return unsupported();
+  for (let x = 0; x < width; x++) visit(edge * width + x);
+  while (start < end) {
+    const pixel = queue[start++];
+    const y = Math.floor(pixel / width),
+      x = pixel % width;
+    for (let row = Math.max(y - 1, first); row <= Math.min(y + 1, last); row++)
+      for (
+        let col = Math.max(x - 1, 0);
+        col <= Math.min(x + 1, width - 1);
+        col++
+      )
+        visit(row * width + col);
+  }
+  for (let p = first * width; p < (last + 1) * width; p++)
+    ink[p] = Number(ink[p] === 2);
 }
 
-function pitchAt(
-  headY: number,
-  staff: Staff,
-  beats: RecognizedNote["beats"],
-): RecognizedNote {
-  const position = ((staff.bottom - headY) * 2) / staff.gap;
-  const diatonic = Math.round(position);
-  if (Math.abs(position - diatonic) > 0.32 || diatonic < -2 || diatonic > 10)
-    unsupported();
-  const pitch = 4 * 7 + 2 + diatonic; // Bottom line = E4.
-  return { step: steps[pitch % 7], octave: Math.floor(pitch / 7), beats };
-}
-
-function readNote(
-  ink: Uint8Array,
-  width: number,
-  span: Span,
-  first: number,
-  glyph: Glyph,
-  staff: Staff,
-): RecognizedNote {
-  const { gap } = staff;
-  const glyphWidth = glyph.columns.length;
-  const glyphHeight = glyph.bottom - glyph.top + 1;
-  if (
-    glyphHeight >= gap * 0.7 &&
-    glyphHeight <= gap * 1.25 &&
-    glyphWidth >= gap * 1.45 &&
-    glyphWidth <= gap * 2.35
-  ) {
-    const y = (glyph.top + glyph.bottom) / 2;
-    if (headFill(ink, width, span, y, gap) !== "hollow") unsupported();
-    return pitchAt(y, staff, 4);
-  }
-  if (
-    glyphWidth < gap * 0.8 ||
-    glyphWidth > gap * 1.85 ||
-    glyphHeight < gap * 2.45 ||
-    glyphHeight > gap * 5.1
-  )
-    unsupported();
-
-  // The stem must occupy exactly one narrow strip at the side of the head.
-  const stems = runs(glyphWidth, (x) => glyph.columns[x] >= gap * 1.7);
-  if (
-    stems.length !== 1 ||
-    stems[0].end - stems[0].start + 1 > Math.max(2, gap * 0.32)
-  )
-    unsupported();
-  const stem = stems[0];
-  const stemX = (stem.start + stem.end) / 2;
-  const stemUp = stemX > glyphWidth / 2;
-  if ((stemUp ? glyphWidth - 1 - stemX : stemX) > glyphWidth * 0.3)
-    unsupported();
-
-  // Wide rows locate one head. Other wide marks away from that head indicate
-  // an unsupported chord, flag, or a symbol touching the note.
-  let headTop = Infinity,
-    headBottom = -Infinity,
-    mass = 0,
-    moment = 0;
-  for (let y = glyph.top; y <= glyph.bottom; y++) {
-    const pixels = glyph.rows[y - first];
-    if (pixels < gap * 0.4) continue;
-    headTop = Math.min(headTop, y);
-    headBottom = Math.max(headBottom, y);
-    mass += pixels;
-    moment += pixels * y;
-  }
-  if (
-    !mass ||
-    headBottom - headTop > gap * 1.18 ||
-    (stemUp ? glyph.bottom - headBottom : headTop - glyph.top) > gap * 0.21
-  )
-    unsupported();
-  const headY = moment / mass;
-  const fill = headFill(ink, width, span, headY, gap);
-  return pitchAt(headY, staff, fill === "hollow" ? 2 : 1);
+function dotMatches(event: WrittenEvent, glyph: Glyph, staff: Staff) {
+  const center = (glyph.top + glyph.bottom) / 2;
+  // A line-note's dot normally appears in the space immediately above it.
+  const positions = event.positions.length ? event.positions : [3, 4, 5];
+  return positions.some((position) => {
+    const offset =
+      (staff.bottom - (position * staff.gap) / 2 - center) / staff.gap;
+    return offset >= -0.62 && offset <= 0.62;
+  });
 }
 
 export function recognizeStaff(
@@ -350,7 +193,7 @@ export function recognizeStaff(
   width: number,
   height: number,
   options: { deskewed?: boolean } = {},
-): { bars: RecognizedNote[][] } {
+): StaffReading {
   if (
     !Number.isInteger(width) ||
     !Number.isInteger(height) ||
@@ -364,67 +207,113 @@ export function recognizeStaff(
     unsupported();
   const ink = inkMask(gray);
   const staff = locateStaff(ink, width, height);
-  stripLines(ink, width, height, staff, !!options.deskewed);
   const first = Math.max(0, Math.floor(staff.top - staff.gap * 3.5));
   const last = Math.min(height - 1, Math.ceil(staff.bottom + staff.gap * 3.5));
+  clearAnnotations(
+    ink,
+    width,
+    Math.max(first, Math.floor(staff.top - staff.gap * 1.5)),
+    first,
+  );
+  clearAnnotations(
+    ink,
+    width,
+    Math.min(last, Math.ceil(staff.bottom + staff.gap * 1.5)),
+    last,
+  );
+  stripLines(ink, width, height, staff, !!options.deskewed);
   const spans = runs(width, (x) => {
     for (let y = first; y <= last; y++) if (ink[y * width + x]) return true;
     return false;
   });
-  const bars: RecognizedNote[][] = [];
-  let bar: RecognizedNote[] = [];
-  let beats = 0;
+  if (
+    spans[0] &&
+    isBarline(measureGlyph(ink, width, spans[0], first, last), staff)
+  )
+    spans.shift();
+  const { consumed, clef, fifths, meter } = readSignatures(
+    ink,
+    width,
+    staff,
+    spans,
+    first,
+    last,
+  );
+  const bars: WrittenEvent[][] = [];
+  let bar: WrittenEvent[] = [];
+  let accidentals: NonNullable<WrittenEvent["accidentals"]> = [];
   let previousBarline: number | undefined;
-  let clefSeen = false,
-    timeSeen = false;
-  for (const [index, span] of spans.entries()) {
+  let eventEnd = -Infinity;
+  for (const span of spans.slice(consumed)) {
     const glyph = measureGlyph(ink, width, span, first, last);
-    // Resampling can leave a pixel at the clipped start of a staff line.
-    // Only discard this residue before a recognized clef, never between notes.
-    if (
-      index === 0 &&
-      spans[1] &&
-      glyph.columns.length <= Math.max(1, staff.gap * 0.15) &&
-      glyph.bottom - glyph.top <= Math.max(2, staff.gap * 0.2) &&
-      staff.lines.some(
-        (line) => glyph.top <= line.end + 1 && glyph.bottom >= line.start - 1,
-      ) &&
-      isClef(measureGlyph(ink, width, spans[1], first, last), staff)
-    )
-      continue;
     if (isBarline(glyph, staff)) {
+      if (accidentals.length) unsupported();
       if (bar.length) {
-        if (beats !== 4) unsupported();
         bars.push(bar);
         bar = [];
-        beats = 0;
       } else if (
-        (previousBarline === undefined && (clefSeen || timeSeen)) ||
-        (previousBarline !== undefined &&
-          span.start - previousBarline > staff.gap)
-      ) {
-        unsupported(); // An empty measure, rather than adjacent double-bar strokes.
-      }
+        previousBarline === undefined ||
+        span.start - previousBarline > staff.gap
+      )
+        unsupported();
       previousBarline = span.end;
+      eventEnd = -Infinity;
       continue;
     }
-    if (!bars.length && !bar.length) {
-      if (!clefSeen && !timeSeen && isClef(glyph, staff)) {
-        clefSeen = true;
-        continue;
-      }
-      if (!timeSeen && isStackedTime(glyph, first, staff)) {
-        timeSeen = true;
-        continue;
-      }
+    const previous = bar[bar.length - 1];
+    const chordDots =
+      previous?.positions.length > 1 &&
+      matchesChordDots(
+        ink,
+        width,
+        span,
+        first,
+        last,
+        staff,
+        previous.positions,
+      );
+    if (chordDots || isAugmentationDot(glyph, staff.gap)) {
+      if (
+        !previous ||
+        previous.dotted ||
+        accidentals.length ||
+        span.start - eventEnd > staff.gap * 1.35 ||
+        (!chordDots && !dotMatches(previous, glyph, staff))
+      )
+        unsupported();
+      previous.dotted = true;
+      previous.beats *= 1.5;
+      continue;
     }
-    const note = readNote(ink, width, span, first, glyph, staff);
-    beats += note.beats;
-    if (beats > 4) unsupported();
-    bar.push(note);
+    const sign = readPlacedAccidental(ink, width, span, staff, first, last);
+    if (sign) {
+      if (accidentals.some((a) => a.position === sign.position)) unsupported();
+      accidentals.push(sign);
+      continue;
+    }
+    const events: WrittenEvent[] = readEvents(
+      ink,
+      width,
+      span,
+      first,
+      last,
+      staff,
+    );
+    if (accidentals.length) {
+      if (
+        !accidentals.every((sign) =>
+          events[0]?.positions.includes(sign.position),
+        )
+      )
+        unsupported();
+      events[0].accidentals = accidentals;
+      accidentals = [];
+    }
+    bar.push(...events);
+    eventEnd = span.end;
   }
-  if (beats === 4) bars.push(bar);
-  else if (bar.length) unsupported();
+  if (accidentals.length) unsupported();
+  if (bar.length) bars.push(bar);
   if (!bars.length) unsupported();
-  return { bars };
+  return { bars, clef, fifths, meter };
 }

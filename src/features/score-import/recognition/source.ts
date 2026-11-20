@@ -1,6 +1,11 @@
 import { MAX_FILE_BYTES } from "../archive";
 import { createScoreWriter } from "../formats/writer";
-import type { recognizeStaff } from "./engine";
+import { parseScoreDocument } from "../model";
+import {
+  resolveReading,
+  type ReadingContext,
+  type StaffReading,
+} from "./reading";
 import { fitPage, MAX_RENDER_PIXELS, readImageSize } from "./raster";
 
 export const recognitionExtensions = ".png,.jpg,.jpeg,.pdf";
@@ -66,44 +71,63 @@ export async function openRecognitionSource(
   };
 }
 
-type Recognition = ReturnType<typeof recognizeStaff>;
-
-function musicXml(result: Recognition): File {
-  const writer = createScoreWriter();
-  const part = writer.part("P1", "1");
-  const add = writer.add;
-  result.bars.forEach((notes, index) => {
+/** Build the score only after every missing signature has been confirmed. */
+export function scoreFromReading(
+  reading: StaffReading,
+  context: ReadingContext,
+) {
+  const { bars, hasPickup } = resolveReading(reading, context);
+  const { document: doc, add, part: makePart } = createScoreWriter();
+  const part = makePart("P1", "1");
+  bars.forEach((events, index) => {
     const measure = add(part, "measure", undefined, { number: index + 1 });
+    if (hasPickup && (index === 0 || index === bars.length - 1))
+      measure.setAttribute("implicit", "yes");
     if (index === 0) {
       const attributes = add(measure, "attributes");
-      add(attributes, "divisions", 1);
-      const key = add(attributes, "key");
-      add(key, "fifths", 0);
+      add(attributes, "divisions", 4);
+      add(add(attributes, "key"), "fifths", context.fifths);
       const time = add(attributes, "time");
-      add(time, "beats", 4);
-      add(time, "beat-type", 4);
+      add(time, "beats", context.meter.beats);
+      add(time, "beat-type", context.meter.beatType);
+      if (context.meter.symbol)
+        time.setAttribute("symbol", context.meter.symbol);
       const clef = add(attributes, "clef");
-      add(clef, "sign", "G");
-      add(clef, "line", 2);
+      add(clef, "sign", context.clef);
+      add(clef, "line", context.clef === "G" ? 2 : 4);
     }
-    for (const { step, octave, beats } of notes) {
-      const note = add(measure, "note");
-      const pitch = add(note, "pitch");
-      add(pitch, "step", step);
-      add(pitch, "octave", octave);
-      add(note, "duration", beats);
-      add(
-        note,
-        "type",
-        ({ 1: "quarter", 2: "half", 4: "whole" } as const)[beats],
-      );
+    for (const event of events) {
+      const heads = event.heads.length ? event.heads : [null];
+      for (const [headIndex, head] of heads.entries()) {
+        const note = add(measure, "note");
+        if (headIndex) add(note, "chord");
+        if (head) {
+          const pitch = add(note, "pitch");
+          add(pitch, "step", head.step);
+          if (head.alter) add(pitch, "alter", head.alter);
+          add(pitch, "octave", head.octave);
+        } else {
+          const rest = add(note, "rest");
+          if (event.type === "whole" && events.length === 1)
+            rest.setAttribute("measure", "yes");
+        }
+        add(note, "duration", event.beats * 4);
+        add(note, "type", event.type);
+        if (event.dotted) add(note, "dot");
+        if (head?.accidental != null)
+          add(
+            note,
+            "accidental",
+            head.accidental === 0
+              ? "natural"
+              : head.accidental > 0
+                ? "sharp"
+                : "flat",
+          );
+      }
     }
   });
-  return new File(
-    [new XMLSerializer().serializeToString(writer.document)],
-    "score.musicxml",
-    { type: "application/vnd.recordare.musicxml+xml" },
-  );
+  return parseScoreDocument(doc);
 }
 
 export async function recognizePage(
@@ -120,8 +144,8 @@ export async function recognizePage(
   const worker = new Worker(new URL("./recognize.worker.ts", import.meta.url));
   let removeAbort: (() => void) | undefined;
   try {
-    const result = await new Promise<Recognition>((resolve, reject) => {
-      worker.onmessage = ({ data }: MessageEvent<Recognition | null>) =>
+    const result = await new Promise<StaffReading>((resolve, reject) => {
+      worker.onmessage = ({ data }: MessageEvent<StaffReading | null>) =>
         data ? resolve(data) : reject(new Error("unsupportedNotation"));
       worker.onerror = () => reject(new Error("invalidFile"));
       worker.onmessageerror = () => reject(new Error("invalidFile"));
@@ -133,7 +157,7 @@ export async function recognizePage(
       worker.postMessage(pixels, [pixels.data.buffer]);
     });
     signal.throwIfAborted();
-    return musicXml(result);
+    return result;
   } finally {
     removeAbort?.();
     worker.terminate();

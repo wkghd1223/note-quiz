@@ -5,7 +5,8 @@ import { settingsActionClassName as button } from "@/components/practice/Setting
 import { useTranslation } from "@/hooks/useTranslation";
 import { MelodyHeading } from "@/features/melody/components/MelodyWorkspace";
 import type { ImportWords } from "../copy";
-import { readScoreFile } from "../model";
+import ReadingPreview from "./ReadingPreview";
+import type { StaffReading } from "./reading";
 import ScoreFileButton, { openScoreLabel } from "../ScoreFileButton";
 import type { ImportedScore } from "../types";
 import { openRecognitionSource, recognizePage } from "./source";
@@ -56,7 +57,10 @@ function PageReview({
 }) {
   const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null);
   const [crop, setCrop] = useState({ top: 0, bottom: 100 });
-  const [score, setScore] = useState<ImportedScore | null>(null);
+  const [review, setReview] = useState<{
+    reading: StaffReading;
+    image: Blob;
+  } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const job = useRef<AbortController | null>(null);
@@ -97,11 +101,9 @@ function PageReview({
     setError(null);
     try {
       const excerpt = excerptOf(canvas, crop.top, crop.bottom);
-      const file = await recognizePage(excerpt, controller.signal);
-      const parsed = await readScoreFile(file, controller.signal);
+      const reading = await recognizePage(excerpt, controller.signal);
       const image = await imageOf(excerpt);
-      if (!controller.signal.aborted)
-        setScore({ ...parsed, sourceExcerpt: { image, page } });
+      if (!controller.signal.aborted) setReview({ reading, image });
     } catch (failure) {
       if (!controller.signal.aborted)
         setError(failure instanceof Error ? failure : new Error());
@@ -161,7 +163,7 @@ function PageReview({
                         ? { ...crop, top: Math.min(value, crop.bottom - 1) }
                         : { ...crop, bottom: Math.max(value, crop.top + 1) },
                     );
-                    setScore(null);
+                    setReview(null);
                     setError(null);
                   }}
                 />
@@ -176,42 +178,14 @@ function PageReview({
           {failureMessage(error, words)}
         </p>
       )}
-      {score ? (
-        <div className="grid justify-items-start gap-3">
-          <h2 className="font-semibold">{words.reviewNotes}</h2>
-          <ol className="grid max-h-48 w-full gap-1 overflow-auto text-sm">
-            {score.lanes[0].bars.map((bar) => (
-              <li key={bar.index}>
-                {words.bar} {bar.label} ·{" "}
-                {bar.events.map((event) => {
-                  const head = event.heads[0];
-                  const length =
-                    head.duration === 4 ? "1" : `1/${4 / head.duration}`;
-                  return (
-                    <span
-                      key={event.id}
-                      className="me-3 inline-block whitespace-nowrap"
-                    >
-                      {head.step}
-                      {head.octave}{" "}
-                      <small className="text-slate-600">
-                        <span className="sr-only">{words.length} </span>
-                        {length}
-                      </small>
-                    </span>
-                  );
-                })}
-              </li>
-            ))}
-          </ol>
-          <button
-            type="button"
-            className={primary}
-            onClick={() => onAccept(score)}
-          >
-            {words.editRecognized}
-          </button>
-        </div>
+      {review ? (
+        <ReadingPreview
+          reading={review.reading}
+          words={words}
+          onAccept={(score) =>
+            onAccept({ ...score, sourceExcerpt: { image: review.image, page } })
+          }
+        />
       ) : (
         canvas && (
           <button

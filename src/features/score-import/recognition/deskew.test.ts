@@ -3,6 +3,7 @@ import { gunzipSync } from "node:zlib";
 import { expect, it } from "vitest";
 import { straightenStaff } from "./deskew";
 import { recognizeStaff } from "./engine";
+import { resolveReading } from "./reading";
 
 // ABCJS-engraved pages rotated by libvips with white background before export.
 // Fixed raster inputs exercise interpolation independently of the implementation.
@@ -26,22 +27,26 @@ function straightenFixture(name: string) {
 
 it.each([
   ["rotate-mixed", "E4:2 F4:1 G4:1 | C5:1 A4:2 B4:1 | D4:4"],
+  ["rotate-rest", "E4:1 rest:1 G4:1 A4:1 | B4:1 C5:1 D5:1 E5:1"],
   ["rotate-ledger", "C4:1 E4:1 G4:1 B4:1 | D5:1 F4:1 A4:1 C5:1"],
 ])("recovers the pitches and rhythm of %s", (name, expected) => {
   const { pixels, width, height } = straightenFixture(name);
-  const { bars } = recognizeStaff(pixels, width, height, { deskewed: true });
+  const reading = recognizeStaff(pixels, width, height, { deskewed: true });
+  const { clef, fifths, meter } = reading;
+  if (!clef || fifths == null || !meter) throw new Error("missing signature");
+  const { bars } = resolveReading(reading, { clef, fifths, meter });
   expect(
     bars
-      .map((b) => b.map((n) => `${n.step}${n.octave}:${n.beats}`).join(" "))
+      .map((b) =>
+        b
+          .map(
+            (n) =>
+              `${n.heads.length ? n.heads[0].step + n.heads[0].octave : "rest"}:${n.beats}`,
+          )
+          .join(" "),
+      )
       .join(" | "),
   ).toBe(expected);
-});
-
-it("continues to reject unsupported rests after straightening", () => {
-  const { pixels, width, height } = straightenFixture("rotate-rest");
-  expect(() =>
-    recognizeStaff(pixels, width, height, { deskewed: true }),
-  ).toThrow("unsupportedNotation");
 });
 
 it("leaves a horizontal engraving alone", () => {

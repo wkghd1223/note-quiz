@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 import { recognizeStaff } from "./engine";
+import { resolveReading } from "./reading";
 
 // Engraved with the bundled Bravura font, including clef, stacked time digits,
 // a final double bar, ledger lines and quarter-note glyphs in both directions.
@@ -14,12 +15,27 @@ function printedExample(name = "treble", width = 660, height = 165) {
   return new Uint8Array(file.subarray(header.length));
 }
 
+function readScore(gray: Uint8Array, width: number, height: number) {
+  const reading = recognizeStaff(gray, width, height);
+  const { clef, meter, fifths } = reading;
+  if (!clef || !meter || fifths == null) throw new Error("missing signature");
+  return resolveReading(reading, { clef, meter, fifths }).bars.map((bar) =>
+    bar.map((event) => {
+      const head = event.heads[0];
+      return (
+        (head
+          ? head.step + (head.alter === 1 ? "#" : "") + head.octave
+          : "rest") +
+        ":" +
+        event.beats
+      );
+    }),
+  );
+}
+
 describe("printed staff recognition", () => {
   it("reads the printed pitches, durations and bar boundaries", () => {
-    const { bars } = recognizeStaff(printedExample(), 660, 165);
-    expect(
-      bars.map((bar) => bar.map((n) => `${n.step}${n.octave}:${n.beats}`)),
-    ).toEqual([
+    expect(readScore(printedExample(), 660, 165)).toEqual([
       ["C4:1", "G4:1", "C5:1", "G5:1"],
       ["A5:1", "D5:1", "F4:1", "D4:1"],
     ]);
@@ -27,39 +43,33 @@ describe("printed staff recognition", () => {
 
   // Independent ABCJS engraving of “E2 F G | c A2 B | D4” (L:1/4).
   it("distinguishes mixed quarter, half and whole note durations", () => {
-    const { bars } = recognizeStaff(
-      printedExample("mixed", 1340, 198),
-      1340,
-      198,
-    );
-    expect(
-      bars.map((bar) => bar.map((n) => `${n.step}${n.octave}:${n.beats}`)),
-    ).toEqual([["E4:2", "F4:1", "G4:1"], ["C5:1", "A4:2", "B4:1"], ["D4:4"]]);
-  });
-
-  it("reads a hollow ledger-line note even after image resampling", () => {
-    const { bars } = recognizeStaff(
-      printedExample("ledger-half", 1280, 186),
-      1280,
-      186,
-    );
-    expect(bars[2]).toEqual([
-      { step: "C", octave: 4, beats: 2 },
-      { step: "F", octave: 5, beats: 1 },
-      { step: "F", octave: 4, beats: 1 },
+    expect(readScore(printedExample("mixed", 1340, 198), 1340, 198)).toEqual([
+      ["E4:2", "F4:1", "G4:1"],
+      ["C5:1", "A4:2", "B4:1"],
+      ["D4:4"],
     ]);
   });
 
-  it.each(["rest", "accidental", "eighths"])("rejects a printed %s", (name) => {
-    expect(() =>
-      recognizeStaff(printedExample(name, 1340, 198), 1340, 198),
-    ).toThrow("unsupportedNotation");
+  it("reads a hollow ledger-line note even after image resampling", () => {
+    expect(
+      readScore(printedExample("ledger-half", 1280, 186), 1280, 186)[2],
+    ).toEqual(["C4:2", "F5:1", "F4:1"]);
+  });
+
+  it.each([
+    ["rest", ["E4:1", "rest:1", "G4:1", "A4:1"]],
+    ["accidental", ["E4:1", "F#4:1", "G4:1", "A4:1"]],
+    ["eighths", ["E4:0.5", "F4:0.5", "G4:1", "A4:1", "B4:1"]],
+  ] as const)("reads the printed %s", (name, firstBar) => {
+    expect(readScore(printedExample(name, 1340, 198), 1340, 198)[0]).toEqual(
+      firstBar,
+    );
   });
 
   it.each([
     [110, 350, 240],
     [380, 625, 480],
-  ])("rejects a full-measure rest at either end", (left, right, center) => {
+  ])("reads a full-measure rest at either end", (left, right, center) => {
     const image = printedExample();
     for (let y = 0; y < 165; y++) {
       image.fill(image[y * 660 + 155], y * 660 + left, y * 660 + right);
@@ -67,9 +77,9 @@ describe("printed staff recognition", () => {
     // A whole rest is a horizontal block hanging from the fourth line.
     for (let y = 60; y <= 66; y++)
       image.fill(0, y * 660 + center, y * 660 + center + 17);
-    expect(() => recognizeStaff(image, 660, 165)).toThrow(
-      "unsupportedNotation",
-    );
+    expect(readScore(image, 660, 165)[left === 110 ? 0 : 1]).toEqual([
+      "rest:4",
+    ]);
   });
 
   it("rejects unknown strokes instead of dropping a rest or accidental", () => {
@@ -83,7 +93,25 @@ describe("printed staff recognition", () => {
     for (let y = 0; y < 165; y++) {
       for (let x = 184; x < 210; x++) image[y * 660 + x] = image[y * 660 + 155];
     }
-    expect(() => recognizeStaff(image, 660, 165)).toThrow();
+    expect(() => readScore(image, 660, 165)).toThrow("meterMismatch");
+  });
+
+  it("keeps lyrics below the staff out of the melody", () => {
+    // Independent ABCJS engraving of E F G with a syllable below each note.
+    expect(readScore(printedExample("lyrics", 1340, 236), 1340, 236)).toEqual([
+      ["E4:1", "F4:1", "G4:1"],
+    ]);
+  });
+
+  it("reads a staff occupying a small part of the page width", () => {
+    const image = printedExample();
+    const paperWidth = 3000;
+    const page = new Uint8Array(paperWidth * 165).fill(255);
+    for (let y = 0; y < 165; y++)
+      page.set(image.subarray(y * 660, (y + 1) * 660), y * paperWidth + 900);
+    expect(readScore(page, paperWidth, 165)).toEqual(
+      readScore(image, 660, 165),
+    );
   });
 
   it("rejects blank, malformed and multiple-system images", () => {

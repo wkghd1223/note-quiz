@@ -124,7 +124,7 @@ async function exercise(browser, width, file) {
       (await picker().getAttribute("accept")).split(",").includes(".pdf"),
     );
     const review = page.locator("[data-recognition-review]");
-    const pages = review.getByRole("combobox");
+    const pages = review.getByRole("combobox", { name: /쪽/ });
     const read = review.getByRole("button", { name: "선택한 오선 읽기" });
     const accept = review.getByRole("button", {
       name: "확인한 음으로 편집 시작",
@@ -132,9 +132,24 @@ async function exercise(browser, width, file) {
     const phase = (value) =>
       page.locator(`[data-import-phase="${value}"]`).waitFor();
     const button = (name) => page.getByRole("button", { name, exact: true });
-    const readBars = async () => {
+    const readBars = async (missingHeaders = false) => {
       await read.click();
       const error = review.getByRole("alert");
+      await review.locator("[data-recognition-clef]").or(error).waitFor();
+      if (await error.isVisible()) throw new Error(await error.innerText());
+      if (missingHeaders) {
+        const fields = [
+          ["clef", "G"],
+          ["key", "0"],
+          ["meter", "4/4"],
+        ];
+        assert.equal(await accept.isEnabled(), false);
+        for (const [name, value] of fields) {
+          const select = review.locator(`[data-recognition-${name}]`);
+          assert.equal(await select.inputValue(), "");
+          await select.selectOption(value);
+        }
+      }
       await accept.or(error).waitFor();
       if (await error.isVisible()) throw new Error(await error.innerText());
       return (await review.locator("ol li").allTextContents()).map((text) =>
@@ -153,7 +168,7 @@ async function exercise(browser, width, file) {
     // Switch quickly before reading; old renders and results must not win.
     await pages.selectOption("2");
     await pages.selectOption("1");
-    assert.deepEqual(await readBars(), [["E4", "G4", "B4", "D5"]]);
+    assert.deepEqual(await readBars(true), [["E4", "G4", "B4", "D5"]]);
     await pages.selectOption("2");
     await accept.waitFor({ state: "hidden" });
     await read.click();
