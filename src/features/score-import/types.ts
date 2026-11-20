@@ -87,6 +87,8 @@ export interface ImportedScore {
   document: XMLDocument;
   file?: File;
   sourceFormat?: ScoreFormat;
+  /** Printed excerpt retained for comparison with the editable recognition draft. */
+  sourceExcerpt?: { image: Blob; page: number };
   title: string;
   lanes: ImportedLane[];
   issues: ScoreIssue[];

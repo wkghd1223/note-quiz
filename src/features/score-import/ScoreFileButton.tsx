@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import { supportsPdf } from "./recognition/source";
 import { acceptedScoreFiles } from "./formats/read-document";
 import { settingsActionClassName } from "@/components/practice/SettingsControls";
 
@@ -42,7 +43,9 @@ export default function ScoreFileButton({
         ref={picker}
         type="file"
         hidden
-        accept={acceptedScoreFiles}
+        accept={
+          acceptedScoreFiles + ",.png,.jpg,.jpeg" + (supportsPdf ? ",.pdf" : "")
+        }
         aria-label={label}
         onChange={(event) => {
           const file = event.currentTarget.files?.[0];

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { FaRegFileAudio } from "react-icons/fa";
 import { useTranslation } from "@/hooks/useTranslation";
 import { getScoreDraft } from "@/features/melody/score-draft";
@@ -13,6 +14,13 @@ import type { ImportedScore } from "./types";
 import ScorePracticeWorkspace from "./ScorePracticeWorkspace";
 import ScoreFileButton, { openScoreLabel } from "./ScoreFileButton";
 
+import { isRecognitionFile, supportsPdf } from "./recognition/source";
+
+const RecognitionReview = dynamic(
+  () => import("./recognition/RecognitionReview"),
+  { ssr: false },
+);
+
 function importMessage(code: string, w: ImportWords) {
   return code === "unsupportedFile" || code === "unsupportedNotation"
     ? w.unsupportedImport
@@ -24,6 +32,10 @@ export default function ImportedPractice() {
   const words = useMemo(() => importCopy(language), [language]);
   const draft = getScoreDraft();
   const [request, setRequest] = useState<{ file: File } | null>(null);
+  const [review, setReview] = useState<{ file: File; version: number } | null>(
+    null,
+  );
+  const reviewVersion = useRef(0);
   const [loaded, setLoaded] = useState<{
     score: ImportedScore;
     version: number;
@@ -35,9 +47,16 @@ export default function ImportedPractice() {
   const importJob = useRef<AbortController | null>(null);
   const openFile = (file: File) => {
     importJob.current?.abort();
-    setLoading(true);
     setError("");
-    setRequest({ file });
+    if (isRecognitionFile(file)) {
+      setRequest(null);
+      setLoading(false);
+      setReview({ file, version: ++reviewVersion.current });
+    } else {
+      setReview(null);
+      setLoading(true);
+      setRequest({ file });
+    }
   };
   useEffect(() => {
     if (!request) return;
@@ -60,56 +79,82 @@ export default function ImportedPractice() {
     return () => controller.abort();
   }, [request]);
 
-  if (loaded)
-    return (
-      <ScorePracticeWorkspace
-        key={loaded.version}
-        original={loaded.score}
-        draft={draft}
-        headerAction={(locked, dirty) => (
-          <ScoreFileButton
-            label={openScoreLabel[language]}
-            disabled={locked && !loading}
-            onFile={(file) => {
-              if (!dirty || window.confirm(words.discard)) openFile(file);
-            }}
-          />
-        )}
-        loading={loading}
-        errorMessage={error && importMessage(error, words)}
-      />
-    );
   return (
-    <section className="grid min-w-0 gap-4">
-      <MelodyHeading title={melodySourceCopy[language].upload} />
-      <div
-        data-score-drop-zone
-        onDragOver={(event) => {
-          if (event.dataTransfer.types.includes("Files"))
-            event.preventDefault();
-        }}
-        onDrop={(event) => {
-          event.preventDefault();
-          const file = event.dataTransfer.files[0];
-          if (file) openFile(file);
-        }}
-        className="grid justify-items-center gap-4 rounded-xl border border-dashed border-slate-300 bg-white px-5 py-12 text-center sm:py-16"
-      >
-        <FaRegFileAudio
-          aria-hidden="true"
-          className="h-8 w-8 text-violet-700"
+    <>
+      {review && (
+        <RecognitionReview
+          key={review.version}
+          file={review.file}
+          words={words}
+          onCancel={() => setReview(null)}
+          onReplace={openFile}
+          onAccept={(score) => {
+            setLoaded((last) => ({ score, version: (last?.version ?? 0) + 1 }));
+            setReview(null);
+          }}
         />
-        <p className="max-w-md text-sm leading-6 text-slate-600">
-          {melodySourceCopy[language].openHint}
-        </p>
-        <ScoreFileButton label={openScoreLabel[language]} onFile={openFile} />
-        {loading && <p role="status">{words.loading}</p>}
-        {error && (
-          <p role="alert" className="text-red-800">
-            {importMessage(error, words)}
-          </p>
-        )}
-      </div>
-    </section>
+      )}
+      {loaded ? (
+        <div hidden={!!review}>
+          <ScorePracticeWorkspace
+            key={loaded.version}
+            original={loaded.score}
+            draft={draft}
+            headerAction={(locked, dirty) => (
+              <ScoreFileButton
+                label={openScoreLabel[language]}
+                disabled={locked && !loading}
+                onFile={(file) => {
+                  if (!dirty || window.confirm(words.discard)) openFile(file);
+                }}
+              />
+            )}
+            loading={loading || !!review}
+            errorMessage={error && importMessage(error, words)}
+          />
+        </div>
+      ) : (
+        !review && (
+          <section className="grid min-w-0 gap-4">
+            <MelodyHeading title={melodySourceCopy[language].upload} />
+            <div
+              data-score-drop-zone
+              onDragOver={(event) => {
+                if (event.dataTransfer.types.includes("Files"))
+                  event.preventDefault();
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                const file = event.dataTransfer.files[0];
+                if (file) openFile(file);
+              }}
+              className="grid justify-items-center gap-4 rounded-xl border border-dashed border-slate-300 bg-white px-5 py-12 text-center sm:py-16"
+            >
+              <FaRegFileAudio
+                aria-hidden="true"
+                className="h-8 w-8 text-violet-700"
+              />
+              <p className="max-w-md text-sm leading-6 text-slate-600">
+                {melodySourceCopy[language].openHint}
+              </p>
+              <p className="text-sm text-slate-600">
+                {words.recognitionLabel} ·{" "}
+                {supportsPdf ? "PNG, JPEG, PDF" : "PNG, JPEG"}
+              </p>
+              <ScoreFileButton
+                label={openScoreLabel[language]}
+                onFile={openFile}
+              />
+              {loading && <p role="status">{words.loading}</p>}
+              {error && (
+                <p role="alert" className="text-red-800">
+                  {importMessage(error, words)}
+                </p>
+              )}
+            </div>
+          </section>
+        )
+      )}
+    </>
   );
 }

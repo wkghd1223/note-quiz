@@ -28,6 +28,7 @@ import {
 } from "@/features/melody/components/MelodyWorkspace";
 import ImportedScoreSettings from "./ImportedScoreSettings";
 import ScoreEditor from "./ScoreEditor";
+import SourceExcerpt from "./recognition/SourceExcerpt";
 
 import type { ScoreDraftRef } from "@/features/melody/score-draft";
 import { reason, fileMessage } from "./score-error";
@@ -386,6 +387,7 @@ export default function ScorePracticeWorkspace({
           {errorMessage}
         </p>
       )}
+      {original.sourceExcerpt && <SourceExcerpt excerpt={original.sourceExcerpt} words={w} />}
       <MelodyWorkspace>
         <section className="grid min-w-0 gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
