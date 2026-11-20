@@ -1,8 +1,49 @@
+import { readFileSync, readdirSync } from "node:fs";
+import { dirname, join } from "node:path";
 import type { NextConfig } from "next";
+import type { webpack as Webpack } from "next/dist/compiled/webpack/webpack";
+import { version as pdfVersion } from "pdfjs-dist/package.json";
 import { AlphaTabWebPackPlugin } from "@coderline/alphatab-webpack";
 
+// PDF.js loads its codecs and fonts by filename relative to asset directories.
+// Emit those directories with the matching worker in the existing Next host.
+const pdfAssets = {
+  apply(compiler: Webpack.Compiler) {
+    const name = "NoteQuizPdfAssets";
+    const root = dirname(require.resolve("pdfjs-dist/package.json"));
+    compiler.hooks.thisCompilation.tap(
+      name,
+      (compilation: Webpack.Compilation) => {
+        compilation.hooks.processAssets.tap(
+          {
+            name,
+            stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL,
+          },
+          () => {
+            const files = ["LICENSE", "legacy/build/pdf.worker.min.mjs"];
+            for (const folder of ["cmaps", "standard_fonts", "wasm", "iccs"]) {
+              for (const file of readdirSync(join(root, folder)))
+                files.push(folder + "/" + file);
+            }
+            for (const file of files) {
+              compilation.emitAsset(
+                `static/pdfjs/${pdfVersion}/${file}`,
+                new compiler.webpack.sources.RawSource(
+                  readFileSync(join(root, file)),
+                ),
+                { minimized: true },
+              );
+            }
+          },
+        );
+      },
+    );
+  },
+};
+
 const nextConfig: NextConfig = {
-  webpack(config) {
+  webpack(config, { isServer }) {
+    if (!isServer) config.plugins.push(pdfAssets);
     config.plugins.push(
       new AlphaTabWebPackPlugin({ assetOutputDir: "public/alphatab" }),
     );

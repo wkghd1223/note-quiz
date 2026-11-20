@@ -14,7 +14,7 @@ import type { ImportedScore } from "./types";
 import ScorePracticeWorkspace from "./ScorePracticeWorkspace";
 import ScoreFileButton, { openScoreLabel } from "./ScoreFileButton";
 
-import { isRecognitionFile, supportsPdf } from "./recognition/source";
+import { isRecognitionFile } from "./recognition/source";
 
 const RecognitionReview = dynamic(
   () => import("./recognition/RecognitionReview"),
@@ -138,8 +138,7 @@ export default function ImportedPractice() {
                 {melodySourceCopy[language].openHint}
               </p>
               <p className="text-sm text-slate-600">
-                {words.recognitionLabel} ·{" "}
-                {supportsPdf ? "PNG, JPEG, PDF" : "PNG, JPEG"}
+                {words.recognitionLabel} · PNG, JPEG, PDF
               </p>
               <ScoreFileButton
                 label={openScoreLabel[language]}

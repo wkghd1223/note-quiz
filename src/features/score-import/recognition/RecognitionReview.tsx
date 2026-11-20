@@ -14,9 +14,12 @@ type Source = Awaited<ReturnType<typeof openRecognitionSource>>;
 const primary = button + " !border-violet-800 !bg-violet-800 !text-white";
 
 function failureMessage(failure: unknown, words: ImportWords) {
-  return failure instanceof Error && failure.message === "fileTooLarge"
-    ? words.tooLarge
-    : words.recognitionFailed;
+  if (failure instanceof Error) {
+    if (failure.message === "fileTooLarge") return words.tooLarge;
+    if (failure.message === "passwordPdf") return words.passwordPdf;
+    if (failure.message === "invalidPdf") return words.invalidPdf;
+  }
+  return words.recognitionFailed;
 }
 
 function excerptOf(canvas: HTMLCanvasElement, top: number, bottom: number) {
@@ -284,19 +287,43 @@ export default function RecognitionReview({
             {source.pageCount > 1 && (
               <label className="flex items-center gap-2 text-sm">
                 {words.page}
-                <select
-                  className="min-h-11 rounded-lg border border-slate-300 px-2"
-                  value={page}
-                  onChange={(event) =>
-                    setPage(Number(event.currentTarget.value))
-                  }
-                >
-                  {Array.from({ length: source.pageCount }, (_, i) => (
-                    <option key={i} value={i + 1}>
-                      {i + 1} / {source.pageCount}
-                    </option>
-                  ))}
-                </select>
+                {source.pageCount > 100 ? (
+                  <>
+                    <input
+                      type="number"
+                      min={1}
+                      max={source.pageCount}
+                      defaultValue={page}
+                      className="min-h-11 w-24 rounded-lg border border-slate-300 px-2"
+                      onChange={(event) => {
+                        const input = event.currentTarget;
+                        if (
+                          input.validity.valid &&
+                          Number.isInteger(input.valueAsNumber)
+                        )
+                          setPage(input.valueAsNumber);
+                      }}
+                      onBlur={(event) => {
+                        event.currentTarget.value = String(page);
+                      }}
+                    />
+                    / {source.pageCount}
+                  </>
+                ) : (
+                  <select
+                    className="min-h-11 rounded-lg border border-slate-300 px-2"
+                    value={page}
+                    onChange={(event) =>
+                      setPage(Number(event.currentTarget.value))
+                    }
+                  >
+                    {Array.from({ length: source.pageCount }, (_, i) => (
+                      <option key={i} value={i + 1}>
+                        {i + 1} / {source.pageCount}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </label>
             )}
             <PageReview

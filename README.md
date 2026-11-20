@@ -51,7 +51,7 @@ This project started as a focused practice tool for learning to recognize notes 
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20.19+
 - npm
 
 ### Install

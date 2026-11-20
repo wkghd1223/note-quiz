@@ -3,12 +3,12 @@ import { createScoreWriter } from "../formats/writer";
 import type { recognizeStaff } from "./engine";
 import { fitPage, MAX_RENDER_PIXELS, readImageSize } from "./raster";
 
-export const supportsPdf = false;
+export const recognitionExtensions = ".png,.jpg,.jpeg,.pdf";
 
 export function isRecognitionFile(file: File) {
   return (
-    /\.(png|jpe?g)$/i.test(file.name) ||
-    ["image/png", "image/jpeg"].includes(file.type)
+    /\.(png|jpe?g|pdf)$/i.test(file.name) ||
+    ["image/png", "image/jpeg", "application/pdf"].includes(file.type)
   );
 }
 
@@ -26,6 +26,17 @@ export async function openRecognitionSource(
   if (file.size > MAX_FILE_BYTES) throw new Error("fileTooLarge");
   const bytes = new Uint8Array(await file.arrayBuffer());
   signal.throwIfAborted();
+  // Use the file header even when the browser supplies a generic MIME type.
+  const prefix = new TextDecoder().decode(bytes.subarray(0, 1024));
+  if (
+    prefix.trimStart().startsWith("%PDF-") ||
+    file.type === "application/pdf" ||
+    /\.pdf$/i.test(file.name)
+  ) {
+    const { openPdfSource } = await import("./pdf-source");
+    signal.throwIfAborted();
+    return openPdfSource(bytes, signal);
+  }
   readImageSize(bytes);
   const bitmap = await createImageBitmap(file);
   const canvas = document.createElement("canvas");
