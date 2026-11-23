@@ -22,7 +22,7 @@ description: Implement or review Note Quiz practice experience changes involving
 - Reset transient question, feedback, timer, and submission state together when starting a fresh session.
 - Keep controls usable with keyboard, pointer, and touch where the existing surface supports them.
 - Keep fixed-format practice controls dimensionally stable and verify that translated text does not overlap.
-- Update the translation contract and `en`, `ko`, `ja`, `es`, `de`, and `fr` entries for every new user-facing label or message.
+- Update the translation contract and the entries for every locale in `SUPPORTED_LOCALES` for each new user-facing label or message.
 - Add analytics at session-level milestones. Avoid sending note-level content, session IDs, or other unnecessary identifiers.
 
 ## Implement And Verify

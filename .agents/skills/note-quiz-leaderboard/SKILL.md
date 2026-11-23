@@ -40,7 +40,7 @@ When the contract changes, update every affected layer in the same change:
 - API tests for accepted, duplicate, ineligible, malformed, and unavailable persistence outcomes
 - Supabase table, RPC, grants, policies, indexes, and cleanup behavior
 - leaderboard reads and displays
-- all six translations
+- translations for every locale in `SUPPORTED_LOCALES`
 - analytics outcome events
 - privacy text when collected or retained data changes
 
@@ -51,6 +51,6 @@ When the contract changes, update every affected layer in the same change:
 3. Run `npm test`, `npx tsc --noEmit`, and `npm run build` for contract changes.
 4. Inspect the SQL transaction path for concurrent duplicate safety and verify cleanup intervals against the documented retention periods.
 5. Manually exercise eligible, ineligible, duplicate, and failed submissions in the result UI when possible.
-6. Confirm ranking labels and submission messages in all six languages at desktop and mobile widths.
+6. Confirm ranking labels and submission messages in every supported locale at desktop and mobile widths.
 
 Report local verification separately from database deployment or production verification.

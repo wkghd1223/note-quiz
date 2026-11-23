@@ -5,7 +5,7 @@
 - Note Quiz is a Next.js 15 App Router application built with React 19, TypeScript, Tailwind CSS, Zustand, Vitest, and the Web Audio API.
 - The primary product surface is `/practice`. Legacy `/game`, `/ear-training`, and `/leaderboard` routes redirect into that surface through `next.config.ts`.
 - Sight-reading and ear-training share UI infrastructure but have separate state and domain behavior. Do not assume a change for one mode applies to the other.
-- The app supports English, Korean, Japanese, Spanish, German, and French.
+- The supported languages are listed in [`SUPPORTED_LOCALES`](src/lib/i18n/locale.ts).
 
 ## Ownership Map
 
@@ -23,7 +23,7 @@
 
 - Trace the active `/practice` path before modifying a legacy component. Change redirected legacy surfaces only when the request requires it.
 - Keep browser-only APIs, including audio, microphone, storage, and analytics, in client code. Preserve user-gesture requirements for audio and microphone initialization.
-- When adding or changing user-facing copy, update the translation type and all six language entries in the same change.
+- When adding or changing user-facing copy, update the translation type and the entries for every supported locale in the same change.
 - Keep scoring rules in shared pure functions. The server is authoritative for leaderboard points; never trust client-calculated points or client-supplied country data.
 - Preserve anonymous play. Do not add user identifiers, raw IP storage, fingerprinting, or long-lived session tracking without explicit approval and a privacy review.
 - Treat `supabase/leaderboard.sql` as a migration artifact. Make SQL changes idempotent where practical and never claim they are deployed unless deployment was actually performed.
