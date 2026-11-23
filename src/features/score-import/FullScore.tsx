@@ -9,6 +9,7 @@ import {
   type EngravedBar,
 } from "./full-score-signatures";
 import { displayedPitch, shiftedKey } from "./editor-pitch";
+import { scopeUnpitchedInstruments } from "./unpitched-engraving";
 import type { ImportWords } from "./copy";
 import type { ImportedLane, ImportedScore, ScoreStep } from "./types";
 
@@ -250,7 +251,11 @@ export default function FullScore({
   const [attempt, setAttempt] = useState(0);
   const { document: source, lanes } = score;
   const credits = useMemo(() => pageCredits(source), [source]);
-  const engraving = useMemo(() => fullScoreSignatures(score), [score]);
+  const engraving = useMemo(() => {
+    const engraving = fullScoreSignatures(score);
+    scopeUnpitchedInstruments(engraving.root, score);
+    return engraving;
+  }, [score]);
   const current =
     view?.source === source && view.semitones === semitones ? view : undefined;
   const status = current?.status ?? "loading";

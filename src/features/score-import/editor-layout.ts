@@ -3,11 +3,14 @@ import type {
   ImportedEvent,
   ImportedHead,
   ImportedLane,
+  ImportedUnpitchedHead,
   ScoreClef,
+  WrittenHead,
 } from "./types";
 import {
   bottomStaffPosition,
   displayedPitch,
+  fromPosition,
   keyAlter,
   soundingShift,
   staffPosition,
@@ -22,6 +25,15 @@ export const space = 12,
   bottom = 118;
 export const noteY = (p: Spelling, c: ScoreClef) =>
   bottom - ((staffPosition(p) - bottomStaffPosition(c)) * space) / 2;
+const treble: ScoreClef = { sign: "G", line: 2 };
+function unpitchedPosition(head: ImportedUnpitchedHead, clef: ScoreClef) {
+  // MusicXML positions percussion notes relative to G4 on the second line.
+  const reference = clef.sign === "percussion" ? treble : clef;
+  const shown = head.display
+    ? { ...head.display, alter: 0 }
+    : fromPosition(bottomStaffPosition(reference) + 4);
+  return { shown, y: noteY(shown, reference) };
+}
 export const clefGlyph = (c: ScoreClef) =>
   ({
     G: "\uE050",
@@ -94,8 +106,8 @@ function inlineSignature(
   return { clefChanged, signs, cancelled, width };
 }
 
-export interface LayoutHead {
-  head: ImportedHead;
+export interface LayoutHead<T extends WrittenHead = ImportedHead> {
+  head: T;
   index: number;
   eventIndex: number;
   shown: Spelling;
@@ -176,6 +188,11 @@ export function layoutScoreLine(
           soundingShift(head, semitones),
         );
         const y = noteY(shown, event.clef);
+        top = Math.min(top, y - 64);
+        end = Math.max(end, y + 53);
+      }
+      for (const head of event.unpitchedHeads ?? []) {
+        const { y } = unpitchedPosition(head, event.clef);
         top = Math.min(top, y - 64);
         end = Math.max(end, y + 53);
       }
@@ -306,7 +323,18 @@ export function layoutBar(
         shift: soundingShift(head, semitones),
       };
     });
-    const ascending = [...heads].sort((a, b) => a.y - b.y);
+    const unpitchedHeads = (event.unpitchedHeads ?? []).map((head, index) => ({
+      head,
+      index: heads.length + index,
+      eventIndex,
+      ...unpitchedPosition(head, event.clef),
+      x: center,
+      accidental: false,
+      ...writtenRhythm(event, head),
+      shift: 0,
+    }));
+    const writtenHeads = [...heads, ...unpitchedHeads];
+    const ascending = [...writtenHeads].sort((a, b) => a.y - b.y);
     for (let j = 1; j < ascending.length; j++) {
       if (
         ascending[j].y - ascending[j - 1].y <= space / 2 + 0.01 &&
@@ -319,6 +347,7 @@ export function layoutBar(
       eventIndex,
       x: center,
       heads,
+      writtenHeads,
       contextChange,
       fifths,
       eventShift,
@@ -366,7 +395,7 @@ export function layoutBar(
     });
     i = last + 1;
   }
-  const ys = events.flatMap((e) => e.heads.map((h) => h.y));
+  const ys = events.flatMap((e) => e.writtenHeads.map((h) => h.y));
   const top = Math.min(0, ...ys.map((y) => y - 64)),
     end = Math.max(163, ...ys.map((y) => y + 53));
   return { events, groups, ties, key, width, top, height: end - top };

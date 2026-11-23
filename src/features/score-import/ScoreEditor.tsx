@@ -16,7 +16,8 @@ import { MAX_SCORE_REPEAT_PASSES } from "./model";
 import type {
   ImportedBar,
   ImportedEvent,
-  ImportedHead,
+  ImportedUnpitchedHead,
+  WrittenHead,
   ImportedLane,
   ImportedScore,
   ScoreClef,
@@ -46,6 +47,7 @@ import {
   durationEdit,
   groupTupletEdit,
   meterEdit,
+  noteheadEdit,
   pitchEdit,
   repeatEdit,
   repeatRanges,
@@ -56,6 +58,7 @@ import {
   writtenRhythm,
   type Edit,
 } from "./score-edits";
+import { first } from "./score-xml";
 import { canDropNote, moveNoteEdit } from "./move-note";
 import { beginNoteDrag } from "./note-drag";
 import {
@@ -104,6 +107,32 @@ type Tool =
   | null;
 type Selection = { event: number; head: number };
 const presets = ["3:2", "4:3", "5:4", "7:4", "2:3"];
+
+type DrawnHead = LayoutHead | LayoutHead<ImportedUnpitchedHead>;
+
+function pitchedLayout(h: DrawnHead): h is LayoutHead {
+  return "midi" in h.head;
+}
+
+function writtenHeadLabel(h: DrawnHead, words: ImportWords) {
+  return pitchedLayout(h) ? pitchLabel(h.shown) : words.unpitchedNote;
+}
+
+function xHeadGlyph(type: string, filled: string | null) {
+  if (filled === "yes") return "\uE0A9";
+  switch (type) {
+    case "maxima":
+    case "long":
+    case "breve":
+      return "\uE0A6";
+    case "whole":
+      return "\uE0A7";
+    case "half":
+      return "\uE0A8";
+    default:
+      return filled === "no" ? "\uE0A8" : "\uE0A9";
+  }
+}
 
 function glyph(text: string, x: number, y: number, size = 48) {
   return (
@@ -494,15 +523,16 @@ function EditorBar({
   const event = bar.events[eventIndex];
   const editable = event && canEditEvent(event);
   const rhythm = event ? writtenRhythm(event) : null;
+  const current = drawing.events[eventIndex];
   const headIndex = Math.max(
     0,
-    Math.min(selected.head, (event?.heads.length ?? 0) - 1),
+    Math.min(selected.head, (current?.writtenHeads.length ?? 0) - 1),
   );
-  const head = event?.heads[headIndex];
-  const current = drawing.events[eventIndex];
-  const currentHead = current?.heads[headIndex];
+  const written = current?.writtenHeads[headIndex];
+  const currentHead = written && pitchedLayout(written) ? written : undefined;
+  const head = currentHead?.head;
   const tie =
-    !locked && tool === "note" && head
+    !locked && editable && tool === "note" && head
       ? tieAction(lane, barIndex, eventIndex, headIndex)
       : undefined;
   const [a, n] =
@@ -544,7 +574,7 @@ function EditorBar({
   const eventAnchor =
     barSelector +
     eventSelector +
-    (head ? `[data-edit-head="${headIndex}"]` : "");
+    (written ? `[data-edit-head="${headIndex}"]` : "");
   const menuAnchors = {
     event: eventAnchor,
     inline: barSelector + `[data-edit-context="${eventIndex}"]`,
@@ -726,10 +756,11 @@ function EditorBar({
           return { barIndex: b, eventIndex: i };
     }
   }
-  function startDrag(e: React.PointerEvent<SVGGElement>, h: LayoutHead) {
+  function startDrag(e: React.PointerEvent<SVGGElement>, h: DrawnHead) {
     if (locked || !e.isPrimary || e.button !== 0) return;
     const source = bar.events[h.eventIndex];
-    if (!canEditEvent(source) || (rangeFrom !== null && rangeEnd === null)) {
+    if (!pitchedLayout(h) || !canEditEvent(source)) return;
+    if (rangeFrom !== null && rangeEnd === null) {
       select(h.eventIndex, h.index);
       return;
     }
@@ -786,7 +817,7 @@ function EditorBar({
     select(target.eventIndex, 0);
     focusWrittenEvent(sheet.current, target.eventIndex);
   }
-  function headKeys(e: React.KeyboardEvent<SVGGElement>, h: LayoutHead) {
+  function headKeys(e: React.KeyboardEvent<SVGGElement>, h: DrawnHead) {
     if (locked) return;
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -797,7 +828,8 @@ function EditorBar({
     if (e.key === "ArrowUp" || e.key === "ArrowDown") {
       e.preventDefault();
       select(h.eventIndex, h.index);
-      nudge(h, e.key === "ArrowUp" ? 1 : -1);
+      if (pitchedLayout(h) && canEditEvent(bar.events[h.eventIndex]))
+        nudge(h, e.key === "ArrowUp" ? 1 : -1);
       return;
     }
     if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
@@ -859,17 +891,20 @@ function EditorBar({
       <g key={i}>{glyph(accidentalGlyph(Math.sign(fifths)), x + 10 * i, y)}</g>
     ));
   }
-  function renderNote(h: LayoutHead, e: ImportedEvent) {
+  function renderNote(h: DrawnHead, e: ImportedEvent) {
     const focused =
       !!visible && h.eventIndex === eventIndex && h.index === headIndex;
-    const isGhost = ghost?.head.head.id === h.head.id;
+    const selectOnly = !canEditEvent(e);
+    const xHead =
+      h.head.shape === "x" ? first(h.head.source, "notehead") : undefined;
+    const isGhost = ghost?.head.head.id === h.head.id && pitchedLayout(h);
     const pitch = isGhost
       ? displayedPitch(originFor(h, ghost!.delta), e.fifths, h.shift)
       : h.shown;
-    const y = noteY(pitch, e.clef),
+    const y = isGhost ? noteY(pitch, e.clef) : h.y,
       rank = noteRank.indexOf(h.type),
       openHead = rank >= 0 && rank <= 4;
-    const sameStem = drawing.events[h.eventIndex].heads.filter((other) =>
+    const sameStem = drawing.events[h.eventIndex].writtenHeads.filter((other) =>
       nearDuration(other.head, h.head),
     );
     const lowY = Math.max(...sameStem.map((other) => other.y)),
@@ -887,15 +922,16 @@ function EditorBar({
         key={h.head.id}
         data-edit-event={h.eventIndex}
         data-edit-head={h.index}
-        data-midi={h.head.midi + semitones}
+        data-midi={pitchedLayout(h) ? h.head.midi + semitones : undefined}
         role="button"
         tabIndex={locked ? -1 : 0}
-        aria-label={`${w.pitch} ${pitchLabel(pitch)} · ${w.bar} ${bar.label}`}
+        aria-label={`${pitchedLayout(h) ? w.pitch + " " + pitchLabel(pitch) : w.unpitchedNote}${h.head.shape === "x" ? " · " + w.notehead + " X" : ""} · ${w.bar} ${bar.label}`}
         aria-haspopup="dialog"
         aria-expanded={focused}
         aria-pressed={focused}
         aria-disabled={locked}
         className={styles.head}
+        data-select-only={selectOnly || undefined}
         color={colour}
         style={
           visible === "move" && h.eventIndex === eventIndex
@@ -906,7 +942,7 @@ function EditorBar({
         onPointerDown={(ev) => startDrag(ev, h)}
         onKeyDown={(ev) => headKeys(ev, h)}
         onClick={(ev) => {
-          if (ev.detail === 0) select(h.eventIndex, h.index);
+          if (selectOnly || ev.detail === 0) select(h.eventIndex, h.index);
         }}
       >
         <rect
@@ -940,17 +976,42 @@ function EditorBar({
             down,
             down ? Math.max(lowY, y) + 33 : Math.min(highY, y) - 33,
           )}
-        <ellipse
-          className={styles.ink}
-          cx={h.x}
-          cy={y}
-          rx={rank <= 3 ? 7.4 : 6.2}
-          ry="4.25"
-          transform={`rotate(-18 ${h.x} ${y})`}
-          fill={openHead ? "white" : "currentColor"}
-          stroke="currentColor"
-          strokeWidth={openHead ? 2.2 : 1}
-        />
+        {xHead?.getAttribute("parentheses") === "yes" && (
+          <path
+            className={styles.ink}
+            d={`M${h.x - 8} ${y - 8}q-6 8 0 16 M${h.x + 8} ${y - 8}q6 8 0 16`}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.4"
+          />
+        )}
+        {xHead ? (
+          <text
+            data-notehead-shape="x"
+            className={styles.glyph}
+            aria-hidden="true"
+            x={h.x}
+            y={y}
+            textAnchor="middle"
+            fontSize={4 * space}
+            fill="currentColor"
+          >
+            {xHeadGlyph(h.type, xHead.getAttribute("filled"))}
+          </text>
+        ) : (
+          <ellipse
+            data-notehead-shape="default"
+            className={styles.ink}
+            cx={h.x}
+            cy={y}
+            rx={rank <= 3 ? 7.4 : 6.2}
+            ry="4.25"
+            transform={`rotate(-18 ${h.x} ${y})`}
+            fill={openHead ? "white" : "currentColor"}
+            stroke="currentColor"
+            strokeWidth={openHead ? 2.2 : 1}
+          />
+        )}
         {Array.from({ length: Math.min(4, h.dots) }, (_, i) => (
           <circle
             key={i}
@@ -1237,7 +1298,7 @@ function EditorBar({
           </g>
         )}
         {drawing.events.map(
-          ({ event: e, eventIndex: i, x, heads, contextChange }) => (
+          ({ event: e, eventIndex: i, x, writtenHeads, contextChange }) => (
             <g key={e.id} data-edit-slot={i} data-slot-x={x}>
               <rect
                 className={styles.dropMark}
@@ -1323,8 +1384,8 @@ function EditorBar({
                     opacity=".52"
                   />
                 )}
-              {heads.length ? (
-                heads.map((h) => renderNote(h, e))
+              {writtenHeads.length ? (
+                writtenHeads.map((h) => renderNote(h, e))
               ) : (
                 <g
                   data-edit-event={i}
@@ -1456,8 +1517,8 @@ function EditorBar({
             tool={visible}
             title={
               visible === "note"
-                ? currentHead
-                  ? pitchLabel(currentHead.shown)
+                ? written
+                  ? writtenHeadLabel(written, w)
                   : editable
                     ? w.rest
                     : w.editor
@@ -1467,14 +1528,14 @@ function EditorBar({
             closeLabel={w.close}
             onClose={close}
           >
-            {visible === "note" && event && !editable && (
+            {visible === "note" && event && !editable && !written && (
               <p role="status">{w.editConflict}</p>
             )}
-            {visible === "note" && editable && event && (
+            {visible === "note" && written && event && (
               <div className={styles.toolbar}>
-                {event.heads.length > 1 && (
+                {current.writtenHeads.length > 1 && (
                   <label>
-                    {w.pitch}
+                    {event.unpitchedHeads?.length ? w.chordNote : w.pitch}
                     <select
                       value={headIndex}
                       onChange={(ev) =>
@@ -1484,14 +1545,43 @@ function EditorBar({
                         })
                       }
                     >
-                      {current.heads.map((h) => (
+                      {current.writtenHeads.map((h) => (
                         <option key={h.head.id} value={h.index}>
-                          {pitchLabel(h.shown)}
+                          {pitchedLayout(h)
+                            ? pitchLabel(h.shown)
+                            : w.unpitchedNote + " " + (h.index + 1)}
                         </option>
                       ))}
                     </select>
                   </label>
                 )}
+                <label>
+                  {w.notehead}
+                  <select
+                    data-notehead-select
+                    value={written.head.shape ?? "default"}
+                    onChange={(ev) =>
+                      change(
+                        noteheadEdit(
+                          written.head.source,
+                          ev.target.value === "x" ? "x" : "default",
+                        ),
+                      )
+                    }
+                  >
+                    <option value="default">{w.defaultNotehead}</option>
+                    <option value="x">X</option>
+                    {written.head.shape && written.head.shape !== "x" && (
+                      <option value={written.head.shape} disabled>
+                        {written.head.shape}
+                      </option>
+                    )}
+                  </select>
+                </label>
+              </div>
+            )}
+            {visible === "note" && editable && event && (
+              <div className={styles.toolbar}>
                 {currentHead && (
                   <>
                     <button
@@ -1967,6 +2057,6 @@ function EditorBar({
   );
 }
 
-function nearDuration(a: ImportedHead, b: ImportedHead) {
+function nearDuration(a: WrittenHead, b: WrittenHead) {
   return Math.abs(a.duration - b.duration) < 1e-7;
 }

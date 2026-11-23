@@ -29,6 +29,7 @@ import type {
   ImportedScore,
   ScoreClef,
   ScoreMeter,
+  WrittenHead,
 } from "./types";
 import {
   fromPosition,
@@ -51,7 +52,7 @@ function partBars(note: Element): Element[] {
   );
 }
 
-export function writtenRhythm(event: ImportedEvent, head?: ImportedHead) {
+export function writtenRhythm(event: ImportedEvent, head?: WrittenHead) {
   const note = head?.source ?? event.source;
   const type = value(note, "type");
   if (type) return { type, dots: direct(note, "dot").length };
@@ -64,6 +65,20 @@ export function writtenRhythm(event: ImportedEvent, head?: ImportedHead) {
       dots: 0,
     }
   );
+}
+
+/** Change just this printed head, even when other heads share its stem. */
+export function noteheadEdit(source: Element, shape: "default" | "x"): Edit {
+  return (copy) => {
+    const note = copy(source);
+    if (!first(note, "pitch") && !first(note, "unpitched")) fail();
+    if (shape === "default") remove(note, "notehead");
+    else {
+      const head = set(note, "notehead", shape);
+      // A glyph override for the old shape no longer applies to an X.
+      head.removeAttribute("smufl");
+    }
+  };
 }
 
 export function cloneTiming(source: Element) {
@@ -93,6 +108,7 @@ function notesFor(event: ImportedEvent, copy: (source: Element) => Element) {
 }
 
 export function canEditEvent(event: ImportedEvent) {
+  if (event.unpitchedHeads?.length) return false;
   if (
     event.heads.length
       ? event.heads[0].source !== event.source

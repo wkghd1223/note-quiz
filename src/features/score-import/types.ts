@@ -15,16 +15,26 @@ export interface ScoreClef {
   octaveChange?: number;
 }
 
-export interface ImportedHead {
+export interface WrittenHead {
   id: string;
   source: Element;
+  /** Explicit MusicXML notehead value, omitted for the instrument's default. */
+  shape?: string;
+  /** Quarter-note units. A secondary chord note can end before the next beat. */
+  duration: number;
+}
+
+export interface ImportedUnpitchedHead extends WrittenHead {
+  /** A staff position for engraving only. An omitted position uses the middle line. */
+  display?: { step: ScoreStep; octave: number };
+}
+
+export interface ImportedHead extends WrittenHead {
   step: ScoreStep;
   octave: number;
   alter: number;
   /** Sounding pitch, including the instrument's written transposition. */
   midi: number;
-  /** Quarter-note units. A secondary chord note can end before the next beat. */
-  duration: number;
 }
 
 export interface ImportedEvent {
@@ -35,6 +45,8 @@ export interface ImportedEvent {
   start: number;
   duration: number;
   heads: ImportedHead[];
+  /** Written percussion or speaking-voice notes have no sounding MIDI pitch. */
+  unpitchedHeads?: ImportedUnpitchedHead[];
   noteType: string;
   dots: number;
   tuplet?: { actual: number; normal: number };

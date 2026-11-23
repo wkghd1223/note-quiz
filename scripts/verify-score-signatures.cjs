@@ -18,6 +18,34 @@ const xml = `<score-partwise version="4.0"><part-list><score-part id="P"><part-n
       `<measure number="${i + 1}">${i === 0 ? "<attributes><divisions>1</divisions>" + key(0) + "<time><beats>4</beats><beat-type>4</beat-type></time><clef><sign>G</sign><line>2</line></clef></attributes>" : i === 2 ? "<attributes>" + key(-1) + "</attributes>" : ""}${i === 0 ? harmony : ""}${[...notes].map(note).join("")}</measure>`,
   )
   .join("")}</part></score-partwise>`;
+
+// The same percussion instrument and display E4 occur on staves with
+// different clefs. Each X must line up with the following pitched reference.
+const displayedE =
+  "<display-step>E</display-step><display-octave>4</display-octave>";
+const hits = (staff, middleStep, middleOctave) =>
+  [
+    `<unpitched>${displayedE}</unpitched>`,
+    "<pitch><step>E</step><octave>4</octave></pitch>",
+    "<unpitched/>",
+    `<pitch><step>${middleStep}</step><octave>${middleOctave}</octave></pitch>`,
+  ]
+    .map(
+      (sound, i) =>
+        `<note>${sound}<duration>1</duration>${i % 2 === 0 ? '<instrument id="Drum"/>' : ""}<type>quarter</type>${i % 2 === 0 ? "<notehead>x</notehead>" : ""}<staff>${staff}</staff></note>`,
+    )
+    .join("");
+const percussionClefs = `<score-partwise version="4.0">
+  <part-list><score-part id="P"><part-name>Voice</part-name><score-instrument id="Drum"><instrument-name>Drum</instrument-name></score-instrument><score-instrument id="NoteQuiz-Unpitched-1"><instrument-name>Other</instrument-name></score-instrument><midi-instrument id="Drum"><midi-unpitched>39</midi-unpitched></midi-instrument></score-part></part-list>
+  <part id="P">${[
+    ["G", "F"],
+    ["F", "G"],
+  ]
+    .map(
+      (signs, i) =>
+        `<measure number="${i + 1}"><attributes><divisions>1</divisions><time><beats>4</beats><beat-type>4</beat-type></time><staves>2</staves>${signs.map((s, j) => `<clef number="${j + 1}"><sign>${s}</sign><line>${s === "G" ? 2 : 4}</line></clef>`).join("")}</attributes>${signs.map((s, j) => hits(j + 1, s === "G" ? "B" : "D", s === "G" ? 4 : 3)).join("<backup><duration>4</duration></backup>")}</measure>`,
+    )
+    .join("")}</part></score-partwise>`;
 async function verify(browser, width) {
   const page = await browser.newPage({
     viewport: { width, height: 860 },
@@ -146,10 +174,46 @@ async function verify(browser, width) {
     await full.locator("[data-inline-signature-warning]").waitFor();
     await full.getByRole("button", { name: /마디 1 ·/ }).click();
     await bar(0).locator('[data-edit-context="1"]').waitFor();
+    await page
+      .locator("input[type=file]")
+      .first()
+      .setInputFiles({
+        name: "percussion-clefs.musicxml",
+        mimeType: "application/xml",
+        buffer: Buffer.from(percussionClefs),
+      });
+    await page
+      .locator("[data-score-line]")
+      .getByRole("heading", { name: /Voice/ })
+      .waitFor();
+    await button(page, "전체 보기").click();
+    await full
+      .locator("svg text")
+      .filter({ hasText: "\uE0A9" })
+      .first()
+      .waitFor();
+    const renderedHeads = await full
+      .locator("svg text")
+      .evaluateAll((nodes) =>
+        nodes
+          .filter(
+            (n) => n.textContent === "\uE0A9" || n.textContent === "\uE0A4",
+          )
+          .map((n) => [n.textContent, n.getBoundingClientRect().y]),
+      );
+    assert.equal(renderedHeads.length, 16);
+    for (let i = 0; i < renderedHeads.length; i += 2) {
+      assert.equal(renderedHeads[i][0], "\uE0A9");
+      assert.equal(renderedHeads[i + 1][0], "\uE0A4");
+      assert.ok(
+        Math.abs(renderedHeads[i][1] - renderedHeads[i + 1][1]) < 1,
+        "Unpitched head must match its written staff position",
+      );
+    }
     assert.deepEqual(errors, []);
     console.log(
       width +
-        "px · bar and in-measure signature edits, independent next key, clef and undo passed",
+        "px · bar and in-measure signatures, undo and unpitched positions across clefs passed",
     );
   } finally {
     await page.close();

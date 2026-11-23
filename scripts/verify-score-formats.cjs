@@ -99,6 +99,175 @@ function midi(format) {
   ]);
 }
 
+// The pitched E4 and unpitched display-E4 share a staff position. The
+// unpitched note without display metadata belongs on the middle line (B4).
+const mixedHeads = `<score-partwise version="4.0"><part-list><score-part id="P"><part-name>Voice</part-name></score-part></part-list>
+<part id="P"><measure number="1"><attributes><divisions>1</divisions><time><beats>5</beats><beat-type>4</beat-type></time><clef><sign>G</sign><line>2</line></clef></attributes>
+${[
+  ["<pitch><step>C</step><octave>4</octave></pitch>", ""],
+  [
+    "<chord/><pitch><step>E</step><octave>4</octave></pitch>",
+    "<notehead>x</notehead>",
+  ],
+  [
+    "<unpitched><display-step>E</display-step><display-octave>4</display-octave></unpitched>",
+    "<notehead>x</notehead>",
+  ],
+  ["<unpitched/>", '<notehead filled="no" parentheses="yes">x</notehead>'],
+  ["<pitch><step>B</step><octave>4</octave></pitch>", ""],
+  ["<rest/>", ""],
+]
+  .map(
+    ([sound, shape]) =>
+      `<note>${sound}<duration>1</duration><voice>1</voice><type>quarter</type>${shape}</note>`,
+  )
+  .join("")}
+</measure></part></score-partwise>`;
+
+async function verifyWrittenHeads(browser, width, name, source) {
+  const mobile = width < 500;
+  const page = await browser.newPage({
+    viewport: { width, height: mobile ? 844 : 900 },
+    hasTouch: mobile,
+    reducedMotion: "reduce",
+  });
+  try {
+    await page.route("**/*", (route) =>
+      new URL(route.request().url()).origin === base.origin
+        ? route.continue()
+        : route.abort(),
+    );
+    await page.goto(new URL("/ko/melody/upload", base).href);
+    await page
+      .locator("input[type=file]")
+      .first()
+      .setInputFiles({
+        name,
+        mimeType: "application/octet-stream",
+        buffer: Buffer.from(source),
+      });
+    const bar = page.locator('[data-edit-bar="0"]');
+    const button = (label) =>
+      page.getByRole("button", { name: label, exact: true });
+    const heads = bar.locator("[data-edit-head]");
+    const rest = bar.locator('[data-edit-event="4"]');
+    const select = page.locator("[data-notehead-select]");
+    const press = (locator) => (mobile ? locator.tap() : locator.click());
+
+    async function line(expected) {
+      await bar.locator("[data-notehead-shape]").first().waitFor();
+      const ink = await bar
+        .locator("[data-notehead-shape]")
+        .evaluateAll((nodes) =>
+          nodes.map((node) => ({
+            shape: node.tagName === "ellipse" ? "default" : node.textContent,
+            y: Number(
+              node.getAttribute(node.tagName === "ellipse" ? "cy" : "y"),
+            ),
+          })),
+        );
+      assert.deepEqual(
+        ink.map((head) => head.shape),
+        expected,
+        name + " written head shapes",
+      );
+      const centers = ink.map((head) => head.y);
+      const parentheses = await heads.nth(3).evaluate((head) => {
+        const glyph = head.querySelector("[data-notehead-shape]");
+        const x = Number(
+          glyph.getAttribute(glyph.tagName === "ellipse" ? "cx" : "x"),
+        );
+        const y = Number(
+          glyph.getAttribute(glyph.tagName === "ellipse" ? "cy" : "y"),
+        );
+        return Array.from(head.querySelectorAll('path[fill="none"]')).some(
+          (path) => {
+            const box = path.getBBox();
+            return (
+              box.x < x - 6 &&
+              box.x + box.width > x + 6 &&
+              box.y < y &&
+              box.y + box.height > y
+            );
+          },
+        );
+      });
+      assert.equal(
+        parentheses,
+        expected[3] === "\uE0A8",
+        "parentheses around the hollow X",
+      );
+      assert.equal(centers[1], centers[2], "explicit unpitched E4");
+      assert.equal(
+        centers[3],
+        centers[4],
+        "unpitched default is middle line B4",
+      );
+      assert.ok(centers[1] > centers[3], "E4 is below B4");
+      assert.equal(await heads.nth(0).getAttribute("data-midi"), "60");
+      assert.equal(await heads.nth(1).getAttribute("data-midi"), "64");
+      assert.equal(await rest.locator("[data-notehead-shape]").count(), 0);
+    }
+    async function full(expected) {
+      await button("전체 보기").click();
+      const fullScore = page.locator('[data-full-score="ready"]');
+      await fullScore
+        .locator("svg text")
+        .filter({ hasText: "\uE0A4" })
+        .first()
+        .waitFor({ state: "attached" });
+      // Read actual font glyphs. DOM text Y baselines allow different glyph
+      // widths while still detecting a head rendered at the wrong staff step.
+      const ink = await fullScore.locator("svg text").evaluateAll((nodes) =>
+        nodes
+          .filter((node) =>
+            ["\uE0A4", "\uE0A8", "\uE0A9"].includes(node.textContent),
+          )
+          .map((node) => ({
+            shape: node.textContent === "\uE0A4" ? "default" : node.textContent,
+            y: node.getBoundingClientRect().y,
+          })),
+      );
+      assert.deepEqual(
+        ink.map((head) => head.shape),
+        expected,
+        name + " engraved head shapes",
+      );
+      assert.ok(Math.abs(ink[1].y - ink[2].y) < 1, "full E4 positions");
+      assert.ok(Math.abs(ink[3].y - ink[4].y) < 1, "full B4 positions");
+      await button("한 줄 보기").click();
+    }
+    async function setHead(index, value) {
+      await press(heads.nth(index).locator("[data-notehead-hit]"));
+      await select.selectOption(value);
+      await page.keyboard.press("Escape");
+    }
+    const x = "\uE0A9";
+    const hollowX = "\uE0A8";
+    const original = ["default", x, x, hollowX, "default"];
+    const edited = [x, x, x, hollowX, "default"];
+    await line(original);
+    await full(original);
+    await setHead(0, "x");
+    await line(edited);
+    await full(edited);
+    await setHead(3, "default");
+    await line([x, x, x, "default", "default"]);
+    await button("실행 취소").click();
+    await line(edited);
+    await button("실행 취소").click();
+    await line(original);
+    await press(rest);
+    await page.locator("[data-edit-panel]").waitFor();
+    assert.equal(await select.count(), 0, "rest offered a notehead control");
+    console.log(
+      `${width} ${name}: line and full score, mixed heads, edit and undo`,
+    );
+  } finally {
+    await page.close();
+  }
+}
+
 async function main() {
   const browser = await chromium.launch({
     headless: true,
@@ -241,6 +410,16 @@ async function main() {
     );
     console.log(
       "Failed replacements preserved edits and undo. File data stayed local.",
+    );
+    await verifyWrittenHeads(browser, 1280, "mixed-heads.musicxml", mixedHeads);
+    await verifyWrittenHeads(
+      browser,
+      390,
+      "mixed-heads.mxl",
+      zip({
+        "META-INF/container.xml": manifest("score.musicxml"),
+        "score.musicxml": mixedHeads,
+      }),
     );
   } finally {
     await browser.close();

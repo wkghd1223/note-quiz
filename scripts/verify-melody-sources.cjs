@@ -89,6 +89,25 @@ async function check(browser, viewport) {
       Number(await generatedHead.getAttribute("data-midi")),
       editedMidi,
     );
+    const notehead = generatedHead.locator("[data-notehead-shape]");
+    assert.equal(await notehead.getAttribute("data-notehead-shape"), "default");
+    const headHit = generatedHead.locator("[data-notehead-hit]");
+    if (viewport.width < 500) await headHit.tap();
+    else await headHit.click();
+    await page.locator("[data-notehead-select]").selectOption("x");
+    await page.keyboard.press("Escape");
+    await page.getByRole("button", { name: "생성 원본 보기" }).click();
+    const originalInk = page.locator("[data-score-rail] svg text");
+    await originalInk.first().waitFor();
+    assert.ok(!(await originalInk.allTextContents()).includes("\uE0A9"));
+    await page.getByRole("button", { name: "편집한 악보 열기" }).click();
+    assert.equal(await notehead.getAttribute("data-notehead-shape"), "x");
+    assert.equal(
+      Number(await generatedHead.getAttribute("data-midi")),
+      editedMidi,
+    );
+    await page.getByRole("button", { name: "실행 취소", exact: true }).click();
+    assert.equal(await notehead.getAttribute("data-notehead-shape"), "default");
     await source(upload).click();
     await urlIs(upload);
     await page

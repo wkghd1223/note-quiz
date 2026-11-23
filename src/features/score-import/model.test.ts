@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { parseScoreDocument } from "./model";
 import { prepareScore } from "./timeline";
+import { layoutBar, layoutScoreLine, bottom, space } from "./editor-layout";
+import { canEditEvent } from "./score-edits";
 import type { ImportedScore, ScoreOptions } from "./types";
 
 // The unit environment is Node. Fixture nodes expose the same read-only
@@ -62,6 +64,69 @@ const sound = (attrs: Record<string, string>) =>
   e("direction", {}, e("sound", attrs));
 
 describe("MusicXML score and performance", () => {
+  it("retains each chord member's explicit notehead without changing sounding pitches", () => {
+    const value = score(
+      bar(1, note("C"), note("E", 1, [e("chord"), val("notehead", "x")])),
+      bar(2, note("G", 1, [val("notehead", "circle-x")])),
+    );
+    const [first, second] = value.lanes[0].bars;
+    expect(first.events[0].heads.map((h) => h.shape)).toEqual([undefined, "x"]);
+    expect(second.events[0].heads[0].shape).toBe("circle-x");
+    expect(preview(value).targets.map((t) => t.midis)).toEqual([
+      [60, 64],
+      [67],
+    ]);
+  });
+
+  it("lays out a mixed chord's unpitched X heads without transposing them or treating them as rests", () => {
+    const hit = (display?: Element) =>
+      e(
+        "note",
+        {},
+        e("chord"),
+        display ?? e("unpitched"),
+        val("duration", 1),
+        val("notehead", "x"),
+      );
+    const value = score(
+      bar(
+        1,
+        e(
+          "attributes",
+          {},
+          e("clef", {}, val("sign", "percussion"), val("line", 3)),
+        ),
+        note("C"),
+        hit(
+          e(
+            "unpitched",
+            {},
+            val("display-step", "F"),
+            val("display-octave", 5),
+          ),
+        ),
+        hit(),
+        e("note", {}, e("rest"), val("duration", 1)),
+      ),
+    );
+    const lane = value.lanes[0];
+    const measure = lane.bars[0];
+    expect(measure.events[0].heads.map((h) => h.midi)).toEqual([60]);
+    expect(canEditEvent(measure.events[0])).toBe(false);
+    expect(() => preview(value)).toThrow("unsupportedNotation");
+    for (const shift of [0, 2]) {
+      const line = layoutScoreLine(lane, shift, 300);
+      const [chord, rest] = layoutBar(measure, shift, line.bars[0]).events;
+      expect(
+        chord.writtenHeads.slice(1).map((h) => [h.y, h.head.shape, h.index]),
+      ).toEqual([
+        [bottom - 4 * space, "x", 1],
+        [bottom - 2 * space, "x", 2],
+      ]);
+      expect(chord.writtenHeads).toHaveLength(3);
+      expect(rest.writtenHeads).toHaveLength(0);
+    }
+  });
   it("keeps the complete written measure when shortening an unusually long count-in", () => {
     const value = score(
       e(

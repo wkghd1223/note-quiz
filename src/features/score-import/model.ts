@@ -6,6 +6,7 @@ import type {
   ImportedHead,
   ImportedLane,
   ImportedScore,
+  ImportedUnpitchedHead,
   ScoreClef,
   ScoreIssue,
   ScoreMeter,
@@ -383,7 +384,7 @@ function readDirection(
     }
 }
 
-function pitches(
+function readHead(
   note: Element,
   id: string,
   dur: number,
@@ -391,8 +392,25 @@ function pitches(
   issue: Issue,
   staff: string,
   voice: string,
-): ImportedHead[] {
-  if (child(note, "rest")) return [];
+): ImportedHead | ImportedUnpitchedHead | undefined {
+  if (child(note, "rest")) return;
+  const shape = content(note, "notehead");
+  const written = { id, source: note, duration: dur, ...(shape && { shape }) };
+  const unpitched = child(note, "unpitched");
+  if (unpitched) {
+    issue("unpitched", true, staff, voice);
+    const step = content(unpitched, "display-step") as ScoreStep | undefined;
+    const octave = number(content(unpitched, "display-octave"));
+    if (
+      step &&
+      Object.hasOwn(pitchSteps, step) &&
+      Number.isInteger(octave) &&
+      octave >= 0 &&
+      octave <= 9
+    )
+      return { ...written, display: { step, octave } };
+    return written;
+  }
   const pitch = child(note, "pitch");
   const step = pitch && (content(pitch, "step") as ScoreStep | undefined);
   const octave = pitch && number(content(pitch, "octave"));
@@ -405,13 +423,13 @@ function pitches(
     alter == null ||
     !Number.isFinite(alter)
   ) {
-    issue(child(note, "unpitched") ? "unpitched" : "pitch", true, staff, voice);
-    return [];
+    issue("pitch", true, staff, voice);
+    return;
   }
   const midi = 12 * (octave + 1) + pitchSteps[step] + alter + ctx.transpose;
   if (!Number.isInteger(midi) || midi < 0 || midi > 127)
     issue("pitch", true, staff, voice);
-  return [{ id, source: note, step, octave, alter, midi, duration: dur }];
+  return { ...written, step, octave, alter, midi };
 }
 
 interface RawNote {
@@ -627,20 +645,18 @@ function readMeasure(
     const ctx = contextAt(staff, at);
     const lane = JSON.stringify([staff, voice]);
     const events = groups.get(lane) ?? [];
-    const heads = pitches(node, id, duration, ctx, issue, staff, voice);
-    const last = events.at(-1);
-    if (chord && last && Math.abs(last.start - at) < EPS) {
-      last.heads.push(...heads);
-      if (last.duration + EPS < duration)
+    let event = events.at(-1);
+    if (chord && event && Math.abs(event.start - at) < EPS) {
+      if (event.duration + EPS < duration)
         issue("chordDuration", true, staff, voice);
     } else {
       const modification = child(node, "time-modification");
-      events.push({
+      event = {
         id,
         source: node,
         start: at,
         duration,
-        heads,
+        heads: [],
         noteType: content(node, "type") ?? "",
         dots: elements(node, "dot").length,
         ...(modification
@@ -656,7 +672,13 @@ function readMeasure(
         keyMode: ctx.keyMode,
         transpose: ctx.transpose,
         clef: ctx.clef,
-      });
+      };
+      events.push(event);
+    }
+    const head = readHead(node, id, duration, ctx, issue, staff, voice);
+    if (head) {
+      if ("midi" in head) event.heads.push(head);
+      else (event.unpitchedHeads ??= []).push(head);
     }
     groups.set(lane, events);
   }

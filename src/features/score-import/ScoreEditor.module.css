@@ -105,6 +105,11 @@
   -webkit-touch-callout: none;
   cursor: ns-resize;
 }
+.head[data-select-only],
+.head[data-select-only] [data-notehead-hit] {
+  cursor: pointer;
+  touch-action: manipulation;
+}
 .head[data-note-held] [data-notehead-hit] {
   cursor: grabbing;
   fill: #ede9fe;

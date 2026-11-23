@@ -696,6 +696,62 @@ function verify({
       }),
     );
   }
+  {
+    const marked =
+      '<notehead color="#123456" filled="yes" smufl="noteheadDiamondBlack">diamond</notehead>';
+    const chordNote = (step, extra, shape) =>
+      note(step, 1, "quarter", extra, '<instrument id="I1"/>').replace(
+        "</type>",
+        `</type><stem>up</stem>${shape}<staff>1</staff>`,
+      );
+    const song = score(
+      [chordNote("C", "", "") + chordNote("E", "<chord/>", marked)],
+      1,
+    );
+    song.document
+      .querySelector("score-part")
+      .insertAdjacentHTML(
+        "beforeend",
+        '<score-instrument id="I1"><instrument-name>Piano</instrument-name></score-instrument>',
+      );
+    const saved = song.document.cloneNode(true);
+    const change = (sheet, index, shape) =>
+      editScore(
+        sheet,
+        edits.noteheadEdit(event(sheet, 0).heads[index].source, shape),
+      );
+    const added = change(song, 0, "x");
+    const [low, high] = event(added, 0).heads.map((h) => h.source);
+    check(
+      "write X in MusicXML order on the selected chord member and keep its sibling, instruments and sounding pitches/times",
+      Array.from(low.children, (c) => c.localName).join() ===
+        "pitch,duration,instrument,voice,type,stem,notehead,staff" &&
+        low.querySelector("notehead").textContent === "x" &&
+        low.querySelector("instrument").getAttribute("id") === "I1" &&
+        high.isEqualNode(event(song, 0).heads[1].source) &&
+        performance(added) === performance(song),
+    );
+    const replaced = change(added, 1, "x");
+    const x = event(replaced, 0).heads[1].source.querySelector("notehead");
+    const cleared = change(replaced, 1, "default");
+    check(
+      "replace the selected custom glyph and clear its override on default; preserve style and original undo revisions",
+      x.textContent === "x" &&
+        !x.hasAttribute("smufl") &&
+        x.getAttribute("color") === "#123456" &&
+        x.getAttribute("filled") === "yes" &&
+        event(cleared, 0).heads[1].source.querySelector("notehead") === null &&
+        event(cleared, 0).heads[0].source.isEqualNode(low) &&
+        event(added, 0)
+          .heads[1].source.querySelector("notehead")
+          .isEqualNode(saved.querySelector("notehead")) &&
+        event(cleared, 0)
+          .heads[1].source.querySelector("instrument")
+          .isEqualNode(high.querySelector("instrument")) &&
+        song.document.isEqualNode(saved) &&
+        performance(cleared) === performance(song),
+    );
+  }
   const changeMeter = (value, beats, type = 4) =>
     editScore(
       value,
