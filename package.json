@@ -12,7 +12,7 @@
   "dependencies": {
     "@coderline/alphatab": "1.9.0",
     "axios": "^1.7.9",
-    "next": "15.1.7",
+    "next": "15.5.29",
     "pdfjs-dist": "5.6.205",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -27,7 +27,7 @@
     "@types/react-dom": "^19",
     "@typescript-eslint/eslint-plugin": "^8.24.1",
     "eslint": "^9",
-    "eslint-config-next": "15.1.7",
+    "eslint-config-next": "15.5.29",
     "eslint-plugin-prettier": "^5.2.3",
     "postcss": "^8",
     "prettier": "^3.5.2",
